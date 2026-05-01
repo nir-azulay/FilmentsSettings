@@ -1,0 +1,128 @@
+---
+description: How to add a new filament profile for Bambu Lab H2S printer
+alwaysApply: true
+---
+
+# Adding a New Filament Profile
+
+When the user asks to add a new filament, follow this complete workflow.
+
+## 1. Gather Info
+
+- Ask for the **Amazon product URL** or filament specs (material, brand, temps, speeds)
+- Printer is **Bambu Lab H2S**
+- Nozzle sizes: **0.2, 0.4, 0.6, 0.8mm** (both Standard and High Flow)
+- All profile names must start with `azul-` prefix
+
+## 2. Create Filament Folder
+
+Create `c:\GitHub\filments settings\<Brand>\` with a `README.md` containing:
+- Product info (brand, material, diameter, Amazon link)
+- Manufacturer recommended settings (temps, speeds)
+- Table of all created profile files with key settings
+
+## 3. Create Filament Base Profiles
+
+Location: `filament/base/` in both project folder and BambuStudio path
+`C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\base\`
+
+Create **4 JSON files** (one per nozzle):
+- `azul-<Brand> <Material> @Bambu Lab H2S 0.2 nozzle.json`
+- `azul-<Brand> <Material> @Bambu Lab H2S 0.4 nozzle.json`
+- `azul-<Brand> <Material> @Bambu Lab H2S 0.6 nozzle.json`
+- `azul-<Brand> <Material> @Bambu Lab H2S 0.8 nozzle.json`
+
+Each JSON must have:
+- **All 145 fields** matching working Bambu Studio profiles (compare with existing `SUNLU PETG HF` profiles)
+- `"version": "2.6.0.2"` (match current Bambu Studio version)
+- `"from": "User"`
+- `"filament_extruder_variant": ["Direct Drive Standard", "Direct Drive High Flow"]`
+- `"compatible_printers": ["Bambu Lab H2S X.X nozzle"]`
+- `"filament_id"`: format `P` + 7 hex chars (same ID across all nozzle sizes for same filament)
+- Dual-value arrays `[standard_value, high_flow_value]` for speed/temp/retraction fields
+
+Each JSON needs a matching `.info` file:
+```
+sync_info = 
+user_id = 
+setting_id = PFUS<12 random hex chars>
+base_id = 
+updated_time = <unix timestamp>
+```
+- No BOM encoding, use ASCII
+- Each `.info` must have a unique `setting_id`
+
+## 4. Create Filament User Presets
+
+Location: `filament/` in BambuStudio path
+`C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\`
+
+Create **4 user preset JSON files** (one per nozzle) + **1 Calibrated override**:
+
+User preset format (sparse, inherits from base):
+```json
+{
+    "filament_extruder_variant": ["Direct Drive Standard", "Direct Drive High Flow"],
+    "filament_flow_ratio": ["nil", "nil"],
+    "filament_settings_id": ["azul-<name> @Bambu Lab H2S 0.4 nozzle"],
+    "from": "User",
+    "inherits": "azul-<name> @Bambu Lab H2S 0.4 nozzle",
+    "name": "azul-<name> @Bambu Lab H2S 0.4 nozzle",
+    "version": "2.6.0.2"
+}
+```
+
+Each needs a matching `.info` file:
+```
+sync_info = 
+user_id = 2189385007
+setting_id = PFUS<12 random hex>
+base_id = <setting_id from matching base .info>
+updated_time = <unix timestamp>
+```
+
+## 5. Create Process Presets
+
+Location: `process/` in BambuStudio path
+`C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\process\`
+
+Create **4 process preset JSON files** (one per nozzle), inheriting from system profiles:
+
+| Nozzle | Inherits From | Layer Height | base_id |
+|--------|--------------|-------------|---------|
+| 0.2mm | `0.10mm Standard @BBL H2S 0.2 nozzle` | 0.10mm | GP152 |
+| 0.4mm | `0.20mm Standard @BBL H2S` | 0.20mm | GP158 |
+| 0.6mm | `0.30mm Standard @BBL H2S 0.6 nozzle` | 0.30mm | GP159 |
+| 0.8mm | `0.40mm Standard @BBL H2S 0.8 nozzle` | 0.40mm | GP156 |
+
+Naming: `azul-<layer>mm <Brand> <Material> @H2S <nozzle> nozzle`
+
+Default settings to include:
+- `sparse_infill_pattern`: `gyroid`
+- `sparse_infill_density`: `20%`
+- `wall_loops`: `4`
+- `enable_support`: `1`
+- `support_top_z_distance`: material-specific (PETG: 0.32, ASA: 0.3, PLA: 0.28)
+- Speed overrides appropriate for the filament material
+
+Process `.info` files use `PPUS` prefix (not `PFUS`):
+```
+sync_info = 
+user_id = 2189385007
+setting_id = PPUS<12 random hex>
+base_id = <system GP ID from table above>
+updated_time = <unix timestamp>
+```
+
+## 6. Update DeployPack
+
+Copy all new files to `c:\GitHub\filments settings\DeployPack\`:
+- `DeployPack/filament/base/` ← base profiles (.json + .info)
+- `DeployPack/filament/` ← user presets (.json + .info)
+- `DeployPack/process/` ← process presets (.json + .info)
+
+## 7. JSON Formatting
+
+- Use Python `json.dump(indent=4, sort_keys=True)` for consistent formatting
+- Never use PowerShell `ConvertTo-Json` (adds wrong indentation)
+- All `.info` files must be ASCII encoded, no BOM, Unix line endings
