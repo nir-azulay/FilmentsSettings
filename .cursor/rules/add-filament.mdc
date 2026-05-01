@@ -9,37 +9,56 @@ When the user asks to add a new filament, follow this complete workflow.
 
 ## 1. Gather Info
 
-- Ask for the **Amazon product URL** or filament specs (material, brand, temps, speeds)
+- Ask for the **Amazon product URL**, **official product page**, and/or **TDS PDF link**
+- Download the **TDS PDF** and save it in the filament's brand folder as `<Brand>_<Material>_TDS.pdf`
 - Printer is **Bambu Lab H2S**
 - Nozzle sizes: **0.2, 0.4, 0.6, 0.8mm** (both Standard and High Flow)
-- All profile names must start with `azul-` prefix
+- All profile names must start with `my-` prefix
 
-## 2. Create Filament Folder
+## 2. Create Filament Brand Folder
 
-Create `c:\GitHub\filments settings\<Brand>\` with a `README.md` containing:
-- Product info (brand, material, diameter, Amazon link)
-- Manufacturer recommended settings (temps, speeds)
-- Table of all created profile files with key settings
+Create `c:\GitHub\filments settings\<Brand>\` (e.g., `SUNLU\`, `Inslogic\`, `SUNLU-PA\`)
+
+### Required contents:
+- **TDS PDF**: Downloaded from manufacturer (e.g., `SUNLU_PETG_HS_TDS.pdf`)
+- **Base filament profiles**: 4 JSON files (one per nozzle size)
+- **Calibrated override**: 1 JSON file
+- **README.md** containing:
+  - Product info (brand, material, diameter)
+  - Links: Amazon product page, official manufacturer page, TDS PDF download link
+  - Full TDS material properties table (mechanical: tensile, flexural, impact, elongation; thermal: HDT, Tg, Vicat, melting temp; other: density, shrinkage)
+  - Manufacturer recommended print settings from TDS
+  - Table of all created profile files with key settings per nozzle
 
 ## 3. Create Filament Base Profiles
 
-Location: `filament/base/` in both project folder and BambuStudio path
+Location: `filament/base/` in BambuStudio path
 `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\base\`
 
 Create **4 JSON files** (one per nozzle):
-- `azul-<Brand> <Material> @Bambu Lab H2S 0.2 nozzle.json`
-- `azul-<Brand> <Material> @Bambu Lab H2S 0.4 nozzle.json`
-- `azul-<Brand> <Material> @Bambu Lab H2S 0.6 nozzle.json`
-- `azul-<Brand> <Material> @Bambu Lab H2S 0.8 nozzle.json`
+- `my-<Brand> <Material> @Bambu Lab H2S 0.2 nozzle.json`
+- `my-<Brand> <Material> @Bambu Lab H2S 0.4 nozzle.json`
+- `my-<Brand> <Material> @Bambu Lab H2S 0.6 nozzle.json`
+- `my-<Brand> <Material> @Bambu Lab H2S 0.8 nozzle.json`
 
 Each JSON must have:
-- **All 145 fields** matching working Bambu Studio profiles (compare with existing `SUNLU PETG HF` profiles)
+- **All 145 fields** matching working Bambu Studio profiles (compare with existing profiles)
 - `"version": "2.6.0.2"` (match current Bambu Studio version)
 - `"from": "User"`
 - `"filament_extruder_variant": ["Direct Drive Standard", "Direct Drive High Flow"]`
 - `"compatible_printers": ["Bambu Lab H2S X.X nozzle"]`
 - `"filament_id"`: format `P` + 7 hex chars (same ID across all nozzle sizes for same filament)
 - Dual-value arrays `[standard_value, high_flow_value]` for speed/temp/retraction fields
+
+### TDS-Critical Fields to verify against manufacturer specs:
+- `filament_density` — must match TDS density value
+- `temperature_vitrification` — must match TDS Tg value
+- `filament_dev_ams_drying_heat_distortion_temperature` — must match TDS HDT value
+- `filament_dev_drying_softening_temperature` — must match TDS Vicat softening value
+- `hot_plate_temp` / `textured_plate_temp` / `eng_plate_temp` — must be within TDS bed temp range
+- `nozzle_temperature` — must be within TDS nozzle temp range
+- `filament_retraction_length` — must be within TDS retraction distance range (usually 0.8-1.2mm)
+- `filament_retraction_speed` / `filament_deretraction_speed` — must match TDS retraction speed
 
 Each JSON needs a matching `.info` file:
 ```
@@ -49,7 +68,7 @@ setting_id = PFUS<12 random hex chars>
 base_id = 
 updated_time = <unix timestamp>
 ```
-- No BOM encoding, use ASCII
+- No BOM encoding, use ASCII, Unix line endings (`\n`)
 - Each `.info` must have a unique `setting_id`
 
 ## 4. Create Filament User Presets
@@ -64,10 +83,10 @@ User preset format (sparse, inherits from base):
 {
     "filament_extruder_variant": ["Direct Drive Standard", "Direct Drive High Flow"],
     "filament_flow_ratio": ["nil", "nil"],
-    "filament_settings_id": ["azul-<name> @Bambu Lab H2S 0.4 nozzle"],
+    "filament_settings_id": ["my-<name> @Bambu Lab H2S 0.4 nozzle"],
     "from": "User",
-    "inherits": "azul-<name> @Bambu Lab H2S 0.4 nozzle",
-    "name": "azul-<name> @Bambu Lab H2S 0.4 nozzle",
+    "inherits": "my-<name> @Bambu Lab H2S 0.4 nozzle",
+    "name": "my-<name> @Bambu Lab H2S 0.4 nozzle",
     "version": "2.6.0.2"
 }
 ```
@@ -95,15 +114,15 @@ Create **4 process preset JSON files** (one per nozzle), inheriting from system 
 | 0.6mm | `0.30mm Standard @BBL H2S 0.6 nozzle` | 0.30mm | GP159 |
 | 0.8mm | `0.40mm Standard @BBL H2S 0.8 nozzle` | 0.40mm | GP156 |
 
-Naming: `azul-<layer>mm <Brand> <Material> @H2S <nozzle> nozzle`
+Naming: `my-<Brand> <Material> <layer>mm @H2S <nozzle> nozzle`
 
 Default settings to include:
 - `sparse_infill_pattern`: `gyroid`
 - `sparse_infill_density`: `20%`
 - `wall_loops`: `4`
 - `enable_support`: `1`
-- `support_top_z_distance`: material-specific (PETG: 0.32, ASA: 0.3, PLA: 0.28)
-- Speed overrides appropriate for the filament material
+- `support_top_z_distance`: material-specific (PETG: 0.32, ASA: 0.3, PA/Nylon: 0.3, PLA: 0.28)
+- Speed overrides appropriate for the filament material and TDS max speed
 
 Process `.info` files use `PPUS` prefix (not `PFUS`):
 ```
@@ -116,13 +135,73 @@ updated_time = <unix timestamp>
 
 ## 6. Update DeployPack
 
-Copy all new files to `c:\GitHub\filments settings\DeployPack\`:
-- `DeployPack/filament/base/` ← base profiles (.json + .info)
-- `DeployPack/filament/` ← user presets (.json + .info)
-- `DeployPack/process/` ← process presets (.json + .info)
+Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat folder** (no subdirectories):
+- Base filament profiles (.json + .info)
+- Calibrated override (.json + .info)
+- Process presets (.json + .info)
+- `deploy.ps1` script handles copying to correct BambuStudio subdirectories
 
-## 7. JSON Formatting
+### Current DeployPack contents (4 filaments):
+- **SUNLU PETG HS**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- **Inslogic ASA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- **SUNLU PA E-PA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- **Inslogic Matte PLA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- `deploy.ps1`
+
+## 7. Project Folder Structure
+
+```
+c:\GitHub\filments settings\
+├── .cursor\rules\add-filament.mdc    (this file)
+├── DeployPack\                        (flat folder with all profiles + deploy.ps1)
+├── Inslogic\                          (Inslogic ASA brand folder)
+│   ├── README.md
+│   ├── Inslogic_ASA_TDS.pdf
+│   ├── my-Inslogic ASA basic @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   └── my-Inslogic ASA Calibrated.json
+├── SUNLU\                             (SUNLU PETG HS brand folder)
+│   ├── README.md
+│   ├── SUNLU_PETG_HS_TDS.pdf
+│   ├── my-SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   └── my-SUNLU PETG HS Calibrated.json
+├── SUNLU-PA\                          (SUNLU Easy PA Nylon brand folder)
+│   ├── README.md
+│   ├── SUNLU_Easy_PA_TDS.pdf
+│   ├── my-SUNLU PA E-PA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   └── my-SUNLU PA E-PA Calibrated.json
+├── Inslogic-Matte-PLA\               (Inslogic Matte PLA brand folder)
+│   ├── README.md
+│   ├── Inslogic_Matte_PLA_TDS.pdf
+│   ├── my-Inslogic Matte PLA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   └── my-Inslogic Matte PLA Calibrated.json
+└── process\                           (process presets - project copy)
+```
+
+## 8. JSON Formatting Rules
 
 - Use Python `json.dump(indent=4, sort_keys=True)` for consistent formatting
 - Never use PowerShell `ConvertTo-Json` (adds wrong indentation)
-- All `.info` files must be ASCII encoded, no BOM, Unix line endings
+- All `.info` files must be ASCII encoded, no BOM, Unix line endings (`\n`)
+
+## 9. TDS PDF Handling
+
+- Always download the manufacturer's TDS PDF when available
+- Save in the filament's brand folder: `<Brand>\<Brand>_<Material>_TDS.pdf`
+- Extract and verify all printing parameters against profile values
+- Include TDS download link in README.md
+- Key TDS data to extract: nozzle temp, bed temp, retraction distance/speed, density, Tg, HDT, Vicat, melting temp, drying temp, max print speed
+
+## 10. Current Filaments
+
+| Filament | Brand Folder | filament_id | Material Type |
+|----------|-------------|-------------|---------------|
+| SUNLU High Speed PETG | `SUNLU\` | P759ffa0 | PETG |
+| Inslogic ASA | `Inslogic\` | P3a8b2c1 | ASA |
+| SUNLU Easy PA (Nylon 6+66) | `SUNLU-PA\` | Pa7e3c19 | PA/Nylon |
+| Inslogic Matte PLA | `Inslogic-Matte-PLA\` | Pb4d1e07 | PLA |
+
+## 11. BambuStudio Paths
+
+- Base filament profiles: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\base\`
+- User filament presets: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\`
+- Process presets: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\process\`
