@@ -27,7 +27,7 @@
         "Direct Drive Standard",
         "Direct Drive High Flow"
     ],
-    "print_settings_id": "azul-0.30mm Inslogic PLA Pro @H2S 0.6 nozzle",
+    "print_settings_id": "my-Inslogic PLA Pro 0.30mm @H2S 0.6 nozzle",
     "sparse_infill_density": "20%",
     "sparse_infill_pattern": "gyroid",
     "sparse_infill_speed": [
