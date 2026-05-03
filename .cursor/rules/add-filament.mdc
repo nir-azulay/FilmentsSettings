@@ -15,9 +15,9 @@ When the user asks to add a new filament, follow this complete workflow.
 - Nozzle sizes: **0.2, 0.4, 0.6, 0.8mm** (both Standard and High Flow)
 - All profile names must start with `my-` prefix
 
-## 2. Create Filament Brand Folder
+## 2. Create Filament Brand/Material Folder
 
-Create `c:\GitHub\filments settings\<Brand>\` (e.g., `SUNLU\`, `Inslogic\`, `SUNLU-PA\`)
+Create `c:\GitHub\filments settings\<Brand>\<Material>\` (e.g., `SUNLU\PETG-HS\`, `Inslogic\ASA\`)
 
 ### Required contents:
 - **TDS PDF**: Downloaded from manufacturer (e.g., `SUNLU_PETG_HS_TDS.pdf`)
@@ -59,6 +59,34 @@ Each JSON must have:
 - `nozzle_temperature` — must be within TDS nozzle temp range
 - `filament_retraction_length` — must be within TDS retraction distance range (usually 0.8-1.2mm)
 - `filament_retraction_speed` / `filament_deretraction_speed` — must match TDS retraction speed
+
+### Mandatory Validation Against Bambu System Profiles:
+Always compare new profiles against the corresponding **Bambu system profile** for the same material type on H2S. System profiles are at:
+`C:\Users\Nir\AppData\Roaming\BambuStudio\system\BBL\filament\`
+
+Key fields to cross-check with Bambu system profile (these caused real issues when wrong):
+- `nozzle_temperature` / `nozzle_temperature_initial_layer` — match Bambu's values, NOT TDS low-end
+- `hot_plate_temp` / `eng_plate_temp` / `textured_plate_temp` — match Bambu's values (often higher than TDS minimum)
+- `fan_max_speed` / `fan_min_speed` — **MUST match Bambu's values** (too high = stringing on PETG, no extrusion on ASA)
+- `overhang_fan_speed` — match Bambu (typically 50% for PETG, 80-100% for ASA)
+- `enable_pressure_advance` — must be `"1"` (enabled), never `"0"`
+- `filament_retraction_speed` — must NOT be `"nil"` for any extruder
+- `filament_deretraction_speed` — must NOT be `"nil"`, should match retraction speed
+- `filament_start_gcode` — must include aux fan control gcode (copy from Bambu system profile for same material type)
+
+### Material-specific Fan Speed Reference (from Bambu system profiles):
+| Material | fan_max_speed | fan_min_speed | overhang_fan_speed |
+|----------|--------------|--------------|-------------------|
+| PETG | 60% | 20% | 50% |
+| ASA | 35% | 10% | 80-100% |
+| PLA | 100% | 100% | 90% |
+| PA/Nylon | 30% | 10% | 50% |
+
+### Filament Start Gcode (copy from Bambu system profile for material type):
+PETG/PLA use:
+```
+; filament start gcode\n{if (bed_temperature[current_extruder] >80)||(bed_temperature_initial_layer[current_extruder] >80)}M106 P3 S255\n{elsif (bed_temperature[current_extruder] >60)||(bed_temperature_initial_layer[current_extruder] >60)}M106 P3 S180\n{endif}\n\n{if activate_air_filtration[current_extruder] && support_air_filtration}\nM106 P3 S{during_print_exhaust_fan_speed_num[current_extruder]} \n{endif}
+```
 
 Each JSON needs a matching `.info` file:
 ```
@@ -121,7 +149,8 @@ Default settings to include:
 - `sparse_infill_density`: `20%`
 - `wall_loops`: `4`
 - `enable_support`: `1`
-- `support_top_z_distance`: material-specific (PETG: 0.32, ASA: 0.3, PA/Nylon: 0.3, PLA: 0.28)
+- `support_top_z_distance`: match Bambu system default (0.2mm for 0.4/0.6/0.8 nozzle, 0.1mm for 0.2 nozzle)
+- `brim_type`: `outer_and_inner` for ASA (bed adhesion critical)
 - Speed overrides appropriate for the filament material and TDS max speed
 
 Process `.info` files use `PPUS` prefix (not `PFUS`):
@@ -141,40 +170,56 @@ Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat fold
 - Process presets (.json + .info)
 - `deploy.ps1` script handles copying to correct BambuStudio subdirectories
 
-### Current DeployPack contents (4 filaments):
+### Current DeployPack contents (6 filaments):
 - **SUNLU PETG HS**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic ASA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **SUNLU PA E-PA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic Matte PLA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- **Inslogic PLA Pro**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- **Inslogic Silk PLA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - `deploy.ps1`
 
 ## 7. Project Folder Structure
 
+Organized by brand, with each filament type in a subfolder. Process presets live alongside their filament profiles.
+
 ```
 c:\GitHub\filments settings\
-├── .cursor\rules\add-filament.mdc    (this file)
-├── DeployPack\                        (flat folder with all profiles + deploy.ps1)
-├── Inslogic\                          (Inslogic ASA brand folder)
-│   ├── README.md
-│   ├── Inslogic_ASA_TDS.pdf
-│   ├── my-Inslogic ASA basic @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
-│   └── my-Inslogic ASA Calibrated.json
-├── SUNLU\                             (SUNLU PETG HS brand folder)
-│   ├── README.md
-│   ├── SUNLU_PETG_HS_TDS.pdf
-│   ├── my-SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
-│   └── my-SUNLU PETG HS Calibrated.json
-├── SUNLU-PA\                          (SUNLU Easy PA Nylon brand folder)
-│   ├── README.md
-│   ├── SUNLU_Easy_PA_TDS.pdf
-│   ├── my-SUNLU PA E-PA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
-│   └── my-SUNLU PA E-PA Calibrated.json
-├── Inslogic-Matte-PLA\               (Inslogic Matte PLA brand folder)
-│   ├── README.md
-│   ├── Inslogic_Matte_PLA_TDS.pdf
-│   ├── my-Inslogic Matte PLA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
-│   └── my-Inslogic Matte PLA Calibrated.json
-└── process\                           (process presets - project copy)
+├── .cursor\rules\add-filament.mdc       (this file)
+├── DeployPack\                           (flat folder with all profiles + deploy.ps1)
+├── Inslogic\
+│   ├── ASA\
+│   │   ├── README.md
+│   │   ├── Inslogic_ASA_TDS.pdf
+│   │   ├── my-Inslogic ASA basic @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   │   ├── my-Inslogic ASA Calibrated.json
+│   │   └── my-Inslogic ASA 0.{10,20,30,40}mm @H2S ... nozzle.{json,info}  (process)
+│   ├── Matte-PLA\
+│   │   ├── README.md
+│   │   ├── Inslogic_Matte_PLA_TDS.pdf
+│   │   ├── my-Inslogic Matte PLA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   │   └── my-Inslogic Matte PLA Calibrated.json
+│   ├── PLA-Pro\
+│   │   ├── README.md
+│   │   ├── Inslogic_PLA_Pro_TDS.pdf
+│   │   ├── my-Inslogic PLA Pro @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   │   └── my-Inslogic PLA Pro Calibrated.json
+│   └── Silk-PLA\
+│       ├── README.md
+│       ├── my-Inslogic Silk PLA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│       └── my-Inslogic Silk PLA Calibrated.json
+└── SUNLU\
+    ├── PETG-HS\
+    │   ├── README.md
+    │   ├── SUNLU_PETG_HS_TDS.pdf
+    │   ├── my-SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+    │   ├── my-SUNLU PETG HS Calibrated.json
+    │   └── my-SUNLU PETG HS 0.{10,20,30,40}mm @H2S ... nozzle.{json,info}  (process)
+    └── PA-E-PA\
+        ├── README.md
+        ├── SUNLU_Easy_PA_TDS.pdf
+        ├── my-SUNLU PA E-PA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+        └── my-SUNLU PA E-PA Calibrated.json
 ```
 
 ## 8. JSON Formatting Rules
@@ -186,7 +231,7 @@ c:\GitHub\filments settings\
 ## 9. TDS PDF Handling
 
 - Always download the manufacturer's TDS PDF when available
-- Save in the filament's brand folder: `<Brand>\<Brand>_<Material>_TDS.pdf`
+- Save in the filament's folder: `<Brand>\<Material>\<Brand>_<Material>_TDS.pdf`
 - Extract and verify all printing parameters against profile values
 - Include TDS download link in README.md
 - Key TDS data to extract: nozzle temp, bed temp, retraction distance/speed, density, Tg, HDT, Vicat, melting temp, drying temp, max print speed
@@ -195,13 +240,41 @@ c:\GitHub\filments settings\
 
 | Filament | Brand Folder | filament_id | Material Type |
 |----------|-------------|-------------|---------------|
-| SUNLU High Speed PETG | `SUNLU\` | P759ffa0 | PETG |
-| Inslogic ASA | `Inslogic\` | P3a8b2c1 | ASA |
-| SUNLU Easy PA (Nylon 6+66) | `SUNLU-PA\` | Pa7e3c19 | PA/Nylon |
-| Inslogic Matte PLA | `Inslogic-Matte-PLA\` | Pb4d1e07 | PLA |
+| SUNLU High Speed PETG | `SUNLU\PETG-HS\` | P759ffa0 | PETG |
+| Inslogic ASA | `Inslogic\ASA\` | P3a8b2c1 | ASA |
+| SUNLU Easy PA (Nylon 6+66) | `SUNLU\PA-E-PA\` | Pa7e3c19 | PA/Nylon |
+| Inslogic Matte PLA | `Inslogic\Matte-PLA\` | Pb4d1e07 | PLA |
+| Inslogic PLA Pro | `Inslogic\PLA-Pro\` | Pb4f6d21 | PLA |
+| Inslogic Silk PLA | `Inslogic\Silk-PLA\` | Pd0b37275 | PLA |
 
 ## 11. BambuStudio Paths
 
 - Base filament profiles: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\base\`
 - User filament presets: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\`
 - Process presets: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\process\`
+- System profiles (reference): `C:\Users\Nir\AppData\Roaming\BambuStudio\system\BBL\filament\`
+
+## 12. Lessons Learned (Common Profile Mistakes)
+
+These are real issues encountered during profile creation and tuning:
+
+### PETG Stringing
+- **Root cause:** Fan speeds too high (80-90% max, 40-50% min) vs Bambu's 60%/20%
+- **Fix:** Match Bambu PETG fan speeds (max 60%, min 20%, overhang 50%)
+- Over-cooling PETG causes outer shell to freeze while core stays molten — retraction pulls the molten core through the hardened shell creating strings
+- Also lowered nozzle temps 5°C below TDS range to further reduce stringing
+
+### ASA Not Extruding / Calibration Failure
+- **Root cause 1:** `fan_max_speed` at 100% (Bambu uses 35%) — solidified filament at nozzle tip
+- **Root cause 2:** `nozzle_temperature` at 255-260°C (Bambu uses 270°C for ALL nozzle sizes on H2S)
+- **Root cause 3:** `enable_pressure_advance` was `"0"` (disabled)
+- **Root cause 4:** `filament_retraction_speed` and `filament_deretraction_speed` set to `"nil"` for Standard extruder
+- **Root cause 5:** Bed temps 10°C too low (90°C vs Bambu's 100°C)
+- **Fix:** Match all values to Bambu ASA system profile, enable pressure advance, set explicit retraction/deretraction speeds
+
+### General Rules
+- NEVER set `filament_retraction_speed` or `filament_deretraction_speed` to `"nil"` — always use explicit values
+- NEVER set `enable_pressure_advance` to `"0"` — always enable it
+- NEVER trust TDS fan speed recommendations blindly — always compare with Bambu system profile for the same material
+- `nozzle_temperature_initial_layer` should be >= `nozzle_temperature` (calibration uses initial layer temp)
+- Always include proper `filament_start_gcode` with aux fan control from Bambu system profiles
