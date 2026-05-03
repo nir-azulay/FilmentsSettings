@@ -87,6 +87,14 @@
 - **HDT:** 119°C | **Vicat Softening:** 135°C | **Tg:** 65°C
 - **Aux fan gcode:** Included (manages chamber ventilation based on bed temp)
 
+### Recommended Build Plate
+
+| Plate | Recommended? | Glue? | Notes |
+|-------|-------------|-------|-------|
+| **Textured PEI** | **Best choice** | **Yes (required)** | Nylon always needs glue for adhesion |
+| Hot plate (smooth PEI) | OK | Yes (required) | Works with glue |
+| Engineering plate | OK | Yes (required) | Works with glue |
+
 ## Installation
 
 Files are deployed to:

@@ -83,6 +83,15 @@ Full data in the [TDS PDF](https://cdn.shopify.com/s/files/1/0822/8611/7163/file
 - **Aux fan gcode:** Included (manages chamber ventilation based on bed temp)
 - **Tg:** 65°C | **HDT:** 55°C | **Density:** 1.20 g/cm³
 
+### Recommended Build Plate
+
+| Plate | Recommended? | Glue? | Notes |
+|-------|-------------|-------|-------|
+| **Cool plate** | **Best choice** | No | Easy release, good adhesion |
+| Textured PEI | Great | No | Also works well |
+| Hot plate (smooth PEI) | OK | No | Works fine |
+| Engineering plate | Not recommended | — | PLA bonds too strongly, hard to remove |
+
 ## Installation
 
 Files are deployed to:

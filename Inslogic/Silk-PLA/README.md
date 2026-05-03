@@ -98,6 +98,15 @@
 - **Deretraction speed:** 35 mm/s (both extruders)
 - **Aux fan gcode:** Included (manages chamber ventilation based on bed temp)
 
+### Recommended Build Plate
+
+| Plate | Recommended? | Glue? | Notes |
+|-------|-------------|-------|-------|
+| **Cool plate** | **Best choice** | No | Easy release, good adhesion |
+| Textured PEI | Great | No | Also works well for silk finish |
+| Hot plate (smooth PEI) | OK | No | Works fine |
+| Engineering plate | Not recommended | — | PLA bonds too strongly, hard to remove |
+
 ## Installation
 
 Files are deployed to:

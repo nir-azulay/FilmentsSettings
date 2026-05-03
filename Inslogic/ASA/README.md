@@ -106,6 +106,14 @@ Full data in the [TDS PDF](https://cdn.shopify.com/s/files/1/0822/8611/7163/file
 - **Bed plates:** Engineering 100°C, Hot plate 100°C, Textured 100°C (all plates)
 - **Tg:** 108°C | **HDT:** 98°C
 
+### Recommended Build Plate
+
+| Plate | Recommended? | Glue? | Notes |
+|-------|-------------|-------|-------|
+| **Engineering plate** | **Best choice** | Recommended | Best grip for ASA at 100°C |
+| Hot plate (smooth PEI) | OK | Yes | Decent adhesion with glue |
+| Textured PEI | Not ideal | Yes | Too slippery for supports — supports tend to detach |
+
 ## Installation
 
 Files are deployed to:

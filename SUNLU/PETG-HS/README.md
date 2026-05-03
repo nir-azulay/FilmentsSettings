@@ -95,6 +95,15 @@
 - **Aux fan gcode:** Included (manages chamber ventilation based on bed temp)
 - **Max volumetric speed (0.4mm STD):** 18 mm³/s (matching Bambu PETG)
 
+### Recommended Build Plate
+
+| Plate | Recommended? | Glue? | Notes |
+|-------|-------------|-------|-------|
+| **Textured PEI** | **Best choice** | No | Good adhesion + easy release |
+| Hot plate (smooth PEI) | OK | No | Works but parts may stick too hard |
+| Cool plate | OK | No | Lower temp limit |
+| Engineering plate | Not recommended | — | PETG can bond permanently and damage the plate |
+
 ## Installation
 
 Files are deployed to:

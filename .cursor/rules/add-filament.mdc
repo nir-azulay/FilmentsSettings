@@ -22,6 +22,7 @@ Create `c:\GitHub\filments settings\<Brand>\<Material>\` (e.g., `SUNLU\PETG-HS\`
 ### Required contents:
 - **TDS PDF**: Downloaded from manufacturer (e.g., `SUNLU_PETG_HS_TDS.pdf`)
 - **Base filament profiles**: 4 JSON files (one per nozzle size)
+- **Process presets**: 4 JSON + 4 .info files (one per nozzle size) — stored alongside filament profiles
 - **Calibrated override**: 1 JSON file
 - **README.md** containing:
   - Product info (brand, material, diameter)
@@ -150,8 +151,11 @@ Default settings to include:
 - `wall_loops`: `4`
 - `enable_support`: `1`
 - `support_top_z_distance`: match Bambu system default (0.2mm for 0.4/0.6/0.8 nozzle, 0.1mm for 0.2 nozzle)
-- `brim_type`: `outer_and_inner` for ASA (bed adhesion critical)
+- `brim_type`: `outer_and_inner` for ASA (bed adhesion critical without glue)
+- `initial_layer_speed`: 30-35mm/s for ASA (slower = better adhesion)
 - Speed overrides appropriate for the filament material and TDS max speed
+
+Process preset files are stored in the brand/material folder (e.g., `Inslogic\ASA\`) alongside filament profiles, NOT in a separate `process\` folder.
 
 Process `.info` files use `PPUS` prefix (not `PFUS`):
 ```
@@ -252,7 +256,8 @@ c:\GitHub\filments settings\
 - Base filament profiles: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\base\`
 - User filament presets: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\`
 - Process presets: `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\process\`
-- System profiles (reference): `C:\Users\Nir\AppData\Roaming\BambuStudio\system\BBL\filament\`
+- System filament profiles (reference): `C:\Users\Nir\AppData\Roaming\BambuStudio\system\BBL\filament\`
+- System process profiles (reference): `C:\Users\Nir\AppData\Roaming\BambuStudio\system\BBL\process\`
 
 ## 12. Lessons Learned (Common Profile Mistakes)
 
@@ -272,9 +277,33 @@ These are real issues encountered during profile creation and tuning:
 - **Root cause 5:** Bed temps 10°C too low (90°C vs Bambu's 100°C)
 - **Fix:** Match all values to Bambu ASA system profile, enable pressure advance, set explicit retraction/deretraction speeds
 
+### ASA Support Disconnecting from Plate
+- **Root cause:** `support_top_z_distance` was 0.3mm (too large — support ends too far from part)
+- **Fix:** Reduced to 0.2mm (0.4/0.6/0.8 nozzle) and 0.1mm (0.2 nozzle) to match Bambu system defaults
+- Rule of thumb: support-to-part gap should be roughly equal to 1 layer height
+- Also added `brim_type: outer_and_inner` (5mm) to all ASA process presets for better bed adhesion
+- Set `initial_layer_speed` to 30-35mm/s (slower first layer = better adhesion for ASA)
+
+### Matte PLA Nozzle Temp Too Low
+- **Root cause:** Standard extruder temps for 0.2mm and 0.4mm nozzles were below 220°C (matching TDS low-end), but Bambu PLA system profile uses 220°C minimum
+- **Fix:** Raised Standard extruder nozzle temp to minimum 220°C for 0.2mm and 0.4mm nozzles
+
+### Silk PLA Nozzle Temp Inconsistency
+- **Root cause:** Different temps per nozzle size (215-225°C) — Silk PLA needs consistent higher temp for proper flow and silk finish
+- **Fix:** Unified all nozzle sizes to 230/230°C (STD/HF) for consistent silk particle orientation
+
 ### General Rules
-- NEVER set `filament_retraction_speed` or `filament_deretraction_speed` to `"nil"` — always use explicit values
+- NEVER set `filament_retraction_speed` or `filament_deretraction_speed` to `"nil"` — always use explicit values (35mm/s is a safe default)
 - NEVER set `enable_pressure_advance` to `"0"` — always enable it
 - NEVER trust TDS fan speed recommendations blindly — always compare with Bambu system profile for the same material
 - `nozzle_temperature_initial_layer` should be >= `nozzle_temperature` (calibration uses initial layer temp)
 - Always include proper `filament_start_gcode` with aux fan control from Bambu system profiles
+- `support_top_z_distance` should match Bambu system defaults (0.2mm for standard nozzles, 0.1mm for 0.2 nozzle) — NOT arbitrary values
+
+### Recommended Build Plate per Material
+| Material | Best Plate | Glue? | Notes |
+|----------|-----------|-------|-------|
+| PETG | Textured PEI | No | Good adhesion + easy release. Never use smooth PEI (bonds permanently) |
+| ASA | Engineering plate | Yes (recommended) | Textured PEI too slippery for supports |
+| PA/Nylon | Textured PEI | Yes (required) | Nylon always needs glue |
+| PLA (all) | Any plate | No | Avoid engineering plate (bonds too hard) |
