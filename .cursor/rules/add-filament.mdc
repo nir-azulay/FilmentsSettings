@@ -174,13 +174,14 @@ Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat fold
 - Process presets (.json + .info)
 - `deploy.ps1` script handles copying to correct BambuStudio subdirectories
 
-### Current DeployPack contents (6 filaments):
+### Current DeployPack contents (7 filaments):
 - **SUNLU PETG HS**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic ASA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **SUNLU PA E-PA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic Matte PLA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic PLA Pro**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic Silk PLA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- **Inslogic PETG Pro**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - `deploy.ps1`
 
 ## 7. Project Folder Structure
@@ -208,6 +209,12 @@ c:\GitHub\filments settings\
 │   │   ├── Inslogic_PLA_Pro_TDS.pdf
 │   │   ├── my-Inslogic PLA Pro @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
 │   │   └── my-Inslogic PLA Pro Calibrated.json
+│   ├── PETG-Pro\
+│   │   ├── README.md
+│   │   ├── Inslogic_PETG_Pro_TDS.pdf
+│   │   ├── my-Inslogic PETG Pro @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+│   │   ├── my-Inslogic PETG Pro Calibrated.json
+│   │   └── my-Inslogic PETG Pro 0.{10,20,30,40}mm @H2S ... nozzle.{json,info} (process)
 │   └── Silk-PLA\
 │       ├── README.md
 │       ├── my-Inslogic Silk PLA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
@@ -250,6 +257,7 @@ c:\GitHub\filments settings\
 | Inslogic Matte PLA | `Inslogic\Matte-PLA\` | Pb4d1e07 | PLA |
 | Inslogic PLA Pro | `Inslogic\PLA-Pro\` | Pb4f6d21 | PLA |
 | Inslogic Silk PLA | `Inslogic\Silk-PLA\` | Pd0b37275 | PLA |
+| Inslogic PETG Pro | `Inslogic\PETG-Pro\` | Pc7e4a28 | PETG |
 
 ## 11. BambuStudio Paths
 

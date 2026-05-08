@@ -1,7 +1,6 @@
 {
-    "bridge_speed": [
-        "25",
-        "25"
+    "compatible_printers": [
+        "Bambu Lab H2S 0.8 nozzle"
     ],
     "enable_support": "1",
     "from": "User",
@@ -34,15 +33,11 @@
         "300",
         "350"
     ],
-    "support_interface_speed": [
-        "80",
-        "80"
+    "support_top_z_distance": "0.4",
+    "top_surface_speed": [
+        "200",
+        "200"
     ],
-    "support_speed": [
-        "150",
-        "150"
-    ],
-    "support_top_z_distance": "0.31",
     "version": "2.6.0.2",
     "wall_loops": "4"
 }

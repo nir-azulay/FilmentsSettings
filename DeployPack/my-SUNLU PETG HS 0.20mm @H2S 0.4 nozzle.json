@@ -1,18 +1,21 @@
 {
+    "compatible_printers": [
+        "Bambu Lab H2S 0.4 nozzle"
+    ],
     "enable_support": "1",
     "from": "User",
     "inherits": "0.20mm Standard @BBL H2S",
     "initial_layer_speed": [
-        "nil",
+        "40",
         "40"
     ],
     "inner_wall_speed": [
-        "nil",
+        "220",
         "220"
     ],
     "name": "my-SUNLU PETG HS 0.20mm @H2S 0.4 nozzle",
     "outer_wall_speed": [
-        "nil",
+        "150",
         "150"
     ],
     "print_extruder_id": [
@@ -27,18 +30,14 @@
     "sparse_infill_density": "20%",
     "sparse_infill_pattern": "gyroid",
     "sparse_infill_speed": [
-        "nil",
+        "300",
         "300"
     ],
-    "support_interface_speed": [
-        "80",
-        "80"
+    "support_top_z_distance": "0.2",
+    "top_surface_speed": [
+        "200",
+        "200"
     ],
-    "support_speed": [
-        "150",
-        "150"
-    ],
-    "support_top_z_distance": "0.31",
     "version": "2.6.0.2",
     "wall_loops": "4"
 }

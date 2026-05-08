@@ -1,0 +1,36 @@
+{
+    "bridge_speed": [
+        "25",
+        "25"
+    ],
+    "enable_support": "1",
+    "from": "User",
+    "inherits": "0.40mm Standard @BBL H2S 0.8 nozzle",
+    "initial_layer_speed": [
+        "30",
+        "30"
+    ],
+    "inner_wall_speed": [
+        "150",
+        "150"
+    ],
+    "name": "my-GolGeo Silk PLA 0.40mm @H2S 0.8 nozzle",
+    "print_extruder_id": [
+        "1",
+        "1"
+    ],
+    "print_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow"
+    ],
+    "print_settings_id": "my-GolGeo Silk PLA 0.40mm @H2S 0.8 nozzle",
+    "sparse_infill_density": "20%",
+    "sparse_infill_pattern": "gyroid",
+    "sparse_infill_speed": [
+        "180",
+        "180"
+    ],
+    "support_top_z_distance": "0.4",
+    "version": "2.6.0.2",
+    "wall_loops": "4"
+}

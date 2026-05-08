@@ -72,10 +72,10 @@
         "1"
     ],
     "eng_plate_temp": [
-        "70"
+        "75"
     ],
     "eng_plate_temp_initial_layer": [
-        "70"
+        "75"
     ],
     "fan_cooling_layer_time": [
         "30"
@@ -118,28 +118,35 @@
         "40"
     ],
     "filament_dev_ams_drying_ams_limitations": [
-        ""
+        "1",
+        "0"
     ],
     "filament_dev_ams_drying_heat_distortion_temperature": [
         "70"
     ],
     "filament_dev_ams_drying_temperature": [
-        "50"
+        "65",
+        "65",
+        "55",
+        "55"
     ],
     "filament_dev_ams_drying_time": [
-        "0"
+        "12",
+        "12",
+        "12",
+        "12"
     ],
     "filament_dev_chamber_drying_bed_temperature": [
-        "0"
+        "80"
     ],
     "filament_dev_chamber_drying_time": [
-        "0"
+        "12"
     ],
     "filament_dev_drying_cooling_temperature": [
-        "0"
+        "55"
     ],
     "filament_dev_drying_softening_temperature": [
-        "0"
+        "60"
     ],
     "filament_diameter": [
         "1.75"
@@ -194,16 +201,16 @@
         "0"
     ],
     "filament_overhang_2_4_speed": [
-        "0",
-        "0"
+        "50",
+        "50"
     ],
     "filament_overhang_3_4_speed": [
-        "0",
-        "0"
+        "30",
+        "30"
     ],
     "filament_overhang_4_4_speed": [
-        "0",
-        "0"
+        "10",
+        "10"
     ],
     "filament_overhang_totally_speed": [
         "10",
@@ -364,10 +371,10 @@
         "0.088"
     ],
     "hot_plate_temp": [
-        "70"
+        "75"
     ],
     "hot_plate_temp_initial_layer": [
-        "70"
+        "75"
     ],
     "impact_strength_z": [
         "10"
@@ -447,10 +454,10 @@
         "65"
     ],
     "textured_plate_temp": [
-        "70"
+        "75"
     ],
     "textured_plate_temp_initial_layer": [
-        "70"
+        "75"
     ],
     "version": "2.6.0.2",
     "volumetric_speed_coefficients": [
