@@ -16,6 +16,7 @@ class FilamentBase(BaseModel):
     nozzle_temp_max: Optional[int] = None
     bed_temp: Optional[int] = None
     amazon_url: str = ""
+    brand_logo_url: str = ""
     notes: str = ""
     low_stock_threshold: int = 1
 
@@ -36,6 +37,7 @@ class FilamentUpdate(BaseModel):
     nozzle_temp_max: Optional[int] = None
     bed_temp: Optional[int] = None
     amazon_url: Optional[str] = None
+    brand_logo_url: Optional[str] = None
     notes: Optional[str] = None
     low_stock_threshold: Optional[int] = None
 

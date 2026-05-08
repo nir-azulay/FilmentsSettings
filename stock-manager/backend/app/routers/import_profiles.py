@@ -13,6 +13,12 @@ router = APIRouter(tags=["import"])
 
 PROFILES_ROOT = os.environ.get("PROFILES_ROOT", "/profiles")
 
+BRAND_LOGOS = {
+    "SUNLU": "https://sunlu.com/cdn/shop/files/SUNLU-LOGO.png",
+    "Inslogic": "https://m.media-amazon.com/images/S/aplus-media-library-service-media/cc498a1a-7d04-48a7-8688-cec1f7de7da0.__CR0,0,315,315_PT0_SX300_V1___.png",
+    "GolGeo": "https://m.media-amazon.com/images/S/aplus-media-library-service-media/31291c8d-0a69-4649-9105-e4d46bfea607.__CR0,0,315,315_PT0_SX300_V1___.png",
+}
+
 
 @router.post("/import")
 def import_profiles(db: Session = Depends(get_db)):
@@ -62,6 +68,7 @@ def import_profiles(db: Session = Depends(get_db)):
             bed_temp = _extract_int(data, "hot_plate_temp")
 
             amazon_url = _extract_amazon_url(material_dir)
+            brand_logo_url = BRAND_LOGOS.get(brand, "")
 
             filament = Filament(
                 brand=brand,
@@ -73,6 +80,7 @@ def import_profiles(db: Session = Depends(get_db)):
                 nozzle_temp_max=nozzle_range_high or (nozzle_temps[1] if nozzle_temps else None),
                 bed_temp=bed_temp,
                 amazon_url=amazon_url,
+                brand_logo_url=brand_logo_url,
                 notes=f"Imported from {profile_path.name}",
             )
             db.add(filament)

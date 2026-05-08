@@ -13,6 +13,7 @@ export interface Filament {
   nozzle_temp_max: number | null;
   bed_temp: number | null;
   amazon_url: string;
+  brand_logo_url: string;
   notes: string;
   low_stock_threshold: number;
   current_stock: number;

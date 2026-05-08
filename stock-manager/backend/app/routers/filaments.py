@@ -89,6 +89,7 @@ def _to_response(filament: Filament) -> FilamentResponse:
         nozzle_temp_max=filament.nozzle_temp_max,
         bed_temp=filament.bed_temp,
         amazon_url=filament.amazon_url,
+        brand_logo_url=filament.brand_logo_url,
         notes=filament.notes,
         low_stock_threshold=filament.low_stock_threshold,
         current_stock=filament.current_stock,

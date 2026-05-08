@@ -29,7 +29,17 @@ export default function FilamentCard({ filament, onManageStock, onUpdate }: Prop
           title="Click to change color"
         />
         <div style={{ flex: 1 }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>{filament.brand}</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            {filament.brand_logo_url && (
+              <img
+                src={filament.brand_logo_url}
+                alt={filament.brand}
+                style={logoStyle}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            )}
+            <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>{filament.brand}</h3>
+          </div>
           <p style={{ fontSize: "0.85rem", opacity: 0.7 }}>{filament.material}</p>
           {filament.color_name && (
             <p style={{ fontSize: "0.75rem", opacity: 0.5 }}>{filament.color_name}</p>
@@ -107,6 +117,13 @@ const cardStyle: React.CSSProperties = {
   padding: "1.2rem",
   border: "1px solid #27272a",
   transition: "border-color 0.2s",
+};
+
+const logoStyle: React.CSSProperties = {
+  width: "22px",
+  height: "22px",
+  objectFit: "contain",
+  borderRadius: "4px",
 };
 
 const swatchStyle: React.CSSProperties = {

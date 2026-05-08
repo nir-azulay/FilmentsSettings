@@ -21,6 +21,7 @@ class Filament(Base):
     nozzle_temp_max = Column(Integer, nullable=True)
     bed_temp = Column(Integer, nullable=True)
     amazon_url = Column(String, default="")
+    brand_logo_url = Column(String, default="")
     notes = Column(String, default="")
     low_stock_threshold = Column(Integer, default=1)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
