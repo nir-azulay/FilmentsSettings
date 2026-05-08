@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - db-data:/app/data
+      - ../:/profiles:ro
+    environment:
+      - PROFILES_ROOT=/profiles
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
