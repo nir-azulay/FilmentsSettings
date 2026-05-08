@@ -14,8 +14,6 @@ class Filament(Base):
     material = Column(String, nullable=False)
     filament_type = Column(String, nullable=False)
     filament_id = Column(String, unique=True, nullable=True)
-    color_name = Column(String, default="")
-    color_hex = Column(String, default="#808080")
     density = Column(Float, nullable=True)
     nozzle_temp_min = Column(Integer, nullable=True)
     nozzle_temp_max = Column(Integer, nullable=True)
@@ -26,11 +24,25 @@ class Filament(Base):
     low_stock_threshold = Column(Integer, default=1)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+    colors = relationship("ColorStock", back_populates="filament", cascade="all, delete-orphan")
     stock_entries = relationship("StockEntry", back_populates="filament", cascade="all, delete-orphan")
 
     @property
     def current_stock(self) -> int:
-        return sum(e.quantity for e in self.stock_entries)
+        return sum(c.quantity for c in self.colors)
+
+
+class ColorStock(Base):
+    __tablename__ = "color_stocks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    filament_id = Column(Integer, ForeignKey("filaments.id"), nullable=False)
+    color_name = Column(String, nullable=False)
+    color_hex = Column(String, default="#808080")
+    quantity = Column(Integer, default=0)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    filament = relationship("Filament", back_populates="colors")
 
 
 class StockEntry(Base):
@@ -38,9 +50,11 @@ class StockEntry(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     filament_id = Column(Integer, ForeignKey("filaments.id"), nullable=False)
+    color_stock_id = Column(Integer, ForeignKey("color_stocks.id"), nullable=True)
     quantity = Column(Integer, nullable=False)
     event_type = Column(String, nullable=False)  # "purchase", "used", "adjustment"
     notes = Column(String, default="")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     filament = relationship("Filament", back_populates="stock_entries")
+    color_stock = relationship("ColorStock")

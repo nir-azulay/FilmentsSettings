@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Filament, StockEntry
+from ..models import ColorStock, Filament, StockEntry
 from ..schemas import StockEntryCreate, StockEntryResponse
 
 router = APIRouter(tags=["stock"])
@@ -29,8 +29,17 @@ def add_stock_event(filament_id: int, payload: StockEntryCreate, db: Session = D
         raise HTTPException(status_code=404, detail="Filament not found")
     if payload.event_type not in ("purchase", "used", "adjustment"):
         raise HTTPException(status_code=400, detail="event_type must be 'purchase', 'used', or 'adjustment'")
+
+    # Update the color stock quantity if a color is specified
+    if payload.color_stock_id:
+        color = db.query(ColorStock).filter(ColorStock.id == payload.color_stock_id).first()
+        if not color:
+            raise HTTPException(status_code=404, detail="Color not found")
+        color.quantity += payload.quantity
+
     entry = StockEntry(
         filament_id=filament_id,
+        color_stock_id=payload.color_stock_id,
         quantity=payload.quantity,
         event_type=payload.event_type,
         notes=payload.notes,

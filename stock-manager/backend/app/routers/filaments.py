@@ -2,9 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Filament
+from ..models import ColorStock, Filament
 from ..schemas import (
     AlertResponse,
+    ColorStockCreate,
+    ColorStockResponse,
+    ColorStockUpdate,
     FilamentCreate,
     FilamentResponse,
     FilamentUpdate,
@@ -57,6 +60,43 @@ def delete_filament(filament_id: int, db: Session = Depends(get_db)):
     db.commit()
 
 
+# --- Color stock endpoints ---
+
+@router.post("/filaments/{filament_id}/colors", response_model=ColorStockResponse, status_code=201)
+def add_color(filament_id: int, payload: ColorStockCreate, db: Session = Depends(get_db)):
+    filament = db.query(Filament).filter(Filament.id == filament_id).first()
+    if not filament:
+        raise HTTPException(status_code=404, detail="Filament not found")
+    color = ColorStock(filament_id=filament_id, **payload.model_dump())
+    db.add(color)
+    db.commit()
+    db.refresh(color)
+    return color
+
+
+@router.put("/colors/{color_id}", response_model=ColorStockResponse)
+def update_color(color_id: int, payload: ColorStockUpdate, db: Session = Depends(get_db)):
+    color = db.query(ColorStock).filter(ColorStock.id == color_id).first()
+    if not color:
+        raise HTTPException(status_code=404, detail="Color not found")
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(color, key, value)
+    db.commit()
+    db.refresh(color)
+    return color
+
+
+@router.delete("/colors/{color_id}", status_code=204)
+def delete_color(color_id: int, db: Session = Depends(get_db)):
+    color = db.query(ColorStock).filter(ColorStock.id == color_id).first()
+    if not color:
+        raise HTTPException(status_code=404, detail="Color not found")
+    db.delete(color)
+    db.commit()
+
+
+# --- Alerts ---
+
 @router.get("/alerts", response_model=list[AlertResponse])
 def get_alerts(db: Session = Depends(get_db)):
     filaments = db.query(Filament).all()
@@ -68,7 +108,6 @@ def get_alerts(db: Session = Depends(get_db)):
                 filament_id=f.id,
                 brand=f.brand,
                 material=f.material,
-                color_name=f.color_name,
                 current_stock=stock,
                 threshold=f.low_stock_threshold,
             ))
@@ -82,8 +121,6 @@ def _to_response(filament: Filament) -> FilamentResponse:
         material=filament.material,
         filament_type=filament.filament_type,
         filament_id=filament.filament_id,
-        color_name=filament.color_name,
-        color_hex=filament.color_hex,
         density=filament.density,
         nozzle_temp_min=filament.nozzle_temp_min,
         nozzle_temp_max=filament.nozzle_temp_max,
@@ -93,5 +130,6 @@ def _to_response(filament: Filament) -> FilamentResponse:
         notes=filament.notes,
         low_stock_threshold=filament.low_stock_threshold,
         current_stock=filament.current_stock,
+        colors=filament.colors,
         created_at=filament.created_at,
     )

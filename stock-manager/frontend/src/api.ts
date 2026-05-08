@@ -1,13 +1,20 @@
 const BASE = "/api";
 
+export interface ColorStock {
+  id: number;
+  filament_id: number;
+  color_name: string;
+  color_hex: string;
+  quantity: number;
+  created_at: string;
+}
+
 export interface Filament {
   id: number;
   brand: string;
   material: string;
   filament_type: string;
   filament_id: string | null;
-  color_name: string;
-  color_hex: string;
   density: number | null;
   nozzle_temp_min: number | null;
   nozzle_temp_max: number | null;
@@ -17,12 +24,14 @@ export interface Filament {
   notes: string;
   low_stock_threshold: number;
   current_stock: number;
+  colors: ColorStock[];
   created_at: string;
 }
 
 export interface StockEntry {
   id: number;
   filament_id: number;
+  color_stock_id: number | null;
   quantity: number;
   event_type: string;
   notes: string;
@@ -33,7 +42,6 @@ export interface Alert {
   filament_id: number;
   brand: string;
   material: string;
-  color_name: string;
   current_stock: number;
   threshold: number;
 }
@@ -43,7 +51,7 @@ export async function fetchFilaments(): Promise<Filament[]> {
   return res.json();
 }
 
-export async function createFilament(data: Omit<Filament, "id" | "current_stock" | "created_at">): Promise<Filament> {
+export async function createFilament(data: Partial<Filament>): Promise<Filament> {
   const res = await fetch(`${BASE}/filaments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -65,6 +73,28 @@ export async function deleteFilament(id: number): Promise<void> {
   await fetch(`${BASE}/filaments/${id}`, { method: "DELETE" });
 }
 
+export async function addColor(filamentId: number, data: { color_name: string; color_hex: string; quantity: number }): Promise<ColorStock> {
+  const res = await fetch(`${BASE}/filaments/${filamentId}/colors`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function updateColor(colorId: number, data: Partial<ColorStock>): Promise<ColorStock> {
+  const res = await fetch(`${BASE}/colors/${colorId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function deleteColor(colorId: number): Promise<void> {
+  await fetch(`${BASE}/colors/${colorId}`, { method: "DELETE" });
+}
+
 export async function fetchHistory(filamentId: number): Promise<StockEntry[]> {
   const res = await fetch(`${BASE}/filaments/${filamentId}/history`);
   return res.json();
@@ -72,7 +102,7 @@ export async function fetchHistory(filamentId: number): Promise<StockEntry[]> {
 
 export async function addStockEvent(
   filamentId: number,
-  data: { quantity: number; event_type: string; notes: string }
+  data: { quantity: number; event_type: string; color_stock_id?: number | null; notes: string }
 ): Promise<StockEntry> {
   const res = await fetch(`${BASE}/stock/${filamentId}`, {
     method: "POST",

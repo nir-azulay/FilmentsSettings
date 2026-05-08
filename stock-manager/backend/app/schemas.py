@@ -4,13 +4,35 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class ColorStockBase(BaseModel):
+    color_name: str
+    color_hex: str = "#808080"
+    quantity: int = 0
+
+
+class ColorStockCreate(ColorStockBase):
+    pass
+
+
+class ColorStockUpdate(BaseModel):
+    color_name: Optional[str] = None
+    color_hex: Optional[str] = None
+    quantity: Optional[int] = None
+
+
+class ColorStockResponse(ColorStockBase):
+    id: int
+    filament_id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class FilamentBase(BaseModel):
     brand: str
     material: str
     filament_type: str
     filament_id: Optional[str] = None
-    color_name: str = ""
-    color_hex: str = "#808080"
     density: Optional[float] = None
     nozzle_temp_min: Optional[int] = None
     nozzle_temp_max: Optional[int] = None
@@ -30,8 +52,6 @@ class FilamentUpdate(BaseModel):
     material: Optional[str] = None
     filament_type: Optional[str] = None
     filament_id: Optional[str] = None
-    color_name: Optional[str] = None
-    color_hex: Optional[str] = None
     density: Optional[float] = None
     nozzle_temp_min: Optional[int] = None
     nozzle_temp_max: Optional[int] = None
@@ -45,6 +65,7 @@ class FilamentUpdate(BaseModel):
 class FilamentResponse(FilamentBase):
     id: int
     current_stock: int
+    colors: list[ColorStockResponse]
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -53,6 +74,7 @@ class FilamentResponse(FilamentBase):
 class StockEntryBase(BaseModel):
     quantity: int
     event_type: str
+    color_stock_id: Optional[int] = None
     notes: str = ""
 
 
@@ -72,6 +94,5 @@ class AlertResponse(BaseModel):
     filament_id: int
     brand: str
     material: str
-    color_name: str
     current_stock: int
     threshold: int
