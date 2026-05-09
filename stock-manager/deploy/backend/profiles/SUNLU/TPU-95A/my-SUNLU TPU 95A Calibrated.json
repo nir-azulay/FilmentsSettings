@@ -1,0 +1,20 @@
+{
+    "filament_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow"
+    ],
+    "filament_flow_ratio": [
+        "0.98",
+        "0.98"
+    ],
+    "filament_settings_id": [
+        "my-SUNLU TPU 95A Calibrated"
+    ],
+    "from": "User",
+    "inherits": "my-SUNLU TPU 95A @Bambu Lab H2S 0.4 nozzle",
+    "name": "my-SUNLU TPU 95A Calibrated",
+    "pressure_advance": [
+        "0.04"
+    ],
+    "version": "2.6.0.2"
+}

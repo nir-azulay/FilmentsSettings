@@ -82,6 +82,7 @@ Key fields to cross-check with Bambu system profile (these caused real issues wh
 | ASA | 35% | 10% | 80-100% |
 | PLA | 100% | 100% | 90% |
 | PA/Nylon | 30% | 10% | 50% |
+| TPU | 100% | 100% | 100% |
 
 ### Filament Start Gcode (copy from Bambu system profile for material type):
 PETG/PLA use:
@@ -174,7 +175,7 @@ Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat fold
 - Process presets (.json + .info)
 - `deploy.ps1` script handles copying to correct BambuStudio subdirectories
 
-### Current DeployPack contents (7 filaments):
+### Current DeployPack contents (9 filaments):
 - **SUNLU PETG HS**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic ASA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **SUNLU PA E-PA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
@@ -182,6 +183,8 @@ Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat fold
 - **Inslogic PLA Pro**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic Silk PLA**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - **Inslogic PETG Pro**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
+- **SUNLU TPU 95A**: 3 base + 1 calibrated + 3 process = 14 files (.json + .info) — no 0.2mm nozzle
+- **SUNLU PETG (Standard)**: 4 base + 1 calibrated + 4 process = 18 files (.json + .info)
 - `deploy.ps1`
 
 ## 7. Project Folder Structure
@@ -226,11 +229,24 @@ c:\GitHub\filments settings\
     │   ├── my-SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
     │   ├── my-SUNLU PETG HS Calibrated.json
     │   └── my-SUNLU PETG HS 0.{10,20,30,40}mm @H2S ... nozzle.{json,info}  (process)
-    └── PA-E-PA\
-        ├── README.md
-        ├── SUNLU_Easy_PA_TDS.pdf
-        ├── my-SUNLU PA E-PA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
-        └── my-SUNLU PA E-PA Calibrated.json
+ ├── PA-E-PA\
+ │   ├── README.md
+ │   ├── SUNLU_Easy_PA_TDS.pdf
+ │   ├── my-SUNLU PA E-PA @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+ │   └── my-SUNLU PA E-PA Calibrated.json
+ ├── TPU-95A\
+ │   ├── README.md
+ │   ├── gen_sunlu_tpu.py
+ │   ├── my-SUNLU TPU 95A @Bambu Lab H2S 0.{4,6,8} nozzle.json
+ │   ├── my-SUNLU TPU 95A Calibrated.json
+ │   └── my-SUNLU TPU 95A 0.{20,30,40}mm @H2S ... nozzle.{json,info} (process)
+ └── PETG\
+     ├── README.md
+     ├── SUNLU_PETG_TDS.pdf
+     ├── gen_sunlu_petg.py
+     ├── my-SUNLU PETG @Bambu Lab H2S 0.{2,4,6,8} nozzle.json
+     ├── my-SUNLU PETG Calibrated.json
+     └── my-SUNLU PETG 0.{10,20,30,40}mm @H2S ... nozzle.{json,info} (process)
 ```
 
 ## 8. JSON Formatting Rules
@@ -258,6 +274,8 @@ c:\GitHub\filments settings\
 | Inslogic PLA Pro | `Inslogic\PLA-Pro\` | Pb4f6d21 | PLA |
 | Inslogic Silk PLA | `Inslogic\Silk-PLA\` | Pd0b37275 | PLA |
 | Inslogic PETG Pro | `Inslogic\PETG-Pro\` | Pc7e4a28 | PETG |
+| SUNLU TPU 95A | `SUNLU\TPU-95A\` | Pe5a1b7c2 | TPU |
+| SUNLU PETG (Standard) | `SUNLU\PETG\` | Pf8c2d4a1 | PETG |
 
 ## 11. BambuStudio Paths
 
@@ -315,3 +333,4 @@ These are real issues encountered during profile creation and tuning:
 | ASA | Engineering plate | Yes (recommended) | Textured PEI too slippery for supports |
 | PA/Nylon | Textured PEI | Yes (required) | Nylon always needs glue |
 | PLA (all) | Any plate | No | Avoid engineering plate (bonds too hard) |
+| TPU | Textured PEI | No | Good adhesion + easy release. Low bed temp (35°C) |

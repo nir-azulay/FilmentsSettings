@@ -1,0 +1,20 @@
+{
+    "filament_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow"
+    ],
+    "filament_flow_ratio": [
+        "0.98",
+        "0.98"
+    ],
+    "filament_settings_id": [
+        "my-SUNLU PETG Calibrated"
+    ],
+    "from": "User",
+    "inherits": "my-SUNLU PETG @Bambu Lab H2S 0.4 nozzle",
+    "name": "my-SUNLU PETG Calibrated",
+    "pressure_advance": [
+        "0.02"
+    ],
+    "version": "2.6.0.2"
+}

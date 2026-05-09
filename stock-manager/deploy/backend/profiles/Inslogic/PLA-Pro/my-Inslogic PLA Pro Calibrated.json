@@ -1,0 +1,17 @@
+{
+    "filament_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow"
+    ],
+    "filament_flow_ratio": [
+        "nil",
+        "nil"
+    ],
+    "filament_settings_id": [
+        "my-Inslogic PLA Pro Calibrated"
+    ],
+    "from": "User",
+    "inherits": "my-Inslogic PLA Pro @Bambu Lab H2S 0.4 nozzle",
+    "name": "my-Inslogic PLA Pro Calibrated",
+    "version": "2.6.0.2"
+}
