@@ -34,7 +34,7 @@
         "300",
         "350"
     ],
-    "support_top_z_distance": "0.2",
+    "support_top_z_distance": "0.30",
     "top_surface_speed": [
         "200",
         "200"
