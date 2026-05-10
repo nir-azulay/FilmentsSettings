@@ -1,4 +1,5 @@
 {
+    "brim_type": "outer_and_inner",
     "compatible_printers": [
         "Bambu Lab H2S 0.6 nozzle"
     ],

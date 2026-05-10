@@ -392,11 +392,11 @@
         "0"
     ],
     "nozzle_temperature": [
-        "245",
+        "240",
         "250"
     ],
     "nozzle_temperature_initial_layer": [
-        "245",
+        "242",
         "255"
     ],
     "nozzle_temperature_range_high": [

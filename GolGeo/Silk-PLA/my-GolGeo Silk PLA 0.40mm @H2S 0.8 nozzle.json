@@ -30,7 +30,7 @@
         "180",
         "180"
     ],
-    "support_top_z_distance": "0.4",
+    "support_top_z_distance": "0.2",
     "version": "2.6.0.2",
     "wall_loops": "4"
 }

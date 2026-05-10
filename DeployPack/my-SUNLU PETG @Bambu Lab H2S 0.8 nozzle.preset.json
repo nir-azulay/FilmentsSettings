@@ -10,6 +10,9 @@
     "filament_settings_id": [
         "my-SUNLU PETG @Bambu Lab H2S 0.8 nozzle"
     ],
+    "filament_type": [
+        "PETG"
+    ],
     "from": "User",
     "inherits": "my-SUNLU PETG @Bambu Lab H2S 0.8 nozzle",
     "name": "my-SUNLU PETG @Bambu Lab H2S 0.8 nozzle",
