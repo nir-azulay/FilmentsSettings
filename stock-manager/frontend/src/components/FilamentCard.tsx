@@ -610,32 +610,32 @@ const receiveBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,
   padding: "5px 10px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "rgba(76,175,80,0.2)", color: "#4caf50",
-  border: "1px solid rgba(76,175,80,0.5)",
+  background: "#c2f2c1", color: "#036730",
+  border: "1px solid #93da98",
   cursor: "pointer", whiteSpace: "nowrap",
 };
 const useBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 3,
   padding: "5px 10px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "rgba(255,152,0,0.15)", color: "var(--ha-warning)",
-  border: "1px solid rgba(255,152,0,0.4)",
+  background: "#ffe0c8", color: "#7e2900",
+  border: "1px solid #ffbb89",
   whiteSpace: "nowrap",
 };
 const undoBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center",
   padding: "5px 7px", borderRadius: 6,
   fontSize: 12,
-  background: "rgba(0,0,0,0.04)", color: "var(--ha-secondary-text)",
-  border: "1px solid rgba(0,0,0,0.08)",
+  background: "#e6e6e6", color: "var(--ha-secondary-text)",
+  border: "1px solid #cccccc",
   cursor: "pointer",
 };
 const reorderBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,
   padding: "5px 10px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "rgba(3,169,244,0.15)", color: "#03a9f4",
-  border: "1px solid rgba(3,169,244,0.3)",
+  background: "#dff3fc", color: "#006787",
+  border: "1px solid #7bd4fb",
   cursor: "pointer", whiteSpace: "nowrap",
 };
 const sugBox: React.CSSProperties = {

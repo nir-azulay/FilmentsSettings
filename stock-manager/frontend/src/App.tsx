@@ -58,7 +58,7 @@ export default function App() {
       <header className="ha-toolbar">
         {/* HA hamburger / logo zone */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--ha-primary-color)">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
           <span style={toolbarTitle}>Filament Stock</span>
@@ -100,9 +100,9 @@ export default function App() {
         {/* ── Summary row — HA glance-card style ── */}
         <div style={summaryRow}>
           <SummaryCard value={typesSet.size}    label="Filament Types" color="var(--ha-primary-color)" />
-          <SummaryCard value={totalInStock}     label="Total Spools" color="var(--ha-success)"       icon="✓" />
-          <SummaryCard value={totalOrdered}     label="Ordered"      color="var(--ha-primary-color)" icon="⏳" />
-          <SummaryCard value={brandsSet.size}   label="Brands"     color="#9c27b0"                 />
+          <SummaryCard value={totalInStock}     label="Spools In Stock" color="var(--ha-success)"   icon="✓" />
+          <SummaryCard value={totalOrdered}     label="On Order"        color="var(--ha-warning)"   icon="⏳" />
+          <SummaryCard value={brandsSet.size}   label="Brands"          color="#7a7a7a"              />
         </div>
 
         {alerts.length > 0 && <AlertBanner alerts={alerts} />}
@@ -138,19 +138,18 @@ const loaderRing: React.CSSProperties = {
   animation: "spin 0.9s linear infinite",
 };
 const toolbarTitle: React.CSSProperties = {
-  fontSize: 18, fontWeight: 400, color: "#ffffff", letterSpacing: 0,
+  fontSize: 18, fontWeight: 400, color: "var(--ha-primary-text)", letterSpacing: 0,
 };
 const syncBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,
   padding: "8px 16px",
-  background: "rgba(255,255,255,0.15)",
+  background: "var(--ha-primary-color)",
   color: "#fff",
-  border: "1px solid rgba(255,255,255,0.3)",
+  border: "none",
   borderRadius: "var(--ha-btn-radius)",
   fontSize: 13, fontWeight: 500,
   cursor: "pointer",
   letterSpacing: "0.01em",
-  backdropFilter: "blur(4px)",
 };
 const btnSpinner: React.CSSProperties = {
   width: 12, height: 12,

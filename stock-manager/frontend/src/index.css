@@ -1,55 +1,60 @@
-/* ─── Home Assistant Light Theme Design Tokens ──────────────────────────── */
+/* ─── Home Assistant Exact Design Tokens (extracted live from HA instance) ── */
 :root {
-  /* HA light background system */
-  --ha-app-bg:          #f5f5f5;
-  --ha-sidebar-bg:      #fafafa;
+  /* Backgrounds — exact HA values */
+  --ha-app-bg:          #fafafa;   /* --primary-background-color */
+  --ha-sidebar-bg:      #ffffff;
+  --ha-card-bg:         #ffffff;   /* --card-background-color */
+  --ha-card-bg-hover:   #f3f3f3;   /* --ha-color-fill-neutral-quiet-hover */
 
-  /* HA cards — white on light gray */
-  --ha-card-bg:         #ffffff;
-  --ha-card-bg-hover:   #f9f9f9;
+  /* Borders & dividers */
+  --ha-divider:         rgba(0, 0, 0, 0.12);  /* --divider-color */
+  --ha-border:          rgba(0, 0, 0, 0.12);  /* --outline-color */
 
-  /* HA borders */
-  --ha-divider:         rgba(0, 0, 0, 0.08);
-  --ha-border:          rgba(0, 0, 0, 0.06);
+  /* Typography — exact HA values */
+  --ha-primary-text:    #141414;   /* --primary-text-color / --ha-color-text-primary */
+  --ha-secondary-text:  #5e5e5e;   /* --secondary-text-color */
+  --ha-disabled-text:   #bdbdbd;   /* --disabled-text-color */
 
-  /* HA typography */
-  --ha-primary-text:    #212121;
-  --ha-secondary-text:  #727272;
-  --ha-disabled-text:   #bdbdbd;
+  /* Primary accent — exact HA primary */
+  --ha-primary-color:        #009ac7;   /* --primary-color */
+  --ha-primary-color-light:  #dff3fc;   /* --ha-color-fill-primary-normal-resting */
+  --ha-primary-color-dim:    #eff9fe;   /* --ha-color-fill-primary-quiet-resting */
+  --ha-primary-color-dark:   #006787;   /* --ha-color-primary-30 */
 
-  /* HA primary accent — HA blue */
-  --ha-primary-color:        #03a9f4;
-  --ha-primary-color-light:  rgba(3, 169, 244, 0.12);
-  --ha-primary-color-dim:    rgba(3, 169, 244, 0.06);
+  /* State colors — exact HA values */
+  --ha-success:    #43a047;   /* --success-color */
+  --ha-warning:    #ff9800;   /* --accent-color */
+  --ha-error:      #db4437;   /* --error-color */
+  --ha-info:       #039be5;   /* --info-color */
 
-  /* HA state colors */
-  --ha-success:    #4caf50;
-  --ha-warning:    #ff9800;
-  --ha-error:      #f44336;
-  --ha-unavailable:#bdbdbd;
+  /* Semantic dims — HA fill tokens */
+  --ha-success-bg: #c2f2c1;   /* --ha-color-fill-success-normal-resting */
+  --ha-warning-bg: #ffe0c8;   /* --ha-color-fill-warning-normal-resting */
+  --ha-error-bg:   #ffdedc;   /* --ha-color-fill-danger-normal-resting */
+  --ha-info-bg:    #dff3fc;
 
-  /* Semantic dims */
-  --ha-success-bg: rgba(76,175,80,0.10);
-  --ha-warning-bg: rgba(255,152,0,0.10);
-  --ha-error-bg:   rgba(244,67,54,0.10);
+  /* Surface levels */
+  --ha-surface-default: #ffffff;    /* --ha-color-surface-default */
+  --ha-surface-low:     #f3f3f3;    /* --ha-color-surface-low */
+  --ha-surface-lower:   #e6e6e6;    /* --ha-color-surface-lower */
 
-  /* Radii */
+  /* Radii — HA uses 12px for cards */
   --ha-card-radius: 12px;
   --ha-row-radius:  4px;
   --ha-chip-radius: 16px;
   --ha-btn-radius:  4px;
 
-  /* Shadows — HA uses very soft shadows on white cards */
-  --ha-card-shadow: var(--ha-card-box-shadow, 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12), 0 3px 1px -2px rgba(0,0,0,.2));
-  --ha-dialog-shadow: 0 24px 48px rgba(0,0,0,0.18);
+  /* Shadows */
+  --ha-card-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12), 0 3px 1px -2px rgba(0,0,0,.2);
+  --ha-dialog-shadow: 0 24px 48px rgba(0,0,0,0.16);
 
   /* Motion */
   --ha-transition: 0.18s ease;
 
-  /* ── legacy aliases so components keep working ── */
+  /* ── Legacy aliases ── */
   --bg-primary:      var(--ha-app-bg);
   --bg-secondary:    var(--ha-card-bg);
-  --bg-tertiary:     #f0f0f0;
+  --bg-tertiary:     var(--ha-surface-low);
   --bg-elevated:     #ffffff;
   --bg-hover:        var(--ha-card-bg-hover);
   --border:          var(--ha-divider);
@@ -58,7 +63,7 @@
   --text-secondary:  var(--ha-secondary-text);
   --text-muted:      var(--ha-disabled-text);
   --accent:          var(--ha-primary-color);
-  --accent-hover:    #29b6f6;
+  --accent-hover:    var(--ha-primary-color-dark);
   --accent-subtle:   var(--ha-primary-color-light);
   --success:         var(--ha-success);
   --success-subtle:  var(--ha-success-bg);
@@ -81,7 +86,7 @@
 
 /* ─── Base ────────────────────────────────────────────────────────────────── */
 body {
-  font-family: "Roboto", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Roboto", "Noto", sans-serif;
   background: var(--ha-app-bg);
   color: var(--ha-primary-text);
   min-height: 100vh;
@@ -94,8 +99,8 @@ body {
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+::-webkit-scrollbar-thumb { background: rgb(194, 194, 194); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #b1b1b1; }
 
 /* ─── Selection ───────────────────────────────────────────────────────────── */
 ::selection { background: var(--ha-primary-color-light); color: var(--ha-primary-color); }
@@ -110,14 +115,14 @@ body {
 
 /* ─── Interactive ─────────────────────────────────────────────────────────── */
 button { font-family: inherit; }
-button:hover  { filter: brightness(0.96); }
+button:hover  { filter: brightness(0.94); }
 button:active { transform: scale(0.97); }
 input:focus, select:focus {
   outline: none;
   border-color: var(--ha-primary-color) !important;
   box-shadow: 0 0 0 1px var(--ha-primary-color-light);
 }
-a:hover { filter: brightness(0.9); }
+a:hover { filter: brightness(0.88); }
 
 /* ─── HA app shell ────────────────────────────────────────────────────────── */
 .ha-app-shell {
@@ -127,11 +132,11 @@ a:hover { filter: brightness(0.9); }
   background: var(--ha-app-bg);
 }
 
-/* ─── HA toolbar ─────────────────────────────────────────────────────────── */
+/* ─── HA toolbar — matches HA's white top header with tab nav ────────────── */
 .ha-toolbar {
   height: 56px;
-  background: var(--ha-primary-color);
-  border-bottom: none;
+  background: #ffffff;
+  border-bottom: 1px solid var(--ha-divider);
   display: flex;
   align-items: center;
   padding: 0 16px;
@@ -139,7 +144,7 @@ a:hover { filter: brightness(0.9); }
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 /* ─── HA card ─────────────────────────────────────────────────────────────── */
@@ -151,7 +156,7 @@ a:hover { filter: brightness(0.9); }
   transition: box-shadow var(--ha-transition);
 }
 .ha-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
 }
 
 /* ─── HA entity row ───────────────────────────────────────────────────────── */
@@ -164,7 +169,7 @@ a:hover { filter: brightness(0.9); }
   transition: background var(--ha-transition);
 }
 .ha-entity-row:last-child { border-bottom: none; }
-.ha-entity-row:hover { background: rgba(0,0,0,0.02); }
+.ha-entity-row:hover { background: var(--ha-surface-low); }
 
 /* ─── HA toggle switch ────────────────────────────────────────────────────── */
 .ha-toggle {
@@ -208,7 +213,7 @@ a:hover { filter: brightness(0.9); }
   line-height: 1;
 }
 
-/* ─── HA section title ────────────────────────────────────────────────────── */
+/* ─── HA section/card header ──────────────────────────────────────────────── */
 .ha-card-header {
   padding: 16px 16px 0;
   font-size: 14px;

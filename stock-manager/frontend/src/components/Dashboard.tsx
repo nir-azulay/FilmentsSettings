@@ -66,7 +66,7 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
         borderRadius: "var(--ha-chip-radius)",
         fontSize: 12,
         fontWeight: active ? 500 : 400,
-        background: active ? "var(--ha-primary-color)" : "rgba(255,255,255,0.06)",
+        background: active ? "var(--ha-primary-color)" : "var(--ha-surface-lower)",
         color: active ? "#fff" : "var(--ha-secondary-text)",
         border: "none",
         cursor: "pointer",
