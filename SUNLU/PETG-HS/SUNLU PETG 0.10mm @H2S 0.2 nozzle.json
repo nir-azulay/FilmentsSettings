@@ -1,0 +1,12 @@
+{
+    "compatible_printers": [
+        "Bambu Lab H2S 0.2 nozzle"
+    ],
+    "from": "User",
+    "inherits": "0.10mm Standard @BBL H2S 0.2 nozzle",
+    "instantiation": "true",
+    "name": "SUNLU PETG 0.10mm @H2S 0.2 nozzle",
+    "print_settings_id": "SUNLU PETG 0.10mm @H2S 0.2 nozzle",
+    "type": "process",
+    "version": "2.6.0.2"
+}

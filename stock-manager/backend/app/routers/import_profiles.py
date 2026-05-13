@@ -42,7 +42,7 @@ def import_profiles(db: Session = Depends(get_db)):
 
             # Collect all base filament profiles (not presets, not calibrated, not process files)
             all_profiles = [
-                p for p in material_dir.glob("my-*@Bambu Lab H2S*.json")
+                p for p in material_dir.glob("*@Bambu Lab H2S*.json")
                 if ".preset." not in p.name and "Calibrated" not in p.name
                 and not any(s in p.name for s in ["0.10mm", "0.20mm", "0.30mm", "0.40mm"])
             ]
@@ -56,8 +56,8 @@ def import_profiles(db: Session = Depends(get_db)):
                     continue
 
                 brand = _extract_str(data, "filament_vendor", brand_dir.name)
-                # Derive material name from the profile filename: "my-SUNLU PETG HS @Bambu..." → "PETG HS"
-                fname = profile_path.stem  # e.g. "my-SUNLU PETG HS @Bambu Lab H2S"
+                # Derive material name from the profile filename: "SUNLU PETG HS @Bambu..." → "PETG HS"
+                fname = profile_path.stem  # e.g. "SUNLU PETG HS @Bambu Lab H2S"
                 material = _material_from_filename(fname, brand)
 
                 filament_type = _extract_str(data, "filament_type", "")
@@ -153,19 +153,19 @@ def _material_from_path(folder_name: str) -> str:
 def _material_from_filename(filename_stem: str, brand: str) -> str:
     """Extract material name from profile filename stem.
 
-    'my-SUNLU PETG HS @Bambu Lab H2S'  →  'PETG HS'
-    'my-SUNLU TPU 95A @Bambu Lab H2S'  →  'TPU 95A'
+    'SUNLU PETG HS @Bambu Lab H2S'  →  'PETG HS'
+    'Inslogic TPU 95A @Bambu Lab H2S'  →  'TPU 95A'
     """
-    # Strip leading "my-<brand> " prefix
-    prefix = f"my-{brand} "
-    name = filename_stem
-    if name.startswith(prefix):
-        name = name[len(prefix):]
+    # Strip leading "<brand> " prefix (with or without legacy "my-" prefix)
+    for prefix in (f"{brand} ", f"my-{brand} "):
+        if filename_stem.startswith(prefix):
+            filename_stem = filename_stem[len(prefix):]
+            break
     # Strip trailing " @Bambu Lab H2S..." suffix
-    at_idx = name.find(" @")
+    at_idx = filename_stem.find(" @")
     if at_idx != -1:
-        name = name[:at_idx]
-    return name.strip() or filename_stem
+        filename_stem = filename_stem[:at_idx]
+    return filename_stem.strip() or filename_stem
 
 
 def _extract_amazon_url(material_dir: Path) -> str:

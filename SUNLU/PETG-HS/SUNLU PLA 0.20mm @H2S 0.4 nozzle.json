@@ -1,0 +1,12 @@
+{
+    "compatible_printers": [
+        "Bambu Lab H2S 0.4 nozzle"
+    ],
+    "from": "User",
+    "inherits": "0.20mm Standard @BBL H2S",
+    "instantiation": "true",
+    "name": "SUNLU PLA 0.20mm @H2S 0.4 nozzle",
+    "print_settings_id": "SUNLU PLA 0.20mm @H2S 0.4 nozzle",
+    "type": "process",
+    "version": "2.6.0.2"
+}

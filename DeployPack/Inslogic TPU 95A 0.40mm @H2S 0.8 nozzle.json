@@ -1,0 +1,12 @@
+{
+    "compatible_printers": [
+        "Bambu Lab H2S 0.8 nozzle"
+    ],
+    "from": "User",
+    "inherits": "0.40mm Standard @BBL H2S 0.8 nozzle",
+    "instantiation": "true",
+    "name": "Inslogic TPU 95A 0.40mm @H2S 0.8 nozzle",
+    "print_settings_id": "Inslogic TPU 95A 0.40mm @H2S 0.8 nozzle",
+    "type": "process",
+    "version": "2.6.0.2"
+}

@@ -13,7 +13,7 @@ When the user asks to add a new filament, follow this complete workflow.
 - Download the **TDS PDF** and save it in the filament's brand folder as `<Brand>_<Material>_TDS.pdf`
 - Printer is **Bambu Lab H2S**
 - Nozzle sizes: **0.2, 0.4, 0.6, 0.8mm** (both Standard and High Flow)
-- All profile names must start with `my-` prefix
+- Profile names do NOT use a `my-` prefix
 
 ## 2. Create Filament Brand/Material Folder
 
@@ -37,10 +37,10 @@ Location: `filament/base/` in BambuStudio path
 `C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament\base\`
 
 Create **4 JSON files** (one per nozzle):
-- `my-<Brand> <Material> @Bambu Lab H2S 0.2 nozzle.json`
-- `my-<Brand> <Material> @Bambu Lab H2S 0.4 nozzle.json`
-- `my-<Brand> <Material> @Bambu Lab H2S 0.6 nozzle.json`
-- `my-<Brand> <Material> @Bambu Lab H2S 0.8 nozzle.json`
+- `<Brand> <Material> @Bambu Lab H2S 0.2 nozzle.json`
+- `<Brand> <Material> @Bambu Lab H2S 0.4 nozzle.json`
+- `<Brand> <Material> @Bambu Lab H2S 0.6 nozzle.json`
+- `<Brand> <Material> @Bambu Lab H2S 0.8 nozzle.json`
 
 Each JSON must have:
 - **All 145 fields** matching working Bambu Studio profiles (compare with existing profiles)
@@ -113,10 +113,10 @@ User preset format (sparse, inherits from base):
 {
     "filament_extruder_variant": ["Direct Drive Standard", "Direct Drive High Flow"],
     "filament_flow_ratio": ["nil", "nil"],
-    "filament_settings_id": ["my-<name> @Bambu Lab H2S 0.4 nozzle"],
+    "filament_settings_id": ["<name> @Bambu Lab H2S 0.4 nozzle"],
     "from": "User",
-    "inherits": "my-<name> @Bambu Lab H2S 0.4 nozzle",
-    "name": "my-<name> @Bambu Lab H2S 0.4 nozzle",
+    "inherits": "<name> @Bambu Lab H2S 0.4 nozzle",
+    "name": "<name> @Bambu Lab H2S 0.4 nozzle",
     "version": "2.6.0.2"
 }
 ```
@@ -144,7 +144,7 @@ Create **4 process preset JSON files** (one per nozzle), inheriting from system 
 | 0.6mm | `0.30mm Standard @BBL H2S 0.6 nozzle` | 0.30mm | GP159 |
 | 0.8mm | `0.40mm Standard @BBL H2S 0.8 nozzle` | 0.40mm | GP156 |
 
-Naming: `my-<Brand> <Material> <layer>mm @H2S <nozzle> nozzle`
+Naming: `<Brand> <Material> <layer>mm @H2S <nozzle> nozzle`
 
 Default settings to include:
 - `sparse_infill_pattern`: `gyroid`
@@ -185,17 +185,17 @@ Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat fold
 ```
 <repo>/
 ├── .cursor/rules/add-filament.mdc
-├── DeployPack/                    (flat: my-SUNLU PETG HS* + deploy.ps1)
+├── DeployPack/                    (flat: SUNLU PETG HS* + deploy.ps1)
 ├── SUNLU/
 │   └── PETG-HS/
 │       ├── README.md
 │       ├── SUNLU_PETG_HS_TDS.pdf
 │       ├── baseline_full_filament.json   (clone source; do not deploy)
 │       ├── gen_sunlu_petg_hs.py          (generator)
-│       ├── my-SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.{json,info}
-│       ├── my-SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.preset.{json,info}
-│       ├── my-SUNLU PETG HS Calibrated.{json,info}
-│       └── my-SUNLU PETG HS 0.{10,20,30,40}mm @H2S … nozzle.{json,info}  (process)
+│       ├── SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.{json,info}
+│       ├── SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.preset.{json,info}
+│       ├── SUNLU PETG HS Calibrated.{json,info}
+│       └── SUNLU PETG HS 0.{10,20,30,40}mm @H2S … nozzle.{json,info}  (process)
 └── stock-manager/deploy/backend/profiles/SUNLU/PETG-HS/   (Docker copy of same flat files)
 ```
 

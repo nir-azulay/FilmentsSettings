@@ -242,7 +242,7 @@ def write_info(path: Path, setting_id: str, base_id: str = "", user_id: str = ""
 
 def build_filament(fil: dict, template: dict) -> tuple[dict, str]:
     """Full filament JSON listing compatible H2S nozzle sizes."""
-    name = f"my-{fil['short']} @Bambu Lab H2S"
+    name = f"{fil['short']} @Bambu Lab H2S"
     nozzles = fil.get("nozzles", ["0.2", "0.4", "0.6", "0.8"])
     d = deepcopy(template)
     d["name"] = name
@@ -293,7 +293,7 @@ def build_calibrated(fil_name: str, base_sid: str) -> tuple[dict, str]:
 
 def build_process(short: str, nozzle: str) -> tuple[dict, str, str]:
     parent, gp, layer = PROCESS_PARENT[nozzle]
-    proc_name = f"my-{short} {layer}mm @H2S {nozzle} nozzle"
+    proc_name = f"{short} {layer}mm @H2S {nozzle} nozzle"
     proc = {
         "compatible_printers": [f"Bambu Lab H2S {nozzle} nozzle"],
         "from": "User",
@@ -309,7 +309,7 @@ def build_process(short: str, nozzle: str) -> tuple[dict, str, str]:
 # ─── Generator ────────────────────────────────────────────────────────────────
 
 def generate_filament(fil: dict, template: dict) -> None:
-    name = f"my-{fil['short']} @Bambu Lab H2S"
+    name = f"{fil['short']} @Bambu Lab H2S"
 
     filament, base_sid = build_filament(fil, template)
     write_json(SCRIPT_DIR / f"{name}.json", filament)
@@ -337,7 +337,7 @@ def generate_filament(fil: dict, template: dict) -> None:
 
 
 def copy_to(dest_dirs: list[Path]) -> None:
-    for pat in ("my-*.json", "my-*.info", "my-*.preset.json", "my-*.preset.info"):
+    for pat in ("*.json", "*.info", "*.preset.json", "*.preset.info"):
         for src in SCRIPT_DIR.glob(pat):
             if src.name == "baseline_full_filament.json":
                 continue
