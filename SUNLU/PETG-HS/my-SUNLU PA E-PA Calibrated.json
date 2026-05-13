@@ -1,0 +1,17 @@
+{
+    "filament_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow"
+    ],
+    "filament_flow_ratio": [
+        "nil",
+        "nil"
+    ],
+    "filament_settings_id": [
+        "my-SUNLU PA E-PA Calibrated"
+    ],
+    "from": "User",
+    "inherits": "my-SUNLU PA E-PA @Bambu Lab H2S",
+    "name": "my-SUNLU PA E-PA Calibrated",
+    "version": "2.6.0.2"
+}

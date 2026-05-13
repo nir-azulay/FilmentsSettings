@@ -11,7 +11,7 @@
         "my-SUNLU PETG HS Calibrated"
     ],
     "from": "User",
-    "inherits": "my-SUNLU PETG HS @Bambu Lab H2S 0.4 nozzle",
+    "inherits": "my-SUNLU PETG HS @Bambu Lab H2S",
     "name": "my-SUNLU PETG HS Calibrated",
     "version": "2.6.0.2"
 }

@@ -1,9 +1,0 @@
-{
-    "filament_settings_id": [
-        "my-SUNLU TPU 95A Calibrated"
-    ],
-    "from": "User",
-    "inherits": "my-SUNLU TPU 95A @Bambu Lab H2S 0.4 nozzle",
-    "name": "my-SUNLU TPU 95A Calibrated",
-    "version": "2.6.0.2"
-}

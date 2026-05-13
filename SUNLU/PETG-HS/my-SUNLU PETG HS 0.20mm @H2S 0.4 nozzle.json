@@ -6,9 +6,7 @@
     "inherits": "0.20mm Standard @BBL H2S",
     "instantiation": "true",
     "name": "my-SUNLU PETG HS 0.20mm @H2S 0.4 nozzle",
-    "sparse_infill_density": "20%",
-    "sparse_infill_pattern": "gyroid",
+    "print_settings_id": "my-SUNLU PETG HS 0.20mm @H2S 0.4 nozzle",
     "type": "process",
-    "version": "2.6.0.2",
-    "wall_loops": "4"
+    "version": "2.6.0.2"
 }

@@ -67,7 +67,7 @@
 | File | Nozzle | Max Vol Speed (STD/HF) | Nozzle Temp (STD/HF) | Retraction |
 |---|---|---|---|---|
 | `my-SUNLU PETG HS @Bambu Lab H2S 0.2 nozzle.json` | 0.2mm | 6 / 10 mm³/s | 235 / 245°C | 1.0mm @ 35/40 mm/s |
-| `my-SUNLU PETG HS @Bambu Lab H2S 0.4 nozzle.json` | 0.4mm | 12 / 21 mm³/s | 240 / 250°C | 1.0mm @ 35/40 mm/s |
+| `my-SUNLU PETG HS @Bambu Lab H2S 0.4 nozzle.json` | 0.4mm | 18 / 21 mm³/s | 245 / 250°C | 1.0mm @ 35/40 mm/s |
 | `my-SUNLU PETG HS @Bambu Lab H2S 0.6 nozzle.json` | 0.6mm | 18 / 28 mm³/s | 245 / 255°C | 1.0mm @ 35/40 mm/s |
 | `my-SUNLU PETG HS @Bambu Lab H2S 0.8 nozzle.json` | 0.8mm | 22 / 36 mm³/s | 250 / 255°C | 1.0mm @ 35/40 mm/s |
 
@@ -78,14 +78,14 @@
 
 ### Process Presets (`process/`)
 
-| File | Nozzle | Layer Height | Inner Wall | Outer Wall | Infill | Support Speed |
-|---|---|---|---|---|---|---|
-| `my-SUNLU PETG HS 0.10mm @H2S 0.2 nozzle.json` | 0.2mm | 0.10mm | 120 | 80 | 100 | 100 (iface 60) |
-| `my-SUNLU PETG HS 0.20mm @H2S 0.4 nozzle.json` | 0.4mm | 0.20mm | STD/220 HF | STD/150 HF | STD/300 HF | 150 (iface 80) |
-| `my-SUNLU PETG HS 0.30mm @H2S 0.6 nozzle.json` | 0.6mm | 0.30mm | 250/300 HF | 120/150 HF | 300/350 HF | 150 (iface 80) |
-| `my-SUNLU PETG HS 0.40mm @H2S 0.8 nozzle.json` | 0.8mm | 0.40mm | 250/300 HF | 120/150 HF | 300/350 HF | 150 (iface 80) |
+Each process preset **inherits only** the matching Bambu **Standard** profile (same layer height / speeds as **Generic PETG HF + Standard**). No extra wall count, infill pattern, or support flags are baked in—adjust those in the slicer if you want them.
 
-**Common process settings:** Gyroid infill 20%, 4 wall loops, support enabled, support top Z distance 0.32mm, wipe distance 2mm
+| File | Inherits (Bambu system) |
+|---|---|
+| `my-SUNLU PETG HS 0.10mm @H2S 0.2 nozzle.json` | `0.10mm Standard @BBL H2S 0.2 nozzle` |
+| `my-SUNLU PETG HS 0.20mm @H2S 0.4 nozzle.json` | `0.20mm Standard @BBL H2S` |
+| `my-SUNLU PETG HS 0.30mm @H2S 0.6 nozzle.json` | `0.30mm Standard @BBL H2S 0.6 nozzle` |
+| `my-SUNLU PETG HS 0.40mm @H2S 0.8 nozzle.json` | `0.40mm Standard @BBL H2S 0.8 nozzle` |
 
 ### Key PETG-specific Settings
 
@@ -103,6 +103,16 @@
 | Hot plate (smooth PEI) | OK | No | Works but parts may stick too hard |
 | Cool plate | OK | No | Lower temp limit |
 | Engineering plate | Not recommended | — | PETG can bond permanently and damage the plate |
+
+## Regenerate profiles
+
+From the repository root:
+
+```bash
+python3 SUNLU/PETG-HS/gen_sunlu_petg_hs.py
+```
+
+Then copy `DeployPack/` contents with `deploy.ps1` (Windows) or your own copy script to Bambu Studio `user/<id>/filament/base`, `filament`, and `process`.
 
 ## Installation
 

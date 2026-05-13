@@ -15,8 +15,6 @@ PROFILES_ROOT = os.environ.get("PROFILES_ROOT", "/profiles")
 
 BRAND_LOGOS = {
     "SUNLU": "https://sunlu.com/cdn/shop/files/SUNLU-LOGO.png",
-    "Inslogic": "https://m.media-amazon.com/images/S/aplus-media-library-service-media/cc498a1a-7d04-48a7-8688-cec1f7de7da0.__CR0,0,315,315_PT0_SX300_V1___.png",
-    "GolGeo": "https://m.media-amazon.com/images/S/aplus-media-library-service-media/31291c8d-0a69-4649-9105-e4d46bfea607.__CR0,0,315,315_PT0_SX300_V1___.png",
 }
 
 SKIP_FOLDERS = {"DeployPack", ".cursor", ".git", "stock-manager"}

@@ -1,9 +1,0 @@
-{
-    "filament_settings_id": [
-        "my-SUNLU PETG Calibrated"
-    ],
-    "from": "User",
-    "inherits": "my-SUNLU PETG @Bambu Lab H2S 0.4 nozzle",
-    "name": "my-SUNLU PETG Calibrated",
-    "version": "2.6.0.2"
-}
