@@ -14,7 +14,10 @@ router = APIRouter(tags=["import"])
 PROFILES_ROOT = os.environ.get("PROFILES_ROOT", "/profiles")
 
 BRAND_LOGOS = {
-    "SUNLU": "https://sunlu.com/cdn/shop/files/SUNLU-LOGO.png",
+    "SUNLU":      "/logos/logo-sunlu.png",
+    "Inslogic":   "/logos/logo-inslogic.png",
+    "Bambu Lab":  "/logos/logo-bambu.png",
+    "Bambu":      "/logos/logo-bambu.png",
 }
 
 SKIP_FOLDERS = {"DeployPack", ".cursor", ".git", "stock-manager"}
@@ -37,54 +40,60 @@ def import_profiles(db: Session = Depends(get_db)):
             if not material_dir.is_dir():
                 continue
 
-            base_profiles = list(material_dir.glob("my-*@Bambu Lab H2S 0.4 nozzle.json"))
-            if not base_profiles:
-                base_profiles = list(material_dir.glob("my-*@Bambu Lab H2S*.json"))
+            # Collect all base filament profiles (not presets, not calibrated, not process files)
+            all_profiles = [
+                p for p in material_dir.glob("my-*@Bambu Lab H2S*.json")
+                if ".preset." not in p.name and "Calibrated" not in p.name
+                and not any(s in p.name for s in ["0.10mm", "0.20mm", "0.30mm", "0.40mm"])
+            ]
 
-            if not base_profiles:
+            if not all_profiles:
                 continue
 
-            profile_path = base_profiles[0]
-            data = _load_json(profile_path)
-            if not data:
-                continue
+            for profile_path in all_profiles:
+                data = _load_json(profile_path)
+                if not data:
+                    continue
 
-            brand = _extract_str(data, "filament_vendor", brand_dir.name)
-            material = _material_from_path(material_dir.name)
-            filament_type = _extract_str(data, "filament_type", "")
-            filament_id_val = data.get("filament_id", "")
-            if isinstance(filament_id_val, list):
-                filament_id_val = filament_id_val[0] if filament_id_val else ""
+                brand = _extract_str(data, "filament_vendor", brand_dir.name)
+                # Derive material name from the profile filename: "my-SUNLU PETG HS @Bambu..." → "PETG HS"
+                fname = profile_path.stem  # e.g. "my-SUNLU PETG HS @Bambu Lab H2S"
+                material = _material_from_filename(fname, brand)
 
-            existing = db.query(Filament).filter(Filament.filament_id == filament_id_val).first()
-            if existing:
-                skipped += 1
-                continue
+                filament_type = _extract_str(data, "filament_type", "")
+                filament_id_val = data.get("filament_id", "")
+                if isinstance(filament_id_val, list):
+                    filament_id_val = filament_id_val[0] if filament_id_val else ""
 
-            density = _extract_float(data, "filament_density")
-            nozzle_temps = _extract_int_pair(data, "nozzle_temperature")
-            nozzle_range_low = _extract_int(data, "nozzle_temperature_range_low")
-            nozzle_range_high = _extract_int(data, "nozzle_temperature_range_high")
-            bed_temp = _extract_int(data, "hot_plate_temp")
+                existing = db.query(Filament).filter(Filament.filament_id == filament_id_val).first()
+                if existing:
+                    skipped += 1
+                    continue
 
-            amazon_url = _extract_amazon_url(material_dir)
-            brand_logo_url = BRAND_LOGOS.get(brand, "")
+                density = _extract_float(data, "filament_density")
+                nozzle_temps = _extract_int_pair(data, "nozzle_temperature")
+                nozzle_range_low = _extract_int(data, "nozzle_temperature_range_low")
+                nozzle_range_high = _extract_int(data, "nozzle_temperature_range_high")
+                bed_temp = _extract_int(data, "hot_plate_temp")
 
-            filament = Filament(
-                brand=brand,
-                material=material,
-                filament_type=filament_type,
-                filament_id=filament_id_val,
-                density=density,
-                nozzle_temp_min=nozzle_range_low or (nozzle_temps[0] if nozzle_temps else None),
-                nozzle_temp_max=nozzle_range_high or (nozzle_temps[1] if nozzle_temps else None),
-                bed_temp=bed_temp,
-                amazon_url=amazon_url,
-                brand_logo_url=brand_logo_url,
-                notes=f"Imported from {profile_path.name}",
-            )
-            db.add(filament)
-            imported += 1
+                amazon_url = _extract_amazon_url(material_dir)
+                brand_logo_url = BRAND_LOGOS.get(brand, "")
+
+                filament = Filament(
+                    brand=brand,
+                    material=material,
+                    filament_type=filament_type,
+                    filament_id=filament_id_val,
+                    density=density,
+                    nozzle_temp_min=nozzle_range_low or (nozzle_temps[0] if nozzle_temps else None),
+                    nozzle_temp_max=nozzle_range_high or (nozzle_temps[1] if nozzle_temps else None),
+                    bed_temp=bed_temp,
+                    amazon_url=amazon_url,
+                    brand_logo_url=brand_logo_url,
+                    notes=f"Imported from {profile_path.name}",
+                )
+                db.add(filament)
+                imported += 1
 
     db.commit()
     return {"imported": imported, "skipped": skipped}
@@ -139,6 +148,24 @@ def _extract_int_pair(data: dict, key: str) -> tuple[int, int] | None:
 
 def _material_from_path(folder_name: str) -> str:
     return folder_name.replace("-", " ")
+
+
+def _material_from_filename(filename_stem: str, brand: str) -> str:
+    """Extract material name from profile filename stem.
+
+    'my-SUNLU PETG HS @Bambu Lab H2S'  →  'PETG HS'
+    'my-SUNLU TPU 95A @Bambu Lab H2S'  →  'TPU 95A'
+    """
+    # Strip leading "my-<brand> " prefix
+    prefix = f"my-{brand} "
+    name = filename_stem
+    if name.startswith(prefix):
+        name = name[len(prefix):]
+    # Strip trailing " @Bambu Lab H2S..." suffix
+    at_idx = name.find(" @")
+    if at_idx != -1:
+        name = name[:at_idx]
+    return name.strip() or filename_stem
 
 
 def _extract_amazon_url(material_dir: Path) -> str:

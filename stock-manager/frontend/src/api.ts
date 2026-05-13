@@ -1,11 +1,16 @@
 const BASE = "/api";
 
+export type ColorStatus = "in_stock" | "ordered" | "out_of_stock";
+
 export interface ColorStock {
   id: number;
   filament_id: number;
   color_name: string;
   color_hex: string;
   quantity: number;
+  quantity_used: number;
+  status: ColorStatus;
+  order_id: string | null;
   created_at: string;
 }
 
@@ -73,7 +78,7 @@ export async function deleteFilament(id: number): Promise<void> {
   await fetch(`${BASE}/filaments/${id}`, { method: "DELETE" });
 }
 
-export async function addColor(filamentId: number, data: { color_name: string; color_hex: string; quantity: number }): Promise<ColorStock> {
+export async function addColor(filamentId: number, data: { color_name: string; color_hex: string; quantity: number; status?: string }): Promise<ColorStock> {
   const res = await fetch(`${BASE}/filaments/${filamentId}/colors`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

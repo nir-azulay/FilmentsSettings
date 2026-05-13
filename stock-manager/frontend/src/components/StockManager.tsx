@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ColorStock, Filament, StockEntry, addColor, addStockEvent, deleteColor, fetchHistory, updateColor } from "../api";
+import { ColorStatus, ColorStock, Filament, StockEntry, addColor, addStockEvent, deleteColor, fetchHistory, updateColor } from "../api";
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
 
 interface Props {
@@ -16,7 +16,6 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
     filament.colors.length > 0 ? filament.colors[0].id : null
   );
   const [notes, setNotes] = useState("");
-
   const [newColorName, setNewColorName] = useState("");
   const [newColorHex, setNewColorHex] = useState("#808080");
   const [newColorQty, setNewColorQty] = useState(0);
@@ -25,16 +24,12 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchHistory(filament.id).then(setHistory);
-  }, [filament.id]);
+  useEffect(() => { fetchHistory(filament.id).then(setHistory); }, [filament.id]);
 
   const handleColorNameChange = (value: string) => {
     setNewColorName(value);
     const hex = lookupColorHex(value);
-    if (hex) {
-      setNewColorHex(hex);
-    }
+    if (hex) setNewColorHex(hex);
     const sugg = getColorSuggestions(value);
     setSuggestions(sugg);
     setShowSuggestions(sugg.length > 0 && value.length > 0);
@@ -49,16 +44,9 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
   const handleStockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const qty = eventType === "used" ? -Math.abs(quantity) : quantity;
-    await addStockEvent(filament.id, {
-      quantity: qty,
-      event_type: eventType,
-      color_stock_id: selectedColorId,
-      notes,
-    });
-    setNotes("");
-    setQuantity(1);
-    const h = await fetchHistory(filament.id);
-    setHistory(h);
+    await addStockEvent(filament.id, { quantity: qty, event_type: eventType, color_stock_id: selectedColorId, notes });
+    setNotes(""); setQuantity(1);
+    setHistory(await fetchHistory(filament.id));
     await onUpdate();
   };
 
@@ -66,9 +54,7 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
     e.preventDefault();
     if (!newColorName.trim()) return;
     await addColor(filament.id, { color_name: newColorName, color_hex: newColorHex, quantity: newColorQty });
-    setNewColorName("");
-    setNewColorHex("#808080");
-    setNewColorQty(0);
+    setNewColorName(""); setNewColorHex("#808080"); setNewColorQty(0);
     setShowAddColor(false);
     await onUpdate();
   };
@@ -85,111 +71,84 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
   };
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-        {/* Modal header */}
-        <div style={modalHeader}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+    <div style={overlay} onClick={onClose}>
+      <div style={dialog} onClick={(e) => e.stopPropagation()}>
+
+        {/* ── Dialog header — like HA dialog ── */}
+        <div style={dialogHeader}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             {filament.brand_logo_url && (
-              <img src={filament.brand_logo_url} alt="" style={{ width: "24px", height: "24px", borderRadius: "4px", objectFit: "contain" }} />
+              <div style={{ width: 28, height: 28, borderRadius: 6, overflow: "hidden", background: ({ SUNLU: "#00a8a8", Inslogic: "#ffffff", "Bambu Lab": "#ffffff", Bambu: "#ffffff" } as Record<string,string>)[filament.brand] ?? "#2a2a2c", flexShrink: 0 }}>
+                <img src={filament.brand_logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 3 }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              </div>
             )}
             <div>
-              <h2 style={modalTitle}>{filament.brand} {filament.material}</h2>
-              <p style={modalSubtitle}>{filament.filament_type} &middot; {filament.current_stock} spools total</p>
+              <h2 style={dialogTitle}>{filament.brand} {filament.material}</h2>
+              <p style={dialogSubtitle}>{filament.filament_type} · {filament.current_stock} spools in stock</p>
             </div>
           </div>
-          <button onClick={onClose} style={closeBtn}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+          <button onClick={onClose} style={closeBtn} aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        {/* Colors section */}
-        <section style={sectionStyle}>
-          <div style={sectionHeader}>
-            <h3 style={sectionTitle}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="13.5" cy="6.5" r="0.5" fill="var(--accent)" />
-                <circle cx="17.5" cy="10.5" r="0.5" fill="var(--accent)" />
-                <circle cx="8.5" cy="7.5" r="0.5" fill="var(--accent)" />
-                <circle cx="6.5" cy="12.5" r="0.5" fill="var(--accent)" />
-                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
-              </svg>
-              Colors in Stock
-            </h3>
-            <button onClick={() => setShowAddColor(!showAddColor)} style={addColorBtn}>
+        {/* ── Colors section ── */}
+        <section style={section}>
+          <div style={sectionHeaderRow}>
+            <span style={sectionLabel}>Colors in Stock</span>
+            <button onClick={() => setShowAddColor(!showAddColor)} style={chipActionBtn}>
               {showAddColor ? "Cancel" : "+ Add Color"}
             </button>
           </div>
 
           {showAddColor && (
             <form onSubmit={handleAddColor} style={addColorForm}>
-              <input
-                type="color"
-                value={newColorHex}
-                onChange={(e) => setNewColorHex(e.target.value)}
-                style={colorPickerInput}
-              />
+              <input type="color" value={newColorHex} onChange={(e) => setNewColorHex(e.target.value)} style={colorPicker} />
               <div style={{ position: "relative", flex: 1 }}>
                 <input
-                  type="text"
-                  value={newColorName}
+                  type="text" value={newColorName}
                   onChange={(e) => handleColorNameChange(e.target.value)}
                   onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                  placeholder="Type color name..."
-                  style={{ ...inputStyle, width: "100%" }}
-                  required
+                  placeholder="Color name…"
+                  style={{ ...inputStyle, width: "100%" }} required
                 />
                 {showSuggestions && (
-                  <div ref={suggestionsRef} style={suggestionsDropdown}>
+                  <div ref={suggestionsRef} style={suggestionsList}>
                     {suggestions.map((s) => (
-                      <div
-                        key={s.name}
-                        style={suggestionItem}
-                        onMouseDown={() => handleSuggestionClick(s.name, s.hex)}
-                      >
-                        <div style={{ width: "12px", height: "12px", borderRadius: "3px", background: s.hex, border: "1px solid rgba(255,255,255,0.15)", flexShrink: 0 }} />
+                      <div key={s.name} style={suggestionItem} onMouseDown={() => handleSuggestionClick(s.name, s.hex)}>
+                        <div style={{ width: 11, height: 11, borderRadius: 2, background: s.hex, border: "1px solid rgba(255,255,255,0.15)", flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{s.name}</span>
-                        <span style={{ opacity: 0.4, fontSize: "0.72rem", fontFamily: "monospace" }}>{s.hex}</span>
+                        <span style={{ opacity: 0.4, fontSize: 11, fontFamily: "monospace" }}>{s.hex}</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-              <input
-                type="number"
-                min={0}
-                value={newColorQty}
-                onChange={(e) => setNewColorQty(Number(e.target.value))}
-                style={{ ...inputStyle, width: "55px", textAlign: "center" }}
-                placeholder="Qty"
-              />
-              <button type="submit" style={submitColorBtn}>Add</button>
+              <input type="number" min={0} value={newColorQty} onChange={(e) => setNewColorQty(Number(e.target.value))}
+                style={{ ...inputStyle, width: 56, textAlign: "center" }} placeholder="Qty" />
+              <button type="submit" style={primaryBtn}>Add</button>
             </form>
           )}
 
           {filament.colors.length === 0 ? (
-            <div style={emptyState}>
-              <p>No colors yet. Add your first color above.</p>
-            </div>
+            <p style={emptyText}>No colors yet. Add your first one above.</p>
           ) : (
             <div style={colorList}>
               {filament.colors.map((c) => (
-                <div key={c.id} style={colorRow}>
-                  <div style={{ ...colorDot, background: c.color_hex }} />
-                  <span style={{ flex: 1, fontSize: "0.85rem", fontWeight: 500 }}>{c.color_name}</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={c.quantity}
+                <div key={c.id} className="ha-entity-row">
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.color_hex, border: "1px solid rgba(255,255,255,0.15)", flexShrink: 0, marginRight: 10 }} />
+                  <span style={{ flex: 1, fontSize: 13 }}>{c.color_name}</span>
+                  <StatusSelect colorId={c.id} status={(c.status ?? "in_stock") as ColorStatus} onUpdate={onUpdate} />
+                  <input type="number" min={0} value={c.quantity}
                     onChange={(e) => handleEditColorQty(c, Number(e.target.value))}
-                    style={qtyInput}
+                    style={{ ...inputStyle, width: 52, textAlign: "center", fontWeight: 600, marginRight: 6 }}
                   />
-                  <button onClick={() => handleDeleteColor(c.id)} style={deleteColorBtn} title="Remove color">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <button onClick={() => handleDeleteColor(c.id)} style={deleteBtn} title="Delete">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
@@ -200,82 +159,51 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
           )}
         </section>
 
-        {/* Log stock section */}
-        <section style={sectionStyle}>
-          <h3 style={sectionTitle}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20V10M6 20V14M18 20V4" />
-            </svg>
-            Log Stock Change
-          </h3>
-          <form onSubmit={handleStockSubmit} style={stockForm}>
+        {/* ── Log stock section ── */}
+        <section style={section}>
+          <span style={sectionLabel}>Log Stock Change</span>
+          <form onSubmit={handleStockSubmit} style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
             <div style={formRow}>
-              <select
-                value={eventType}
-                onChange={(e) => setEventType(e.target.value as "purchase" | "used" | "adjustment")}
-                style={selectStyle}
-              >
+              <select value={eventType} onChange={(e) => setEventType(e.target.value as typeof eventType)} style={selectStyle}>
                 <option value="purchase">+ Purchase</option>
-                <option value="used">- Used</option>
+                <option value="used">− Used</option>
                 <option value="adjustment">~ Adjustment</option>
               </select>
               {filament.colors.length > 0 && (
-                <select
-                  value={selectedColorId ?? ""}
-                  onChange={(e) => setSelectedColorId(e.target.value ? Number(e.target.value) : null)}
-                  style={selectStyle}
-                >
+                <select value={selectedColorId ?? ""} onChange={(e) => setSelectedColorId(e.target.value ? Number(e.target.value) : null)} style={selectStyle}>
                   <option value="">All colors</option>
-                  {filament.colors.map((c) => (
-                    <option key={c.id} value={c.id}>{c.color_name}</option>
-                  ))}
+                  {filament.colors.map((c) => <option key={c.id} value={c.id}>{c.color_name}</option>)}
                 </select>
               )}
-              <input
-                type="number"
-                min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                style={{ ...inputStyle, width: "60px", textAlign: "center" }}
-              />
+              <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))}
+                style={{ ...inputStyle, width: 60, textAlign: "center" }} />
             </div>
             <div style={formRow}>
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notes (optional)"
-                style={{ ...inputStyle, flex: 1 }}
-              />
-              <button type="submit" style={logBtn}>Log</button>
+              <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)}
+                placeholder="Notes (optional)" style={{ ...inputStyle, flex: 1 }} />
+              <button type="submit" style={primaryBtn}>Log</button>
             </div>
           </form>
         </section>
 
-        {/* History */}
-        <section style={sectionStyle}>
-          <h3 style={sectionTitle}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            History
-          </h3>
-          <div style={historyList}>
-            {history.length === 0 && <p style={emptyState}>No history yet.</p>}
+        {/* ── History section ── */}
+        <section style={{ ...section, borderBottom: "none" }}>
+          <span style={sectionLabel}>History</span>
+          <div style={{ maxHeight: 200, overflowY: "auto", marginTop: 8 }}>
+            {history.length === 0 && <p style={emptyText}>No history yet.</p>}
             {history.map((entry) => {
               const color = filament.colors.find((c) => c.id === entry.color_stock_id);
               return (
-                <div key={entry.id} style={historyRow}>
+                <div key={entry.id} className="ha-entity-row">
                   <span style={eventBadge(entry.event_type)}>
-                    {entry.event_type === "purchase" ? "+" : entry.event_type === "used" ? "" : "~"}
-                    {entry.quantity}
+                    {entry.event_type === "purchase" ? "+" : entry.event_type === "used" ? "−" : "~"}
+                    {Math.abs(entry.quantity)}
                   </span>
-                  {color && <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: color.color_hex, border: "1px solid rgba(255,255,255,0.15)" }} />}
-                  <span style={{ flex: 1, fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                  {color && <div style={{ width: 8, height: 8, borderRadius: "50%", background: color.color_hex, marginLeft: 6, flexShrink: 0 }} />}
+                  <span style={{ flex: 1, fontSize: 12, color: "var(--ha-secondary-text)", marginLeft: 8 }}>
                     {entry.notes || entry.event_type}
                   </span>
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                  <span style={{ fontSize: 11, color: "var(--ha-disabled-text)" }}>
                     {new Date(entry.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -288,274 +216,161 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
   );
 }
 
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0, 0, 0, 0.75)",
+const STATUS_CFG: Record<ColorStatus, { label: string; color: string; bg: string }> = {
+  in_stock:    { label: "In Stock",    color: "#4caf50", bg: "rgba(76,175,80,0.15)"  },
+  ordered:     { label: "Ordered",     color: "#03a9f4", bg: "rgba(3,169,244,0.15)"  },
+  out_of_stock:{ label: "Out of Stock",color: "#f44336", bg: "rgba(244,67,54,0.15)"  },
+};
+
+function StatusSelect({ colorId, status, onUpdate }: { colorId: number; status: ColorStatus; onUpdate: () => Promise<void> }) {
+  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    await updateColor(colorId, { status: e.target.value as ColorStatus });
+    await onUpdate();
+  };
+  const cfg = STATUS_CFG[status];
+  return (
+    <select
+      value={status}
+      onChange={handleChange}
+      style={{
+        fontSize: 11, fontWeight: 600, padding: "2px 5px",
+        borderRadius: 10, border: `1px solid ${cfg.color}40`,
+        background: cfg.bg, color: cfg.color,
+        cursor: "pointer", marginRight: 6, outline: "none",
+      }}
+    >
+      <option value="in_stock">In Stock</option>
+      <option value="ordered">Ordered</option>
+      <option value="out_of_stock">Out of Stock</option>
+    </select>
+  );
+}
+
+/* ─── Styles ─────────────────────────────────────────────────────────────── */
+const overlay: React.CSSProperties = {
+  position: "fixed", inset: 0,
+  background: "rgba(0,0,0,0.78)",
   backdropFilter: "blur(4px)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
+  display: "flex", justifyContent: "center", alignItems: "center",
   zIndex: 1000,
   animation: "fadeIn 0.15s ease-out",
 };
-
-const modalStyle: React.CSSProperties = {
-  background: "var(--bg-secondary)",
-  borderRadius: "var(--radius-xl)",
-  width: "90%",
-  maxWidth: "580px",
-  maxHeight: "88vh",
-  overflow: "auto",
-  border: "1px solid var(--border)",
-  boxShadow: "var(--shadow-lg)",
-  animation: "slideUp 0.2s ease-out",
+const dialog: React.CSSProperties = {
+  background: "var(--ha-card-bg)",
+  borderRadius: "var(--ha-card-radius)",
+  width: "92%", maxWidth: 560, maxHeight: "90vh",
+  overflowY: "auto",
+  boxShadow: "var(--ha-dialog-shadow)",
+  animation: "slideUp 0.22s cubic-bezier(0.34,1.2,0.64,1)",
 };
-
-const modalHeader: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "1.2rem 1.5rem",
-  borderBottom: "1px solid var(--border-subtle)",
-  position: "sticky",
-  top: 0,
-  background: "var(--bg-secondary)",
-  zIndex: 1,
+const dialogHeader: React.CSSProperties = {
+  display: "flex", justifyContent: "space-between", alignItems: "center",
+  padding: "16px 20px",
+  borderBottom: "1px solid var(--ha-divider)",
+  position: "sticky", top: 0, background: "var(--ha-card-bg)", zIndex: 1,
 };
-
-const modalTitle: React.CSSProperties = {
-  fontSize: "1.1rem",
-  fontWeight: 600,
+const dialogTitle: React.CSSProperties = {
+  fontSize: 16, fontWeight: 400, color: "var(--ha-primary-text)",
 };
-
-const modalSubtitle: React.CSSProperties = {
-  fontSize: "0.78rem",
-  color: "var(--text-muted)",
-  marginTop: "1px",
+const dialogSubtitle: React.CSSProperties = {
+  fontSize: 12, color: "var(--ha-secondary-text)", marginTop: 2,
 };
-
 const closeBtn: React.CSSProperties = {
-  background: "var(--bg-tertiary)",
-  border: "1px solid var(--border-subtle)",
-  color: "var(--text-secondary)",
-  width: "32px",
-  height: "32px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "var(--radius-sm)",
-  cursor: "pointer",
-  transition: "var(--transition)",
+  background: "none", border: "none",
+  color: "var(--ha-secondary-text)",
+  width: 32, height: 32,
+  display: "flex", alignItems: "center", justifyContent: "center",
+  borderRadius: "50%", cursor: "pointer",
 };
-
-const sectionStyle: React.CSSProperties = {
-  padding: "1rem 1.5rem",
-  borderBottom: "1px solid var(--border-subtle)",
+const section: React.CSSProperties = {
+  padding: "14px 20px",
+  borderBottom: "1px solid var(--ha-divider)",
 };
-
-const sectionHeader: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "0.7rem",
+const sectionHeaderRow: React.CSSProperties = {
+  display: "flex", justifyContent: "space-between", alignItems: "center",
 };
-
-const sectionTitle: React.CSSProperties = {
-  fontSize: "0.85rem",
-  fontWeight: 600,
-  display: "flex",
-  alignItems: "center",
-  gap: "0.4rem",
+const sectionLabel: React.CSSProperties = {
+  fontSize: 12, fontWeight: 500,
+  color: "var(--ha-secondary-text)",
+  textTransform: "uppercase", letterSpacing: "0.06em",
 };
-
-const addColorBtn: React.CSSProperties = {
-  padding: "0.3rem 0.7rem",
-  background: "var(--accent-subtle)",
-  color: "var(--accent-hover)",
-  border: "1px solid rgba(99, 102, 241, 0.2)",
-  borderRadius: "var(--radius-sm)",
-  fontSize: "0.75rem",
-  fontWeight: 500,
-  cursor: "pointer",
+const chipActionBtn: React.CSSProperties = {
+  padding: "3px 10px",
+  background: "var(--ha-primary-color-light)",
+  color: "var(--ha-primary-color)",
+  border: "none",
+  borderRadius: "var(--ha-chip-radius)",
+  fontSize: 11, fontWeight: 500, cursor: "pointer",
 };
-
 const addColorForm: React.CSSProperties = {
-  display: "flex",
-  gap: "0.4rem",
-  alignItems: "center",
-  marginBottom: "0.7rem",
-  padding: "0.6rem",
-  background: "var(--bg-tertiary)",
-  borderRadius: "var(--radius-md)",
-  border: "1px solid var(--border-subtle)",
+  display: "flex", gap: 6, alignItems: "center",
+  marginTop: 8, padding: "8px 10px",
+  background: "rgba(255,255,255,0.03)",
+  borderRadius: "var(--ha-btn-radius)",
+  border: "1px solid var(--ha-divider)",
 };
-
-const colorPickerInput: React.CSSProperties = {
-  width: "34px",
-  height: "30px",
-  border: "none",
-  cursor: "pointer",
-  borderRadius: "var(--radius-sm)",
-  padding: 0,
-  background: "none",
+const colorPicker: React.CSSProperties = {
+  width: 30, height: 26, border: "none", background: "none",
+  borderRadius: 4, cursor: "pointer", padding: 0,
 };
-
 const inputStyle: React.CSSProperties = {
-  padding: "0.45rem 0.65rem",
-  background: "var(--bg-elevated)",
-  border: "1px solid var(--border)",
-  borderRadius: "var(--radius-sm)",
-  color: "var(--text-primary)",
-  fontSize: "0.82rem",
-  outline: "none",
-  transition: "var(--transition)",
+  padding: "6px 8px",
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid var(--ha-divider)",
+  borderRadius: "var(--ha-btn-radius)",
+  color: "var(--ha-primary-text)",
+  fontSize: 13, outline: "none",
+  transition: "var(--ha-transition)",
 };
-
-const submitColorBtn: React.CSSProperties = {
-  padding: "0.45rem 0.8rem",
-  background: "var(--accent)",
-  color: "#fff",
-  border: "none",
-  borderRadius: "var(--radius-sm)",
-  fontSize: "0.8rem",
-  fontWeight: 500,
-  cursor: "pointer",
+const primaryBtn: React.CSSProperties = {
+  padding: "6px 14px",
+  background: "var(--ha-primary-color)",
+  color: "#fff", border: "none",
+  borderRadius: "var(--ha-btn-radius)",
+  fontSize: 13, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap",
 };
-
 const colorList: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.25rem",
+  marginTop: 4,
+  borderTop: "1px solid var(--ha-divider)",
 };
-
-const colorRow: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.6rem",
-  padding: "0.4rem 0.6rem",
-  borderRadius: "var(--radius-sm)",
-  background: "var(--bg-tertiary)",
+const deleteBtn: React.CSSProperties = {
+  background: "none", border: "none",
+  color: "var(--ha-disabled-text)",
+  cursor: "pointer", padding: 4,
+  borderRadius: "var(--ha-btn-radius)",
+  display: "flex", alignItems: "center",
+  transition: "color var(--ha-transition)",
 };
-
-const colorDot: React.CSSProperties = {
-  width: "14px",
-  height: "14px",
-  borderRadius: "50%",
-  border: "2px solid rgba(255,255,255,0.15)",
-  flexShrink: 0,
-};
-
-const qtyInput: React.CSSProperties = {
-  ...inputStyle,
-  width: "50px",
-  textAlign: "center",
-  fontWeight: 600,
-};
-
-const deleteColorBtn: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  color: "var(--text-muted)",
-  cursor: "pointer",
-  padding: "0.3rem",
-  borderRadius: "var(--radius-sm)",
-  display: "flex",
-  alignItems: "center",
-  transition: "var(--transition)",
-};
-
 const selectStyle: React.CSSProperties = {
-  padding: "0.45rem 0.65rem",
-  background: "var(--bg-elevated)",
-  border: "1px solid var(--border)",
-  borderRadius: "var(--radius-sm)",
-  color: "var(--text-primary)",
-  fontSize: "0.82rem",
-  outline: "none",
+  padding: "6px 8px",
+  background: "rgba(255,255,255,0.05)",
+  border: "1px solid var(--ha-divider)",
+  borderRadius: "var(--ha-btn-radius)",
+  color: "var(--ha-primary-text)",
+  fontSize: 13, outline: "none",
 };
-
-const stockForm: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "0.5rem",
+const formRow: React.CSSProperties = { display: "flex", gap: 6, flexWrap: "wrap" };
+const emptyText: React.CSSProperties = {
+  fontSize: 12, color: "var(--ha-disabled-text)",
+  padding: "8px 0",
 };
-
-const formRow: React.CSSProperties = {
-  display: "flex",
-  gap: "0.4rem",
-  flexWrap: "wrap",
-};
-
-const logBtn: React.CSSProperties = {
-  padding: "0.45rem 1.2rem",
-  background: "var(--accent)",
-  color: "#fff",
-  border: "none",
-  borderRadius: "var(--radius-sm)",
-  fontSize: "0.82rem",
-  fontWeight: 500,
-  cursor: "pointer",
-  transition: "var(--transition)",
-};
-
-const historyList: React.CSSProperties = {
-  maxHeight: "180px",
-  overflow: "auto",
-  display: "flex",
-  flexDirection: "column",
-  gap: "2px",
-};
-
-const historyRow: React.CSSProperties = {
-  display: "flex",
-  gap: "0.5rem",
-  alignItems: "center",
-  padding: "0.4rem 0.5rem",
-  borderRadius: "var(--radius-sm)",
-};
-
 const eventBadge = (type: string): React.CSSProperties => ({
-  fontSize: "0.78rem",
-  fontWeight: 600,
-  minWidth: "38px",
-  textAlign: "center",
-  padding: "0.15rem 0.3rem",
-  borderRadius: "4px",
-  background: type === "purchase" ? "var(--success-subtle)" : type === "used" ? "var(--danger-subtle)" : "var(--warning-subtle)",
-  color: type === "purchase" ? "var(--success)" : type === "used" ? "var(--danger)" : "var(--warning)",
+  fontSize: 12, fontWeight: 600,
+  minWidth: 36, textAlign: "center",
+  padding: "2px 5px", borderRadius: 4,
+  background: type === "purchase" ? "var(--ha-success-bg)" : type === "used" ? "var(--ha-error-bg)" : "var(--ha-warning-bg)",
+  color: type === "purchase" ? "var(--ha-success)" : type === "used" ? "var(--ha-error)" : "var(--ha-warning)",
 });
-
-const emptyState: React.CSSProperties = {
-  padding: "0.8rem",
-  textAlign: "center",
-  fontSize: "0.82rem",
-  color: "var(--text-muted)",
-  background: "var(--bg-tertiary)",
-  borderRadius: "var(--radius-sm)",
+const suggestionsList: React.CSSProperties = {
+  position: "absolute", top: "100%", left: 0, right: 0,
+  background: "#2a2a2c",
+  border: "1px solid var(--ha-divider)",
+  borderRadius: "var(--ha-btn-radius)",
+  marginTop: 3, zIndex: 10,
+  maxHeight: 160, overflowY: "auto",
+  boxShadow: "var(--ha-dialog-shadow)",
 };
-
-const suggestionsDropdown: React.CSSProperties = {
-  position: "absolute",
-  top: "100%",
-  left: 0,
-  right: 0,
-  background: "var(--bg-elevated)",
-  border: "1px solid var(--border)",
-  borderRadius: "var(--radius-sm)",
-  marginTop: "4px",
-  zIndex: 10,
-  maxHeight: "160px",
-  overflow: "auto",
-  boxShadow: "var(--shadow-md)",
-};
-
 const suggestionItem: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "0.5rem",
-  padding: "0.4rem 0.6rem",
-  cursor: "pointer",
-  fontSize: "0.8rem",
-  transition: "background 0.1s",
+  display: "flex", alignItems: "center", gap: 8,
+  padding: "6px 10px", cursor: "pointer", fontSize: 12,
 };

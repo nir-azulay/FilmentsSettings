@@ -13,68 +13,65 @@ export default function Dashboard({ filaments, onUpdate }: Props) {
   const [filter, setFilter] = useState<string>("all");
 
   const types = Array.from(new Set(filaments.map((f) => f.filament_type)));
-
-  const filtered = filter === "all"
-    ? filaments
-    : filaments.filter((f) => f.filament_type === filter);
-
+  const filtered = filter === "all" ? filaments : filaments.filter((f) => f.filament_type === filter);
   const refreshedSelected = selectedFilament
     ? filaments.find((f) => f.id === selectedFilament.id) ?? null
     : null;
 
   return (
     <>
-      {/* Filter pills */}
+      {/* ── HA-style filter chips ── */}
       {types.length > 1 && (
-        <div style={filterRow}>
-          <FilterPill label="All" value="all" active={filter === "all"} onClick={() => setFilter("all")} />
+        <div style={chipRow}>
+          <FilterChip label="All" active={filter === "all"} onClick={() => setFilter("all")} />
           {types.map((t) => (
-            <FilterPill key={t} label={t} value={t} active={filter === t} onClick={() => setFilter(t)} />
+            <FilterChip key={t} label={t} active={filter === t} onClick={() => setFilter(t)} />
           ))}
         </div>
       )}
 
-      <div style={gridStyle}>
+      {/* ── Card grid ── */}
+      <div style={grid}>
         {filtered.map((f) => (
-          <FilamentCard key={f.id} filament={f} onManageStock={() => setSelectedFilament(f)} />
+          <FilamentCard key={f.id} filament={f} onManageStock={() => setSelectedFilament(f)} onUpdate={onUpdate} />
         ))}
         {filtered.length === 0 && (
-          <div style={emptyStyle}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+          <div style={emptyState}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ha-disabled-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
             </svg>
-            <p>No filaments found. Click "Import Profiles" to get started.</p>
+            <p style={{ marginTop: 12, color: "var(--ha-secondary-text)", fontSize: 14 }}>No filaments found</p>
+            <p style={{ color: "var(--ha-disabled-text)", fontSize: 12, marginTop: 4 }}>
+              Click "Sync Profiles" to import your Bambu Studio profiles
+            </p>
           </div>
         )}
       </div>
 
       {refreshedSelected && (
-        <StockManager
-          filament={refreshedSelected}
-          onClose={() => setSelectedFilament(null)}
-          onUpdate={onUpdate}
-        />
+        <StockManager filament={refreshedSelected} onClose={() => setSelectedFilament(null)} onUpdate={onUpdate} />
       )}
     </>
   );
 }
 
-function FilterPill({ label, active, onClick }: { label: string; value: string; active: boolean; onClick: () => void }) {
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       style={{
-        padding: "0.35rem 0.8rem",
-        background: active ? "var(--accent-subtle)" : "var(--bg-tertiary)",
-        color: active ? "var(--accent-hover)" : "var(--text-secondary)",
-        border: active ? "1px solid rgba(99, 102, 241, 0.3)" : "1px solid var(--border-subtle)",
-        borderRadius: "20px",
-        fontSize: "0.78rem",
-        fontWeight: 500,
+        padding: "5px 14px",
+        borderRadius: "var(--ha-chip-radius)",
+        fontSize: 12,
+        fontWeight: active ? 500 : 400,
+        background: active ? "var(--ha-primary-color)" : "rgba(255,255,255,0.06)",
+        color: active ? "#fff" : "var(--ha-secondary-text)",
+        border: "none",
         cursor: "pointer",
-        transition: "var(--transition)",
+        transition: "var(--ha-transition)",
+        letterSpacing: "0.01em",
       }}
     >
       {label}
@@ -82,26 +79,16 @@ function FilterPill({ label, active, onClick }: { label: string; value: string; 
   );
 }
 
-const filterRow: React.CSSProperties = {
-  display: "flex",
-  gap: "0.4rem",
-  marginBottom: "1.2rem",
-  flexWrap: "wrap",
+const chipRow: React.CSSProperties = {
+  display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12,
 };
-
-const gridStyle: React.CSSProperties = {
+const grid: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-  gap: "1rem",
+  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+  gap: 12,
 };
-
-const emptyStyle: React.CSSProperties = {
-  gridColumn: "1 / -1",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "0.8rem",
-  padding: "4rem 2rem",
-  color: "var(--text-muted)",
-  fontSize: "0.9rem",
+const emptyState: React.CSSProperties = {
+  gridColumn: "1/-1",
+  display: "flex", flexDirection: "column", alignItems: "center",
+  padding: "64px 24px", textAlign: "center",
 };

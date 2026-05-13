@@ -8,6 +8,9 @@ class ColorStockBase(BaseModel):
     color_name: str
     color_hex: str = "#808080"
     quantity: int = 0
+    quantity_used: int = 0
+    status: str = "in_stock"  # in_stock | ordered | out_of_stock
+    order_id: Optional[str] = None
 
 
 class ColorStockCreate(ColorStockBase):
@@ -18,11 +21,16 @@ class ColorStockUpdate(BaseModel):
     color_name: Optional[str] = None
     color_hex: Optional[str] = None
     quantity: Optional[int] = None
+    quantity_used: Optional[int] = None
+    status: Optional[str] = None
+    order_id: Optional[str] = None
 
 
 class ColorStockResponse(ColorStockBase):
     id: int
     filament_id: int
+    quantity_used: int = 0
+    order_id: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

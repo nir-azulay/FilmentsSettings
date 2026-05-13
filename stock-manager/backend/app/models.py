@@ -40,6 +40,9 @@ class ColorStock(Base):
     color_name = Column(String, nullable=False)
     color_hex = Column(String, default="#808080")
     quantity = Column(Integer, default=0)
+    status = Column(String, default="in_stock")  # in_stock | ordered | out_of_stock
+    order_id = Column(String, nullable=True)  # e.g. Amazon order number
+    quantity_used = Column(Integer, default=0)  # spools consumed
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     filament = relationship("Filament", back_populates="colors")
