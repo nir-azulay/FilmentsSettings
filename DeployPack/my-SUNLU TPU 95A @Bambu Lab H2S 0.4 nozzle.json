@@ -2,66 +2,17 @@
     "compatible_printers": [
         "Bambu Lab H2S 0.4 nozzle"
     ],
-    "filament_cost": [
-        "58.00"
-    ],
     "filament_density": [
         "1.22"
     ],
-    "filament_deretraction_speed": [
-        "10",
-        "10"
-    ],
-    "filament_end_gcode": [
-        "; filament end gcode \n\n"
-    ],
-    "filament_extruder_variant": [
-        "Direct Drive Standard",
-        "Direct Drive High Flow"
-    ],
-    "filament_flow_ratio": [
-        "1",
-        "1"
-    ],
     "filament_id": "Pe5a1b7c2",
-    "filament_max_volumetric_speed": [
-        "3.6",
-        "12"
-    ],
-    "filament_ramming_volumetric_speed": [
-        "0.9",
-        "3"
-    ],
-    "filament_retraction_length": [
-        "2",
-        "2"
-    ],
-    "filament_retraction_speed": [
-        "10",
-        "10"
-    ],
-    "filament_settings_id": [
-        "my-SUNLU TPU 95A @Bambu Lab H2S 0.4 nozzle"
-    ],
-    "filament_start_gcode": [
-        "; filament start gcode\n{if  (bed_temperature[current_extruder] >35)||(bed_temperature_initial_layer[current_extruder] >35)}M106 P3 S255\n{elsif(bed_temperature[current_extruder] >30)||(bed_temperature_initial_layer[current_extruder] >30)}M106 P3 S180\n{endif}\n\n{if activate_air_filtration[current_extruder] && support_air_filtration}\nM106 P3 S{during_print_exhaust_fan_speed_num[current_extruder]} \n{endif}"
-    ],
-    "filament_type": [
-        "TPU"
-    ],
-    "filament_vendor": [
-        "SUNLU"
-    ],
     "from": "User",
-    "inherits": "Generic TPU @BBL H2S",
+    "inherits": "Bambu TPU 95A @BBL H2S",
+    "instantiation": "true",
     "name": "my-SUNLU TPU 95A @Bambu Lab H2S 0.4 nozzle",
-    "nozzle_temperature": [
-        "230",
-        "230"
+    "temperature_vitrification": [
+        "30"
     ],
-    "nozzle_temperature_initial_layer": [
-        "230",
-        "230"
-    ],
+    "type": "filament",
     "version": "2.6.0.2"
 }

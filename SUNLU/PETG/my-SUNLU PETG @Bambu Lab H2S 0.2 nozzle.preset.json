@@ -1,17 +1,6 @@
 {
-    "filament_extruder_variant": [
-        "Direct Drive Standard",
-        "Direct Drive High Flow"
-    ],
-    "filament_flow_ratio": [
-        "nil",
-        "nil"
-    ],
     "filament_settings_id": [
         "my-SUNLU PETG @Bambu Lab H2S 0.2 nozzle"
-    ],
-    "filament_type": [
-        "PETG"
     ],
     "from": "User",
     "inherits": "my-SUNLU PETG @Bambu Lab H2S 0.2 nozzle",
