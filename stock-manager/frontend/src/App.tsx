@@ -51,13 +51,14 @@ export default function App() {
     );
   }
 
+
   return (
     <div className="ha-app-shell">
       {/* ── HA top toolbar ── */}
       <header className="ha-toolbar">
         {/* HA hamburger / logo zone */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--ha-primary-color)">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
           <span style={toolbarTitle}>Filament Stock</span>
@@ -131,24 +132,25 @@ const loaderWrap: React.CSSProperties = {
 };
 const loaderRing: React.CSSProperties = {
   width: 32, height: 32,
-  border: "3px solid rgba(3,169,244,0.15)",
+  border: "3px solid rgba(3,169,244,0.2)",
   borderTopColor: "var(--ha-primary-color)",
   borderRadius: "50%",
   animation: "spin 0.9s linear infinite",
 };
 const toolbarTitle: React.CSSProperties = {
-  fontSize: 18, fontWeight: 400, color: "var(--ha-primary-text)", letterSpacing: 0,
+  fontSize: 18, fontWeight: 400, color: "#ffffff", letterSpacing: 0,
 };
 const syncBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,
   padding: "8px 16px",
-  background: "var(--ha-primary-color)",
+  background: "rgba(255,255,255,0.15)",
   color: "#fff",
-  border: "none",
+  border: "1px solid rgba(255,255,255,0.3)",
   borderRadius: "var(--ha-btn-radius)",
   fontSize: 13, fontWeight: 500,
   cursor: "pointer",
   letterSpacing: "0.01em",
+  backdropFilter: "blur(4px)",
 };
 const btnSpinner: React.CSSProperties = {
   width: 12, height: 12,

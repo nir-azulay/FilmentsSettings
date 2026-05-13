@@ -239,7 +239,7 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   return (
     <div
       className="ha-entity-row"
-      style={{ ...colorEntityRow, flexWrap: "wrap", background: hovered ? "rgba(255,255,255,0.03)" : "transparent", transition: "background 0.15s" }}
+      style={{ ...colorEntityRow, flexWrap: "wrap", background: hovered ? "rgba(0,0,0,0.025)" : "transparent", transition: "background 0.15s" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -268,7 +268,7 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
 
             {/* used progress bar — always rendered */}
             <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "flex-end" }}>
-              <div style={{ width: 64, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+              <div style={{ width: 64, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
                 <div style={{
                   height: "100%", borderRadius: 2,
                   width: `${qty > 0 ? (qtyUsed / qty) * 100 : 0}%`,
@@ -484,7 +484,7 @@ function SpecBadge({ label, color }: { label: string; color?: string }) {
       display: "inline-flex", alignItems: "center",
       padding: "2px 8px", borderRadius: 12,
       fontSize: 11, fontWeight: 500,
-      background: color ? `${color}18` : "rgba(255,255,255,0.06)",
+      background: color ? `${color}15` : "rgba(0,0,0,0.04)",
       color: color ?? "var(--ha-secondary-text)",
       border: `1px solid ${color ? `${color}30` : "transparent"}`,
     }}>
@@ -510,7 +510,7 @@ const cardSubtitle: React.CSSProperties = {
 const stockChip = (low: boolean): React.CSSProperties => ({
   display: "flex", flexDirection: "column", alignItems: "center",
   padding: "5px 10px", borderRadius: 8,
-  background: low ? "var(--ha-error-bg)" : "rgba(255,255,255,0.05)",
+  background: low ? "var(--ha-error-bg)" : "rgba(0,0,0,0.04)",
   color: low ? "var(--ha-error)" : "var(--ha-primary-text)",
   minWidth: 48, flexShrink: 0,
 });
@@ -544,13 +544,13 @@ const colorEntityRow: React.CSSProperties = {
 };
 const dot: React.CSSProperties = {
   width: 12, height: 12, borderRadius: "50%",
-  border: "1px solid rgba(255,255,255,0.15)",
+  border: "1px solid rgba(0,0,0,0.15)",
   flexShrink: 0, marginRight: 10,
 };
 const stepBtn: React.CSSProperties = {
   width: 20, height: 20,
   display: "flex", alignItems: "center", justifyContent: "center",
-  background: "rgba(255,255,255,0.07)", border: "none",
+  background: "rgba(0,0,0,0.06)", border: "none",
   borderRadius: 4, color: "var(--ha-primary-text)",
   fontSize: 14, cursor: "pointer", lineHeight: 1,
 };
@@ -572,11 +572,11 @@ const addForm: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,
   padding: "6px 16px 8px",
   borderTop: "1px solid var(--ha-divider)",
-  background: "rgba(255,255,255,0.02)",
+  background: "rgba(0,0,0,0.01)",
 };
 const addInput: React.CSSProperties = {
   padding: "5px 8px", fontSize: 12,
-  background: "rgba(255,255,255,0.05)",
+  background: "#fff",
   border: "1px solid var(--ha-divider)",
   borderRadius: 4, color: "var(--ha-primary-text)", outline: "none",
 };
@@ -626,8 +626,8 @@ const undoBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center",
   padding: "5px 7px", borderRadius: 6,
   fontSize: 12,
-  background: "rgba(255,255,255,0.06)", color: "var(--ha-secondary-text)",
-  border: "1px solid rgba(255,255,255,0.1)",
+  background: "rgba(0,0,0,0.04)", color: "var(--ha-secondary-text)",
+  border: "1px solid rgba(0,0,0,0.08)",
   cursor: "pointer",
 };
 const reorderBtn: React.CSSProperties = {
@@ -640,9 +640,9 @@ const reorderBtn: React.CSSProperties = {
 };
 const sugBox: React.CSSProperties = {
   position: "absolute", top: "100%", left: 0, right: 0,
-  background: "#2a2a2c", border: "1px solid var(--ha-divider)",
+  background: "#fff", border: "1px solid var(--ha-divider)",
   borderRadius: 4, marginTop: 2, zIndex: 10,
-  maxHeight: 150, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+  maxHeight: 150, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
 };
 const sugItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 7,

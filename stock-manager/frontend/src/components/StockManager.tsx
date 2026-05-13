@@ -120,7 +120,7 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
                   <div ref={suggestionsRef} style={suggestionsList}>
                     {suggestions.map((s) => (
                       <div key={s.name} style={suggestionItem} onMouseDown={() => handleSuggestionClick(s.name, s.hex)}>
-                        <div style={{ width: 11, height: 11, borderRadius: 2, background: s.hex, border: "1px solid rgba(255,255,255,0.15)", flexShrink: 0 }} />
+                        <div style={{ width: 11, height: 11, borderRadius: 2, background: s.hex, border: "1px solid rgba(0,0,0,0.12)", flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{s.name}</span>
                         <span style={{ opacity: 0.4, fontSize: 11, fontFamily: "monospace" }}>{s.hex}</span>
                       </div>
@@ -140,7 +140,7 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
             <div style={colorList}>
               {filament.colors.map((c) => (
                 <div key={c.id} className="ha-entity-row">
-                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.color_hex, border: "1px solid rgba(255,255,255,0.15)", flexShrink: 0, marginRight: 10 }} />
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.color_hex, border: "1px solid rgba(0,0,0,0.12)", flexShrink: 0, marginRight: 10 }} />
                   <span style={{ flex: 1, fontSize: 13 }}>{c.color_name}</span>
                   <StatusSelect colorId={c.id} status={(c.status ?? "in_stock") as ColorStatus} onUpdate={onUpdate} />
                   <input type="number" min={0} value={c.quantity}
@@ -305,7 +305,7 @@ const chipActionBtn: React.CSSProperties = {
 const addColorForm: React.CSSProperties = {
   display: "flex", gap: 6, alignItems: "center",
   marginTop: 8, padding: "8px 10px",
-  background: "rgba(255,255,255,0.03)",
+  background: "rgba(0,0,0,0.02)",
   borderRadius: "var(--ha-btn-radius)",
   border: "1px solid var(--ha-divider)",
 };
@@ -315,7 +315,7 @@ const colorPicker: React.CSSProperties = {
 };
 const inputStyle: React.CSSProperties = {
   padding: "6px 8px",
-  background: "rgba(255,255,255,0.05)",
+  background: "#fff",
   border: "1px solid var(--ha-divider)",
   borderRadius: "var(--ha-btn-radius)",
   color: "var(--ha-primary-text)",
@@ -343,7 +343,7 @@ const deleteBtn: React.CSSProperties = {
 };
 const selectStyle: React.CSSProperties = {
   padding: "6px 8px",
-  background: "rgba(255,255,255,0.05)",
+  background: "#fff",
   border: "1px solid var(--ha-divider)",
   borderRadius: "var(--ha-btn-radius)",
   color: "var(--ha-primary-text)",
@@ -363,12 +363,12 @@ const eventBadge = (type: string): React.CSSProperties => ({
 });
 const suggestionsList: React.CSSProperties = {
   position: "absolute", top: "100%", left: 0, right: 0,
-  background: "#2a2a2c",
+  background: "#fff",
   border: "1px solid var(--ha-divider)",
   borderRadius: "var(--ha-btn-radius)",
   marginTop: 3, zIndex: 10,
   maxHeight: 160, overflowY: "auto",
-  boxShadow: "var(--ha-dialog-shadow)",
+  boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
 };
 const suggestionItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 8,
