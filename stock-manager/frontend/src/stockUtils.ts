@@ -50,14 +50,34 @@ export function isLowStockMonitoredColorName(colorName: string): boolean {
   return key === "black" || key === "white";
 }
 
-/** Low-stock warning: PLA/PETG/ASA only, black/white colors only. */
-export function filamentHasLowStock(filament: Filament): boolean {
+export function staplePoolKey(filamentType: string, colorName: string): string {
+  const color = colorName.trim().toLowerCase().replace(/\s+/g, " ");
+  return `${filamentType}|${color}`;
+}
+
+/** Black/white totals per PLA/PETG/ASA across all brands. */
+export function buildStaplePools(filaments: Filament[]): Map<string, number> {
+  const pools = new Map<string, number>();
+  for (const f of filaments) {
+    if (!isLowStockMonitoredFilament(f)) continue;
+    for (const c of f.colors) {
+      if (!isLowStockMonitoredColorName(c.color_name) || !isInStockColor(c)) continue;
+      const key = staplePoolKey(f.filament_type, c.color_name);
+      pools.set(key, (pools.get(key) ?? 0) + availableQty(c));
+    }
+  }
+  return pools;
+}
+
+/** Low-stock warning only if no other brand covers the same material type + color. */
+export function filamentHasLowStock(filament: Filament, staplePools: Map<string, number>): boolean {
   if (!isLowStockMonitoredFilament(filament)) return false;
   const threshold = filament.low_stock_threshold ?? 1;
-  return filament.colors.some(
-    (c) =>
-      isLowStockMonitoredColorName(c.color_name) &&
-      isInStockColor(c) &&
-      availableQty(c) <= threshold,
-  );
+  return filament.colors.some((c) => {
+    if (!isLowStockMonitoredColorName(c.color_name) || !isInStockColor(c)) return false;
+    if (availableQty(c) > threshold) return false;
+    const key = staplePoolKey(filament.filament_type, c.color_name);
+    if ((staplePools.get(key) ?? 0) > threshold) return false;
+    return true;
+  });
 }
