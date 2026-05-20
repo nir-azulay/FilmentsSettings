@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..color_merge import find_color_by_name
+from ..low_stock import iter_low_stock_colors
 from ..database import get_db
 from ..models import ColorStock, Filament
 from ..schemas import (
@@ -67,7 +69,23 @@ def add_color(filament_id: int, payload: ColorStockCreate, db: Session = Depends
     filament = db.query(Filament).filter(Filament.id == filament_id).first()
     if not filament:
         raise HTTPException(status_code=404, detail="Filament not found")
-    color = ColorStock(filament_id=filament_id, **payload.model_dump())
+
+    existing = find_color_by_name(db, filament_id, payload.color_name)
+    if existing:
+        data = payload.model_dump()
+        add_qty = data.get("quantity") or 0
+        existing.quantity = (existing.quantity or 0) + add_qty
+        if data.get("color_hex"):
+            existing.color_hex = data["color_hex"]
+        if existing.status != "in_stock" and data.get("status") == "in_stock":
+            existing.status = "in_stock"
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    data = payload.model_dump()
+    data["color_name"] = " ".join(payload.color_name.strip().split())
+    color = ColorStock(filament_id=filament_id, **data)
     db.add(color)
     db.commit()
     db.refresh(color)
@@ -102,14 +120,15 @@ def get_alerts(db: Session = Depends(get_db)):
     filaments = db.query(Filament).all()
     alerts = []
     for f in filaments:
-        stock = f.current_stock
-        if stock <= f.low_stock_threshold:
+        for color, avail, threshold in iter_low_stock_colors(f):
             alerts.append(AlertResponse(
                 filament_id=f.id,
+                color_stock_id=color.id,
                 brand=f.brand,
                 material=f.material,
-                current_stock=stock,
-                threshold=f.low_stock_threshold,
+                color_name=color.color_name,
+                current_stock=avail,
+                threshold=threshold,
             ))
     return alerts
 

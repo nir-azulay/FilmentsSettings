@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ColorStatus, ColorStock, Filament, addColor, deleteColor, updateColor } from "../api";
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
+import { filamentHasLowStock, filamentInStockQty, filamentOrderedQty } from "../stockUtils";
 
 interface Props {
   filament: Filament;
@@ -63,9 +64,9 @@ function getMaterialColor(type: string): string {
 }
 
 export default function FilamentCard({ filament, onManageStock, onUpdate }: Props) {
-  const inStockQty  = filament.colors.filter(c => c.status === "in_stock").reduce((s, c) => s + (c.quantity - (c.quantity_used ?? 0)), 0);
-  const orderedQty  = filament.colors.filter(c => c.status === "ordered").reduce((s, c) => s + c.quantity, 0);
-  const isLow       = inStockQty <= filament.low_stock_threshold;
+  const inStockQty  = filamentInStockQty(filament.colors);
+  const orderedQty  = filamentOrderedQty(filament.colors);
+  const isLow       = filamentHasLowStock(filament);
   const matColor    = getMaterialColor(filament.filament_type);
 
   return (
@@ -162,8 +163,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   const [qty, setQty] = useState(color.quantity);
   const [qtyUsed, setQtyUsed] = useState(color.quantity_used ?? 0);
   const [status, setStatus] = useState<ColorStatus>(color.status ?? "in_stock");
-  const [orderId, setOrderId] = useState(color.order_id ?? "");
-  const [editingOrderId, setEditingOrderId] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const remaining = qty - qtyUsed;
@@ -221,12 +220,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
     await onUpdate();
   };
 
-  const handleOrderIdSave = async () => {
-    setEditingOrderId(false);
-    await updateColor(color.id, { order_id: orderId || null } as never);
-    await onUpdate();
-  };
-
   const handleDelete = async () => {
     if (!confirm(`Remove "${color.color_name}"?`)) return;
     await deleteColor(color.id);
@@ -234,7 +227,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   };
 
   const cfg = STATUS_CFG[status];
-  const amazonUrl = orderId ? `https://www.amazon.com/your-orders/order-details?orderID=${orderId}` : null;
 
   return (
     <div
@@ -346,42 +338,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
           </div>
         )}
       </div>
-
-      {/* ── Order ID sub-row (ordered only) ── */}
-      {status === "ordered" && (
-        <div style={{ display: "flex", alignItems: "center", gap: 5, paddingLeft: 22, paddingBottom: 6, width: "100%" }}>
-          {editingOrderId ? (
-            <>
-              <input
-                autoFocus
-                value={orderId}
-                onChange={(e) => setOrderId(e.target.value)}
-                onBlur={handleOrderIdSave}
-                onKeyDown={(e) => { if (e.key === "Enter") handleOrderIdSave(); if (e.key === "Escape") setEditingOrderId(false); }}
-                placeholder="Order # e.g. 113-1234567-8901234"
-                style={{ ...addInput, flex: 1, fontSize: 10, padding: "2px 6px" }}
-              />
-              <button onMouseDown={handleOrderIdSave} style={{ ...addSubmitBtn, fontSize: 10, padding: "2px 7px" }}>Save</button>
-            </>
-          ) : orderId ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <span style={{ fontSize: 9, color: "var(--ha-secondary-text)" }}>Order:</span>
-              {amazonUrl ? (
-                <a href={amazonUrl} target="_blank" rel="noopener" style={{ fontSize: 10, color: "var(--ha-primary-color)", fontFamily: "monospace", textDecoration: "none" }}>
-                  {orderId}
-                </a>
-              ) : (
-                <span style={{ fontSize: 10, color: "var(--ha-secondary-text)", fontFamily: "monospace" }}>{orderId}</span>
-              )}
-              <button onClick={() => setEditingOrderId(true)} style={{ background: "none", border: "none", color: "var(--ha-secondary-text)", cursor: "pointer", fontSize: 11, padding: "0 2px", opacity: hovered ? 1 : 0, transition: "opacity 0.15s" }}>✎</button>
-            </div>
-          ) : (
-            <button onClick={() => setEditingOrderId(true)} style={{ background: "none", border: "none", color: "var(--ha-secondary-text)", cursor: "pointer", fontSize: 10, padding: 0, display: "flex", alignItems: "center", gap: 3, opacity: hovered ? 0.7 : 0.3, transition: "opacity 0.15s" }}>
-              + Add order #
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

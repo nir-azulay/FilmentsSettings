@@ -14,8 +14,8 @@ export default function AlertBanner({ alerts }: Props) {
         <p style={title}>Low Stock Alert</p>
         <p style={body}>
           {alerts.map((a, i) => (
-            <span key={a.filament_id}>
-              <strong style={{ color: "var(--ha-primary-text)" }}>{a.brand} {a.material}</strong>
+            <span key={`${a.filament_id}-${a.color_stock_id}`}>
+              <strong style={{ color: "var(--ha-primary-text)" }}>{a.brand} {a.material} {a.color_name}</strong>
               <span style={{ color: "var(--ha-secondary-text)", marginLeft: 3 }}>({a.current_stock} left)</span>
               {i < alerts.length - 1 && <span style={{ margin: "0 5px", color: "var(--ha-disabled-text)" }}>·</span>}
             </span>

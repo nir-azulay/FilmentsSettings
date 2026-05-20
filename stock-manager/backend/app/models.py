@@ -29,7 +29,14 @@ class Filament(Base):
 
     @property
     def current_stock(self) -> int:
-        return sum(c.quantity for c in self.colors)
+        """Available spools (in_stock colors, quantity minus opened/used)."""
+        total = 0
+        for c in self.colors:
+            status = c.status or "in_stock"
+            if status != "in_stock":
+                continue
+            total += max(0, (c.quantity or 0) - (c.quantity_used or 0))
+        return total
 
 
 class ColorStock(Base):

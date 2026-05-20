@@ -29,7 +29,14 @@ class Filament(Base):
 
     @property
     def current_stock(self) -> int:
-        return sum(c.quantity for c in self.colors)
+        """Available spools (in_stock colors, quantity minus opened/used)."""
+        total = 0
+        for c in self.colors:
+            status = c.status or "in_stock"
+            if status != "in_stock":
+                continue
+            total += max(0, (c.quantity or 0) - (c.quantity_used or 0))
+        return total
 
 
 class ColorStock(Base):
@@ -40,6 +47,9 @@ class ColorStock(Base):
     color_name = Column(String, nullable=False)
     color_hex = Column(String, default="#808080")
     quantity = Column(Integer, default=0)
+    status = Column(String, default="in_stock")  # in_stock | ordered | out_of_stock
+    order_id = Column(String, nullable=True)
+    quantity_used = Column(Integer, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     filament = relationship("Filament", back_populates="colors")

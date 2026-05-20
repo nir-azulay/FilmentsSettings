@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Alert, Filament, fetchAlerts, fetchFilaments, importProfiles } from "./api";
 import AlertBanner from "./components/AlertBanner";
 import Dashboard from "./components/Dashboard";
+import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
 
 export default function App() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
@@ -35,10 +36,9 @@ export default function App() {
     }
   };
 
-  const totalInStock  = filaments.reduce((sum, f) => sum + f.colors.filter(c => c.status === "in_stock").reduce((s, c) => s + (c.quantity - (c.quantity_used ?? 0)), 0), 0);
-  const totalOrdered  = filaments.reduce((sum, f) => sum + f.colors.filter(c => c.status === "ordered").reduce((s, c) => s + c.quantity, 0), 0);
+  const totalInStock  = totalAvailableSpools(filaments);
+  const totalOrdered  = totalOnOrderSpools(filaments);
   const brandsSet     = new Set(filaments.map((f) => f.brand));
-  const typesSet      = new Set(filaments.map((f) => f.material));
 
   if (loading) {
     return (
@@ -99,8 +99,8 @@ export default function App() {
       <main style={mainWrap}>
         {/* ── Summary row — HA glance-card style ── */}
         <div style={summaryRow}>
-          <SummaryCard value={typesSet.size}    label="Filament Types" color="var(--ha-primary-color)" />
-          <SummaryCard value={totalInStock}     label="Spools In Stock" color="var(--ha-success)"   icon="✓" />
+          <SummaryCard value={filaments.length} label="Filaments"       color="var(--ha-primary-color)" />
+          <SummaryCard value={totalInStock}     label="Spools Available" color="var(--ha-success)"   icon="✓" />
           <SummaryCard value={totalOrdered}     label="On Order"        color="var(--ha-warning)"   icon="⏳" />
           <SummaryCard value={brandsSet.size}   label="Brands"          color="#7a7a7a"              />
         </div>

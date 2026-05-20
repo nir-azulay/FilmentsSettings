@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ColorStatus, ColorStock, Filament, StockEntry, addColor, addStockEvent, deleteColor, fetchHistory, updateColor } from "../api";
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
+import { filamentAvailableSpools } from "../stockUtils";
 
 interface Props {
   filament: Filament;
@@ -85,7 +86,7 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
             )}
             <div>
               <h2 style={dialogTitle}>{filament.brand} {filament.material}</h2>
-              <p style={dialogSubtitle}>{filament.filament_type} · {filament.current_stock} spools in stock</p>
+              <p style={dialogSubtitle}>{filament.filament_type} · {filamentAvailableSpools(filament)} spools available</p>
             </div>
           </div>
           <button onClick={onClose} style={closeBtn} aria-label="Close">

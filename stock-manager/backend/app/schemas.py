@@ -100,7 +100,9 @@ class StockEntryResponse(StockEntryBase):
 
 class AlertResponse(BaseModel):
     filament_id: int
+    color_stock_id: int
     brand: str
     material: str
+    color_name: str
     current_stock: int
     threshold: int

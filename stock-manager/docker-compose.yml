@@ -2,7 +2,7 @@ services:
   backend:
     build: ./backend
     volumes:
-      - db-data:/app/data
+      - ./backend/data:/app/data
       - ../:/profiles:ro
     environment:
       - PROFILES_ROOT=/profiles
@@ -13,6 +13,3 @@ services:
       - "3000:80"
     depends_on:
       - backend
-
-volumes:
-  db-data:

@@ -9,7 +9,8 @@ export interface ColorStock {
   color_hex: string;
   quantity: number;
   quantity_used: number;
-  status: ColorStatus;
+  /** Omitted on older deployed APIs; UI treats missing as in_stock */
+  status?: ColorStatus;
   order_id: string | null;
   created_at: string;
 }
@@ -45,8 +46,10 @@ export interface StockEntry {
 
 export interface Alert {
   filament_id: number;
+  color_stock_id: number;
   brand: string;
   material: string;
+  color_name: string;
   current_stock: number;
   threshold: number;
 }
