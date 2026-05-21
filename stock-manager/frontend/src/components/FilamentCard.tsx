@@ -6,6 +6,7 @@ import { filamentHasLowStock, filamentInStockQty, filamentOrderedQty } from "../
 interface Props {
   filament: Filament;
   staplePools: Map<string, number>;
+  ignoredStaples: Set<string>;
   onManageStock: () => void;
   onUpdate: () => Promise<void>;
 }
@@ -64,10 +65,10 @@ function getMaterialColor(type: string): string {
   return map[type] ?? "#607d8b";
 }
 
-export default function FilamentCard({ filament, staplePools, onManageStock, onUpdate }: Props) {
+export default function FilamentCard({ filament, staplePools, ignoredStaples, onManageStock, onUpdate }: Props) {
   const inStockQty  = filamentInStockQty(filament.colors);
   const orderedQty  = filamentOrderedQty(filament.colors);
-  const isLow       = filamentHasLowStock(filament, staplePools);
+  const isLow       = filamentHasLowStock(filament, staplePools, ignoredStaples);
   const matColor    = getMaterialColor(filament.filament_type);
 
   return (

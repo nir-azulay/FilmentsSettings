@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..color_merge import find_color_by_name
-from ..low_stock import build_staple_pools, iter_low_stock_colors
+from ..low_stock import build_staple_pools, iter_low_stock_colors, load_ignored_staple_keys
+from ..models import StapleAlertIgnore
 from ..database import get_db
 from ..models import ColorStock, Filament
 from ..schemas import (
@@ -119,14 +120,16 @@ def delete_color(color_id: int, db: Session = Depends(get_db)):
 def get_alerts(db: Session = Depends(get_db)):
     filaments = db.query(Filament).all()
     pools = build_staple_pools(filaments)
+    ignored = load_ignored_staple_keys(db.query(StapleAlertIgnore).all())
     alerts = []
     for f in filaments:
-        for color, avail, threshold in iter_low_stock_colors(f, pools):
+        for color, avail, threshold in iter_low_stock_colors(f, pools, ignored):
             alerts.append(AlertResponse(
                 filament_id=f.id,
                 color_stock_id=color.id,
                 brand=f.brand,
                 material=f.material,
+                filament_type=f.filament_type,
                 color_name=color.color_name,
                 current_stock=avail,
                 threshold=threshold,

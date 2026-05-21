@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Filament, fetchAlerts, fetchFilaments, importProfiles } from "./api";
+import {
+  Alert,
+  Filament,
+  StapleAlertIgnore,
+  deleteAlertIgnore,
+  fetchAlertIgnores,
+  fetchAlerts,
+  fetchFilaments,
+  ignoreStapleAlert,
+  importProfiles,
+} from "./api";
 import AlertBanner from "./components/AlertBanner";
 import Dashboard from "./components/Dashboard";
 import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
@@ -7,14 +17,16 @@ import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
 export default function App() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alertIgnores, setAlertIgnores] = useState<StapleAlertIgnore[]>([]);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   const reload = useCallback(async () => {
-    const [f, a] = await Promise.all([fetchFilaments(), fetchAlerts()]);
+    const [f, a, ign] = await Promise.all([fetchFilaments(), fetchAlerts(), fetchAlertIgnores()]);
     setFilaments(f);
     setAlerts(a);
+    setAlertIgnores(ign);
   }, []);
 
   useEffect(() => {
@@ -105,9 +117,22 @@ export default function App() {
           <SummaryCard value={brandsSet.size}   label="Brands"          color="#7a7a7a"              />
         </div>
 
-        {alerts.length > 0 && <AlertBanner alerts={alerts} />}
+        {(alerts.length > 0 || alertIgnores.length > 0) && (
+          <AlertBanner
+            alerts={alerts}
+            ignores={alertIgnores}
+            onIgnore={async (filamentType, colorName) => {
+              await ignoreStapleAlert(filamentType, colorName);
+              await reload();
+            }}
+            onUnignore={async (id) => {
+              await deleteAlertIgnore(id);
+              await reload();
+            }}
+          />
+        )}
 
-        <Dashboard filaments={filaments} onUpdate={reload} />
+        <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
       </main>
     </div>
   );

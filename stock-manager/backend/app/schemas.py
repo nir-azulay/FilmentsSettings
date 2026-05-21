@@ -103,6 +103,22 @@ class AlertResponse(BaseModel):
     color_stock_id: int
     brand: str
     material: str
+    filament_type: str
     color_name: str
     current_stock: int
     threshold: int
+
+
+class StapleAlertIgnoreCreate(BaseModel):
+    filament_type: str
+    color_name: str
+
+
+class StapleAlertIgnoreResponse(BaseModel):
+    id: int
+    filament_type: str
+    color_name: str
+    color_key: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

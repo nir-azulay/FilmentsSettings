@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -48,8 +48,8 @@ class ColorStock(Base):
     color_hex = Column(String, default="#808080")
     quantity = Column(Integer, default=0)
     status = Column(String, default="in_stock")  # in_stock | ordered | out_of_stock
-    order_id = Column(String, nullable=True)
-    quantity_used = Column(Integer, default=0)
+    order_id = Column(String, nullable=True)  # e.g. Amazon order number
+    quantity_used = Column(Integer, default=0)  # spools consumed
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     filament = relationship("Filament", back_populates="colors")
@@ -68,3 +68,15 @@ class StockEntry(Base):
 
     filament = relationship("Filament", back_populates="stock_entries")
     color_stock = relationship("ColorStock")
+
+
+class StapleAlertIgnore(Base):
+    """User-dismissed low-stock staple (material type + black/white), all brands."""
+
+    __tablename__ = "staple_alert_ignores"
+    __table_args__ = (UniqueConstraint("filament_type", "color_key", name="uq_staple_ignore"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    filament_type = Column(String, nullable=False)  # PLA, PETG, ASA
+    color_key = Column(String, nullable=False)  # black, white (normalized)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

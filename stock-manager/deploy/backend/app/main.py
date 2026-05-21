@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
-from .routers import filaments, import_profiles, maintenance, stock
+from .routers import alert_ignores, filaments, import_profiles, maintenance, stock
 
 os.makedirs("data", exist_ok=True)
 Base.metadata.create_all(bind=engine)
@@ -23,6 +23,7 @@ app.include_router(filaments.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")
 app.include_router(import_profiles.router, prefix="/api")
 app.include_router(maintenance.router, prefix="/api")
+app.include_router(alert_ignores.router, prefix="/api")
 
 
 @app.get("/api/health")

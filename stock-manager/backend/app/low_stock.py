@@ -42,7 +42,15 @@ def build_staple_pools(filaments: list[Filament]) -> dict[tuple[str, str], int]:
     return dict(pools)
 
 
-def iter_low_stock_colors(filament: Filament, pools: dict[tuple[str, str], int] | None = None):
+def load_ignored_staple_keys(ignored_rows: list) -> set[tuple[str, str]]:
+    return {(row.filament_type.strip().upper(), row.color_key) for row in ignored_rows}
+
+
+def iter_low_stock_colors(
+    filament: Filament,
+    pools: dict[tuple[str, str], int] | None = None,
+    ignored: set[tuple[str, str]] | None = None,
+):
     if not is_monitored_filament_type(filament.filament_type):
         return
     threshold = filament.low_stock_threshold or 1
@@ -53,6 +61,8 @@ def iter_low_stock_colors(filament: Filament, pools: dict[tuple[str, str], int] 
         if avail > threshold:
             continue
         key = staple_pool_key(filament.filament_type, color.color_name)
+        if ignored and key in ignored:
+            continue
         if pools is not None and pools.get(key, 0) > threshold:
             # Same material + color stocked under another brand (e.g. SUNLU PETG vs Inslogic PETG Pro)
             continue

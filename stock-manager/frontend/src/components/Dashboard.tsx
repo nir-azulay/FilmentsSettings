@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { useMemo } from "react";
-import { Filament } from "../api";
-import { buildStaplePools } from "../stockUtils";
+import { Filament, StapleAlertIgnore } from "../api";
+import { buildIgnoredStapleKeys, buildStaplePools } from "../stockUtils";
 import FilamentCard from "./FilamentCard";
 import StockManager from "./StockManager";
 
 interface Props {
   filaments: Filament[];
+  alertIgnores: StapleAlertIgnore[];
   onUpdate: () => Promise<void>;
 }
 
-export default function Dashboard({ filaments, onUpdate }: Props) {
+export default function Dashboard({ filaments, alertIgnores, onUpdate }: Props) {
   const [selectedFilament, setSelectedFilament] = useState<Filament | null>(null);
   const [filter, setFilter] = useState<string>("all");
 
   const types = Array.from(new Set(filaments.map((f) => f.filament_type)));
   const staplePools = useMemo(() => buildStaplePools(filaments), [filaments]);
+  const ignoredStaples = useMemo(() => buildIgnoredStapleKeys(alertIgnores), [alertIgnores]);
   const filtered = filter === "all" ? filaments : filaments.filter((f) => f.filament_type === filter);
   const refreshedSelected = selectedFilament
     ? filaments.find((f) => f.id === selectedFilament.id) ?? null
@@ -36,7 +38,7 @@ export default function Dashboard({ filaments, onUpdate }: Props) {
       {/* ── Card grid ── */}
       <div style={grid}>
         {filtered.map((f) => (
-          <FilamentCard key={f.id} filament={f} staplePools={staplePools} onManageStock={() => setSelectedFilament(f)} onUpdate={onUpdate} />
+          <FilamentCard key={f.id} filament={f} staplePools={staplePools} ignoredStaples={ignoredStaples} onManageStock={() => setSelectedFilament(f)} onUpdate={onUpdate} />
         ))}
         {filtered.length === 0 && (
           <div style={emptyState}>

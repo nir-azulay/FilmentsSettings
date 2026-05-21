@@ -69,14 +69,27 @@ export function buildStaplePools(filaments: Filament[]): Map<string, number> {
   return pools;
 }
 
+export function buildIgnoredStapleKeys(ignores: { filament_type: string; color_key: string }[]): Set<string> {
+  const s = new Set<string>();
+  for (const row of ignores) {
+    s.add(staplePoolKey(row.filament_type, row.color_key));
+  }
+  return s;
+}
+
 /** Low-stock warning only if no other brand covers the same material type + color. */
-export function filamentHasLowStock(filament: Filament, staplePools: Map<string, number>): boolean {
+export function filamentHasLowStock(
+  filament: Filament,
+  staplePools: Map<string, number>,
+  ignoredStaples: Set<string> = new Set(),
+): boolean {
   if (!isLowStockMonitoredFilament(filament)) return false;
   const threshold = filament.low_stock_threshold ?? 1;
   return filament.colors.some((c) => {
     if (!isLowStockMonitoredColorName(c.color_name) || !isInStockColor(c)) return false;
     if (availableQty(c) > threshold) return false;
     const key = staplePoolKey(filament.filament_type, c.color_name);
+    if (ignoredStaples.has(key)) return false;
     if ((staplePools.get(key) ?? 0) > threshold) return false;
     return true;
   });

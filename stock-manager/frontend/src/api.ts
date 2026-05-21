@@ -49,9 +49,18 @@ export interface Alert {
   color_stock_id: number;
   brand: string;
   material: string;
+  filament_type: string;
   color_name: string;
   current_stock: number;
   threshold: number;
+}
+
+export interface StapleAlertIgnore {
+  id: number;
+  filament_type: string;
+  color_name: string;
+  color_key: string;
+  created_at: string;
 }
 
 export async function fetchFilaments(): Promise<Filament[]> {
@@ -123,6 +132,24 @@ export async function addStockEvent(
 export async function fetchAlerts(): Promise<Alert[]> {
   const res = await fetch(`${BASE}/alerts`);
   return res.json();
+}
+
+export async function fetchAlertIgnores(): Promise<StapleAlertIgnore[]> {
+  const res = await fetch(`${BASE}/alert-ignores`);
+  return res.json();
+}
+
+export async function ignoreStapleAlert(filamentType: string, colorName: string): Promise<StapleAlertIgnore> {
+  const res = await fetch(`${BASE}/alert-ignores`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filament_type: filamentType, color_name: colorName }),
+  });
+  return res.json();
+}
+
+export async function deleteAlertIgnore(ignoreId: number): Promise<void> {
+  await fetch(`${BASE}/alert-ignores/${ignoreId}`, { method: "DELETE" });
 }
 
 export async function importProfiles(): Promise<{ imported: number; skipped: number }> {
