@@ -8,6 +8,7 @@ interface Props {
   ignoredStaples: Set<string>;
   onManageStock: (f: Filament) => void;
   onUpdate: () => Promise<void>;
+  onRequestDeleteFilament: (f: Filament) => void;
 }
 
 export default function MobileFilamentPager({
@@ -16,6 +17,7 @@ export default function MobileFilamentPager({
   ignoredStaples,
   onManageStock,
   onUpdate,
+  onRequestDeleteFilament,
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
@@ -69,6 +71,7 @@ export default function MobileFilamentPager({
               ignoredStaples={ignoredStaples}
               onManageStock={() => onManageStock(f)}
               onUpdate={onUpdate}
+              onRequestDeleteFilament={() => onRequestDeleteFilament(f)}
             />
           </div>
         ))}

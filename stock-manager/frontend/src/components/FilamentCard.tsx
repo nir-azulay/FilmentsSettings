@@ -1,10 +1,13 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ColorStatus, ColorStock, Filament, addColor, deleteColor, updateColor } from "../api";
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
 import { colorTint, getColorVisual } from "../colorVisual";
+import { deleteDangerBtn } from "../deleteDangerButton";
 import { filamentHasLowStock, filamentInStockQty, filamentOrderedQty } from "../stockUtils";
 import BrandLogo from "./BrandLogo";
+import DeleteColorModal from "./DeleteColorModal";
 import { SpoolIcon, SpoolStack } from "./SpoolIcon";
+import TrashIconButton from "./TrashIconButton";
 
 interface Props {
   filament: Filament;
@@ -12,6 +15,7 @@ interface Props {
   ignoredStaples: Set<string>;
   onManageStock: () => void;
   onUpdate: () => Promise<void>;
+  onRequestDeleteFilament: () => void;
 }
 
 function getMaterialColor(type: string): string {
@@ -22,7 +26,7 @@ function getMaterialColor(type: string): string {
   return map[type] ?? "#607d8b";
 }
 
-export default function FilamentCard({ filament, staplePools, ignoredStaples, onManageStock, onUpdate }: Props) {
+export default function FilamentCard({ filament, staplePools, ignoredStaples, onManageStock, onUpdate, onRequestDeleteFilament }: Props) {
   const inStockQty  = filamentInStockQty(filament.colors);
   const orderedQty  = filamentOrderedQty(filament.colors);
   const isLow       = filamentHasLowStock(filament, staplePools, ignoredStaples);
@@ -113,6 +117,14 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
             Buy
           </a>
         )}
+        <button
+          type="button"
+          onClick={onRequestDeleteFilament}
+          style={deleteDangerBtn}
+          title="Delete this filament"
+        >
+          Delete
+        </button>
       </div>
     </div>
   );
@@ -131,6 +143,14 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   const [qtyUsed, setQtyUsed] = useState(color.quantity_used ?? 0);
   const [status, setStatus] = useState<ColorStatus>(color.status ?? "in_stock");
   const [saving, setSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingColor, setDeletingColor] = useState(false);
+
+  useEffect(() => {
+    setQty(color.quantity);
+    setQtyUsed(color.quantity_used ?? 0);
+    setStatus(color.status ?? "in_stock");
+  }, [color.id, color.quantity, color.quantity_used, color.status]);
 
   const remaining = qty - qtyUsed;
 
@@ -138,6 +158,20 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
     setQty(newQty);
     setSaving(true);
     await updateColor(color.id, { quantity: newQty });
+    await onUpdate();
+    setSaving(false);
+  };
+
+  const handleAddSpool = async () => {
+    const newQty = qty + 1;
+    setQty(newQty);
+    setSaving(true);
+    const updates: Parameters<typeof updateColor>[1] = { quantity: newQty };
+    if (status === "out_of_stock") {
+      setStatus("in_stock");
+      updates.status = "in_stock";
+    }
+    await updateColor(color.id, updates);
     await onUpdate();
     setSaving(false);
   };
@@ -150,20 +184,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
     if (newUsed >= qty) {
       setStatus("out_of_stock");
       await updateColor(color.id, { quantity_used: newUsed, status: "out_of_stock" });
-    }
-    await onUpdate();
-    setSaving(false);
-  };
-
-  const handleUndoUsed = async () => {
-    const newUsed = Math.max(qtyUsed - 1, 0);
-    setQtyUsed(newUsed);
-    setSaving(true);
-    if (status === "out_of_stock" && newUsed < qty) {
-      setStatus("in_stock");
-      await updateColor(color.id, { quantity_used: newUsed, status: "in_stock" });
-    } else {
-      await updateColor(color.id, { quantity_used: newUsed });
     }
     await onUpdate();
     setSaving(false);
@@ -187,10 +207,16 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
     await onUpdate();
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`Remove "${color.color_name}"?`)) return;
-    await deleteColor(color.id);
-    await onUpdate();
+  const executeDeleteColor = async () => {
+    if (deletingColor) return;
+    setDeletingColor(true);
+    try {
+      await deleteColor(color.id);
+      setShowDeleteModal(false);
+      await onUpdate();
+    } finally {
+      setDeletingColor(false);
+    }
   };
 
   const cfg = STATUS_CFG[status];
@@ -201,7 +227,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
       className="ha-entity-row color-stock-row"
       style={{
         ...colorEntityRow,
-        flexWrap: "wrap",
         background: hovered ? vis.bgHover : vis.bg,
         borderLeft: `4px solid ${vis.accent}`,
         boxShadow: hovered ? `inset 0 0 0 1px ${vis.border}` : undefined,
@@ -210,75 +235,49 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 10, minHeight: 52 }}>
+      <div className="color-stock-row__line">
         {status === "in_stock" && remaining > 0 ? (
-          <SpoolStack colorHex={color.color_hex} count={remaining} size={32} />
+          <SpoolStack colorHex={color.color_hex} count={remaining} size={28} />
         ) : (
-          <SpoolIcon colorHex={color.color_hex} size={36} muted={status !== "in_stock"} />
+          <SpoolIcon colorHex={color.color_hex} size={32} muted={status !== "in_stock"} />
         )}
 
-        {/* name */}
-        <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "var(--ha-primary-text)" }}>
+        <span className="color-stock-row__name" style={{ fontSize: 14, fontWeight: 600, color: "var(--ha-primary-text)" }}>
           {color.color_name}
         </span>
 
-        {/* ══ IN STOCK layout ══ */}
+        {/* ══ IN STOCK — single line ══ */}
         {status === "in_stock" && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              display: "flex", flexDirection: "column", alignItems: "center", minWidth: 40,
-              padding: "4px 10px", borderRadius: 8,
-              background: colorTint(color.color_hex, 0.22),
-            }}>
-              <span style={{
-                fontSize: 22, fontWeight: 800, lineHeight: 1,
-                color: remaining <= 0 ? "var(--ha-error)" : vis.accent,
-              }}>
+          <>
+            <div className="color-stock-row__stats">
+              <span
+                className="color-stock-row__count"
+                style={{
+                  color: remaining <= 0 ? "var(--ha-error)" : vis.accent,
+                  background: colorTint(color.color_hex, 0.22),
+                }}
+                title={remaining === 1 ? "1 spool left" : `${remaining} spools left`}
+              >
                 {remaining}
               </span>
-              <span style={{ fontSize: 9, color: "var(--ha-secondary-text)", marginTop: 2, fontWeight: 500 }}>
-                {remaining === 1 ? "spool left" : "spools left"}
-              </span>
+              <span className="color-stock-row__used-label">{qtyUsed}/{qty}</span>
             </div>
-
-            {/* used progress bar — always rendered */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "flex-end" }}>
-              <div style={{ width: 64, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.08)", overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", borderRadius: 2,
-                  width: `${qty > 0 ? (qtyUsed / qty) * 100 : 0}%`,
-                  background: qtyUsed >= qty ? "var(--ha-error)" : "var(--ha-warning)",
-                  transition: "width 0.3s",
-                }} />
-              </div>
-              <span style={{ fontSize: 9, color: "var(--ha-secondary-text)" }}>
-                {qtyUsed}/{qty} used
-              </span>
-            </div>
-
-            {/* action buttons — always visible */}
-            <div style={{ display: "flex", gap: 4, opacity: hovered ? 1 : 0.45, transition: "opacity 0.15s" }}>
+            <div className="color-stock-row__actions">
+              <button type="button" onClick={handleAddSpool} disabled={saving} style={addSpoolBtnCompact} title="Add 1 spool">
+                + Add
+              </button>
               <button
-                onClick={handleUndoUsed}
-                disabled={qtyUsed <= 0}
-                style={{ ...undoBtn, opacity: qtyUsed <= 0 ? 0.3 : 1, cursor: qtyUsed <= 0 ? "default" : "pointer" }}
-                title="Undo last use"
-              >↩</button>
-              <button
+                type="button"
                 onClick={handleMarkUsed}
                 disabled={remaining <= 0}
-                style={{ ...useBtn, opacity: remaining <= 0 ? 0.4 : 1, cursor: remaining <= 0 ? "not-allowed" : "pointer" }}
+                style={{ ...useBtnCompact, opacity: remaining <= 0 ? 0.4 : 1, cursor: remaining <= 0 ? "not-allowed" : "pointer" }}
                 title="Mark 1 spool as used"
-              >− Use</button>
+              >
+                Use
+              </button>
+              <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
             </div>
-
-            {/* delete — fades in on hover */}
-            <button onClick={handleDelete} style={{ ...deleteBtn, opacity: hovered ? 1 : 0, transition: "opacity 0.15s" }} title="Remove">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-            </button>
-          </div>
+          </>
         )}
 
         {/* ══ ORDERED layout ══ */}
@@ -300,27 +299,31 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
               </svg>
               Arrived
             </button>
-            <button onClick={handleDelete} style={{ ...deleteBtn, opacity: hovered ? 1 : 0, transition: "opacity 0.15s" }} title="Remove">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-            </button>
+            <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
           </div>
         )}
 
         {/* ══ OUT OF STOCK layout ══ */}
         {status === "out_of_stock" && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "nowrap" }}>
             <span style={{ fontSize: 11, color: "var(--ha-error)", fontWeight: 600 }}>Out of stock</span>
-            <button onClick={handleMarkOrdered} style={reorderBtn}>↺ Reorder</button>
-            <button onClick={handleDelete} style={{ ...deleteBtn, opacity: hovered ? 1 : 0, transition: "opacity 0.15s" }} title="Remove">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
+            <button type="button" onClick={handleAddSpool} disabled={saving} style={addSpoolBtnCompact} title="Add spools back to stock">
+              + Add
             </button>
+            <button onClick={handleMarkOrdered} style={reorderBtn}>↺ Reorder</button>
+            <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
           </div>
         )}
       </div>
+
+      {showDeleteModal && (
+        <DeleteColorModal
+          colorName={color.color_name}
+          confirming={deletingColor}
+          onCancel={() => !deletingColor && setShowDeleteModal(false)}
+          onConfirm={executeDeleteColor}
+        />
+      )}
     </div>
   );
 }
@@ -550,21 +553,22 @@ const receiveBtn: React.CSSProperties = {
   border: "1px solid #93da98",
   cursor: "pointer", whiteSpace: "nowrap",
 };
-const useBtn: React.CSSProperties = {
-  display: "inline-flex", alignItems: "center", gap: 3,
-  padding: "5px 10px", borderRadius: 6,
+const addSpoolBtnCompact: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  padding: "4px 8px", borderRadius: 6,
+  fontSize: 11, fontWeight: 600,
+  background: "#c2f2c1", color: "#036730",
+  border: "1px solid #93da98",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+const useBtnCompact: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  padding: "4px 8px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
   background: "#ffe0c8", color: "#7e2900",
   border: "1px solid #ffbb89",
   whiteSpace: "nowrap",
-};
-const undoBtn: React.CSSProperties = {
-  display: "inline-flex", alignItems: "center",
-  padding: "5px 7px", borderRadius: 6,
-  fontSize: 12,
-  background: "#e6e6e6", color: "var(--ha-secondary-text)",
-  border: "1px solid #cccccc",
-  cursor: "pointer",
 };
 const reorderBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,

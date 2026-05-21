@@ -2,14 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { ColorStatus, ColorStock, Filament, StockEntry, addColor, addStockEvent, deleteColor, fetchHistory, updateColor } from "../api";
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
 import { filamentAvailableSpools } from "../stockUtils";
+import DeleteColorModal from "./DeleteColorModal";
+import TrashIconButton from "./TrashIconButton";
 
 interface Props {
   filament: Filament;
   onClose: () => void;
   onUpdate: () => Promise<void>;
+  onRequestDeleteFilament: () => void;
 }
 
-export default function StockManager({ filament, onClose, onUpdate }: Props) {
+export default function StockManager({ filament, onClose, onUpdate, onRequestDeleteFilament }: Props) {
   const [history, setHistory] = useState<StockEntry[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [eventType, setEventType] = useState<"purchase" | "used" | "adjustment">("purchase");
@@ -21,6 +24,8 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
   const [newColorHex, setNewColorHex] = useState("#808080");
   const [newColorQty, setNewColorQty] = useState(0);
   const [showAddColor, setShowAddColor] = useState(false);
+  const [colorToDelete, setColorToDelete] = useState<ColorStock | null>(null);
+  const [deletingColor, setDeletingColor] = useState(false);
   const [suggestions, setSuggestions] = useState<Array<{ name: string; hex: string }>>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -60,10 +65,16 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
     await onUpdate();
   };
 
-  const handleDeleteColor = async (colorId: number) => {
-    if (!confirm("Delete this color?")) return;
-    await deleteColor(colorId);
-    await onUpdate();
+  const executeDeleteColor = async () => {
+    if (!colorToDelete || deletingColor) return;
+    setDeletingColor(true);
+    try {
+      await deleteColor(colorToDelete.id);
+      setColorToDelete(null);
+      await onUpdate();
+    } finally {
+      setDeletingColor(false);
+    }
   };
 
   const handleEditColorQty = async (color: ColorStock, newQty: number) => {
@@ -148,12 +159,7 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
                     onChange={(e) => handleEditColorQty(c, Number(e.target.value))}
                     style={{ ...inputStyle, width: 52, textAlign: "center", fontWeight: 600, marginRight: 6 }}
                   />
-                  <button onClick={() => handleDeleteColor(c.id)} style={deleteBtn} title="Delete">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    </svg>
-                  </button>
+                  <TrashIconButton onClick={() => setColorToDelete(c)} title="Delete color" />
                 </div>
               ))}
             </div>
@@ -212,7 +218,23 @@ export default function StockManager({ filament, onClose, onUpdate }: Props) {
             })}
           </div>
         </section>
+
+        <section style={{ ...section, borderBottom: "none" }}>
+          <button type="button" onClick={onRequestDeleteFilament} style={deleteFilamentBtn}>
+            Delete filament
+          </button>
+          <p style={deleteFilamentHint}>Removes this entry, all colors, and history permanently.</p>
+        </section>
       </div>
+
+      {colorToDelete && (
+        <DeleteColorModal
+          colorName={colorToDelete.color_name}
+          confirming={deletingColor}
+          onCancel={() => !deletingColor && setColorToDelete(null)}
+          onConfirm={executeDeleteColor}
+        />
+      )}
     </div>
   );
 }
@@ -333,6 +355,23 @@ const primaryBtn: React.CSSProperties = {
 const colorList: React.CSSProperties = {
   marginTop: 4,
   borderTop: "1px solid var(--ha-divider)",
+};
+const deleteFilamentBtn: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 14px",
+  borderRadius: "var(--ha-btn-radius)",
+  border: "1px solid rgba(244,67,54,0.35)",
+  background: "var(--ha-error-bg)",
+  color: "var(--ha-error)",
+  fontSize: 13,
+  fontWeight: 600,
+  cursor: "pointer",
+};
+const deleteFilamentHint: React.CSSProperties = {
+  marginTop: 8,
+  fontSize: 11,
+  color: "var(--ha-disabled-text)",
+  textAlign: "center",
 };
 const deleteBtn: React.CSSProperties = {
   background: "none", border: "none",

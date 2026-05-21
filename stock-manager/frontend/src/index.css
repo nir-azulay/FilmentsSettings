@@ -149,7 +149,54 @@ a:hover { filter: brightness(0.88); }
 
 /* ─── HA card ─────────────────────────────────────────────────────────────── */
 .color-stock-row {
+  overflow: visible;
+}
+
+.color-stock-row__line {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  min-height: 44px;
+  flex-wrap: nowrap;
+}
+
+.color-stock-row__name {
+  flex: 1 1 0;
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-stock-row__stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.color-stock-row__count {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.color-stock-row__used-label {
+  font-size: 10px;
+  color: var(--ha-secondary-text);
+  white-space: nowrap;
+}
+
+.color-stock-row__actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 /* ─── Desktop filament grid ───────────────────────────────────────────────── */
