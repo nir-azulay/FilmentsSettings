@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import { ColorStatus, ColorStock, Filament, addColor, deleteColor, updateColor } from "../api";
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
+import { colorTint, getColorVisual } from "../colorVisual";
 import { filamentHasLowStock, filamentInStockQty, filamentOrderedQty } from "../stockUtils";
+import { SpoolIcon, SpoolStack } from "./SpoolIcon";
 
 interface Props {
   filament: Filament;
@@ -91,8 +93,13 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
           {/* In Stock */}
           <div style={stockChip(isLow)}>
             {isLow && inStockQty === 0 ? null : isLow && <span style={{ fontSize: 9 }}>⚠ </span>}
-            <span style={{ fontSize: 18, fontWeight: 300, lineHeight: 1 }}>{inStockQty}</span>
-            <span style={{ fontSize: 9, opacity: 0.7 }}>in stock</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <SpoolIcon colorHex={isLow ? "#db4437" : "#43a047"} size={28} count={inStockQty > 1 ? inStockQty : undefined} />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                <span style={{ fontSize: 18, fontWeight: 600, lineHeight: 1 }}>{inStockQty}</span>
+                <span style={{ fontSize: 9, opacity: 0.7 }}>in stock</span>
+              </div>
+            </div>
           </div>
           {/* Ordered */}
           {orderedQty > 0 && (
@@ -117,7 +124,10 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
       {/* ── Inline color rows ── */}
       <div style={colorsSection}>
         <div style={colorsSectionHeader}>
-          <span style={sectionLabel}>Colors in Stock</span>
+          <span style={{ ...sectionLabel, display: "flex", alignItems: "center", gap: 6 }}>
+            <SpoolIcon colorHex="#607d8b" size={18} />
+            Colors in stock
+          </span>
         </div>
 
         {filament.colors.length === 0 && (
@@ -229,34 +239,50 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   };
 
   const cfg = STATUS_CFG[status];
+  const vis = getColorVisual(color.color_hex, status !== "in_stock");
 
   return (
     <div
-      className="ha-entity-row"
-      style={{ ...colorEntityRow, flexWrap: "wrap", background: hovered ? "rgba(0,0,0,0.025)" : "transparent", transition: "background 0.15s" }}
+      className="ha-entity-row color-stock-row"
+      style={{
+        ...colorEntityRow,
+        flexWrap: "wrap",
+        background: hovered ? vis.bgHover : vis.bg,
+        borderLeft: `4px solid ${vis.accent}`,
+        boxShadow: hovered ? `inset 0 0 0 1px ${vis.border}` : undefined,
+        transition: "background 0.15s, box-shadow 0.15s",
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 0, minHeight: 44 }}>
-        {/* color swatch */}
-        <div style={{ ...dot, background: color.color_hex }} />
+      <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 10, minHeight: 52 }}>
+        {status === "in_stock" && remaining > 0 ? (
+          <SpoolStack colorHex={color.color_hex} count={remaining} size={32} />
+        ) : (
+          <SpoolIcon colorHex={color.color_hex} size={36} muted={status !== "in_stock"} />
+        )}
 
         {/* name */}
-        <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{color.color_name}</span>
+        <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "var(--ha-primary-text)" }}>
+          {color.color_name}
+        </span>
 
         {/* ══ IN STOCK layout ══ */}
         {status === "in_stock" && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* remaining spools — big */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 36 }}>
+            <div style={{
+              display: "flex", flexDirection: "column", alignItems: "center", minWidth: 40,
+              padding: "4px 10px", borderRadius: 8,
+              background: colorTint(color.color_hex, 0.22),
+            }}>
               <span style={{
-                fontSize: 22, fontWeight: 700, lineHeight: 1,
-                color: remaining <= 0 ? "var(--ha-error)" : saving ? "var(--ha-secondary-text)" : "var(--ha-primary-text)",
+                fontSize: 22, fontWeight: 800, lineHeight: 1,
+                color: remaining <= 0 ? "var(--ha-error)" : vis.accent,
               }}>
                 {remaining}
               </span>
-              <span style={{ fontSize: 9, color: "var(--ha-secondary-text)", marginTop: 1 }}>
-                {remaining === 1 ? "spool" : "spools"}
+              <span style={{ fontSize: 9, color: "var(--ha-secondary-text)", marginTop: 2, fontWeight: 500 }}>
+                {remaining === 1 ? "spool left" : "spools left"}
               </span>
             </div>
 
@@ -303,11 +329,11 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
         {/* ══ ORDERED layout ══ */}
         {status === "ordered" && (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {/* qty stepper — always visible, dimmed when not hovered */}
-            <div style={{ display: "flex", alignItems: "center", gap: 4, opacity: hovered ? 1 : 0.6, transition: "opacity 0.15s" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, opacity: hovered ? 1 : 0.75, transition: "opacity 0.15s" }}>
               <button onClick={() => handleQtyChange(Math.max(0, qty - 1))} style={stepBtn}>−</button>
+              <SpoolIcon colorHex={color.color_hex} size={28} count={qty > 1 ? qty : undefined} muted />
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 32 }}>
-                <span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>{qty}</span>
+                <span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1, color: cfg.color }}>{qty}</span>
                 <span style={{ fontSize: 9, color: "var(--ha-secondary-text)" }}>ordered</span>
               </div>
               <button onClick={() => handleQtyChange(qty + 1)} style={stepBtn}>+</button>
@@ -393,9 +419,8 @@ function AddColorInline({ filamentId, onUpdate }: { filamentId: number; onUpdate
 
   return (
     <form onSubmit={handleAdd} style={addForm}>
-      {/* color picker dot */}
-      <label style={{ cursor: "pointer", flexShrink: 0 }}>
-        <div style={{ ...dot, background: hex, cursor: "pointer", border: "2px solid rgba(255,255,255,0.3)" }} />
+      <label style={{ cursor: "pointer", flexShrink: 0, display: "flex" }} title="Pick color">
+        <SpoolIcon colorHex={hex} size={32} />
         <input type="color" value={hex} onChange={(e) => setHex(e.target.value)} style={{ display: "none" }} />
       </label>
 
@@ -498,12 +523,10 @@ const noColorsText: React.CSSProperties = {
   padding: "6px 16px 4px",
 };
 const colorEntityRow: React.CSSProperties = {
-  padding: "7px 16px", minHeight: 40,
-};
-const dot: React.CSSProperties = {
-  width: 12, height: 12, borderRadius: "50%",
-  border: "1px solid rgba(0,0,0,0.15)",
-  flexShrink: 0, marginRight: 10,
+  padding: "10px 14px 10px 12px",
+  margin: "4px 10px",
+  borderRadius: 10,
+  minHeight: 52,
 };
 const stepBtn: React.CSSProperties = {
   width: 20, height: 20,

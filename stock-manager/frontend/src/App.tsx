@@ -12,6 +12,7 @@ import {
 } from "./api";
 import AlertBanner from "./components/AlertBanner";
 import Dashboard from "./components/Dashboard";
+import { SpoolIcon } from "./components/SpoolIcon";
 import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
 
 export default function App() {
@@ -112,8 +113,8 @@ export default function App() {
         {/* ── Summary row — HA glance-card style ── */}
         <div style={summaryRow}>
           <SummaryCard value={filaments.length} label="Filaments"       color="var(--ha-primary-color)" />
-          <SummaryCard value={totalInStock}     label="Spools Available" color="var(--ha-success)"   icon="✓" />
-          <SummaryCard value={totalOrdered}     label="On Order"        color="var(--ha-warning)"   icon="⏳" />
+          <SummaryCard value={totalInStock}     label="Spools Available" color="var(--ha-success)"   spoolColor="#43a047" />
+          <SummaryCard value={totalOrdered}     label="On Order"        color="var(--ha-warning)"   spoolColor="#ff9800" />
           <SummaryCard value={brandsSet.size}   label="Brands"          color="#7a7a7a"              />
         </div>
 
@@ -138,12 +139,28 @@ export default function App() {
   );
 }
 
-function SummaryCard({ value, label, color, icon }: { value: number; label: string; color: string; icon?: string }) {
+function SummaryCard({
+  value,
+  label,
+  color,
+  icon,
+  spoolColor,
+}: {
+  value: number;
+  label: string;
+  color: string;
+  icon?: string;
+  spoolColor?: string;
+}) {
   return (
     <div className="ha-card" style={summaryCardStyle}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-        {icon && <span style={{ fontSize: 13 }}>{icon}</span>}
-        <p style={{ fontSize: 28, fontWeight: 400, color, lineHeight: 1, letterSpacing: "-0.01em" }}>{value}</p>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {spoolColor ? (
+          <SpoolIcon colorHex={spoolColor} size={32} count={value > 1 ? value : undefined} />
+        ) : icon ? (
+          <span style={{ fontSize: 13 }}>{icon}</span>
+        ) : null}
+        <p style={{ fontSize: 28, fontWeight: 600, color, lineHeight: 1, letterSpacing: "-0.01em" }}>{value}</p>
       </div>
       <p style={{ fontSize: 11, color: "var(--ha-secondary-text)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
     </div>

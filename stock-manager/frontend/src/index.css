@@ -148,6 +148,10 @@ a:hover { filter: brightness(0.88); }
 }
 
 /* ─── HA card ─────────────────────────────────────────────────────────────── */
+.color-stock-row {
+  overflow: hidden;
+}
+
 .ha-card {
   background: var(--ha-card-bg);
   border-radius: var(--ha-card-radius);
