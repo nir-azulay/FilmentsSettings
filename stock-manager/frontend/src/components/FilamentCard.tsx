@@ -3,6 +3,7 @@ import { ColorStatus, ColorStock, Filament, addColor, deleteColor, updateColor }
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
 import { colorTint, getColorVisual } from "../colorVisual";
 import { filamentHasLowStock, filamentInStockQty, filamentOrderedQty } from "../stockUtils";
+import BrandLogo from "./BrandLogo";
 import { SpoolIcon, SpoolStack } from "./SpoolIcon";
 
 interface Props {
@@ -12,52 +13,6 @@ interface Props {
   onManageStock: () => void;
   onUpdate: () => Promise<void>;
 }
-
-/** Brand background colors to match their actual logos */
-const BRAND_BG: Record<string, string> = {
-  SUNLU:      "#00a8a8",
-  Inslogic:   "#ffffff",
-  "Bambu Lab": "#ffffff",
-  Bambu:      "#ffffff",
-  GolGeo:     "#f5e400",
-};
-
-function BrandLogo({ url, brand }: { url: string; brand: string }) {
-  const [failed, setFailed] = useState(false);
-  const bg = BRAND_BG[brand] ?? "#2a2a2c";
-
-  if (!url || failed) {
-    return (
-      <div style={{ ...logoWrap, background: bg }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: "#fff", letterSpacing: "0.03em" }}>
-          {brand.slice(0, 2).toUpperCase()}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ ...logoWrap, background: bg }}>
-      <img
-        src={url}
-        alt={brand}
-        style={{ width: "100%", height: "100%", objectFit: "contain", padding: 4 }}
-        onError={() => setFailed(true)}
-      />
-    </div>
-  );
-}
-
-const logoWrap: React.CSSProperties = {
-  width: 36,
-  height: 36,
-  borderRadius: 8,
-  flexShrink: 0,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  overflow: "hidden",
-};
 
 function getMaterialColor(type: string): string {
   const map: Record<string, string> = {
@@ -81,7 +36,7 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
       {/* header */}
       <div style={headerRow}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <BrandLogo url={filament.brand_logo_url} brand={filament.brand} />
+          <BrandLogo url={filament.brand_logo_url} brand={filament.brand} size={36} />
           <div>
             <p style={cardTitle}>
               {filament.brand} <span style={{ color: matColor }}>{filament.material}</span>

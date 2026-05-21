@@ -3,7 +3,6 @@ import {
   Alert,
   Filament,
   StapleAlertIgnore,
-  deleteAlertIgnore,
   fetchAlertIgnores,
   fetchAlerts,
   fetchFilaments,
@@ -12,6 +11,7 @@ import {
 } from "./api";
 import AlertBanner from "./components/AlertBanner";
 import Dashboard from "./components/Dashboard";
+import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
 import { SpoolIcon } from "./components/SpoolIcon";
 import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
 
@@ -51,7 +51,7 @@ export default function App() {
 
   const totalInStock  = totalAvailableSpools(filaments);
   const totalOrdered  = totalOnOrderSpools(filaments);
-  const brandsSet     = new Set(filaments.map((f) => f.brand));
+  const uniqueBrands = uniqueBrandsFromFilaments(filaments);
 
   if (loading) {
     return (
@@ -109,32 +109,40 @@ export default function App() {
         </div>
       </header>
 
-      <main style={mainWrap}>
+      <main className="ha-main" style={mainWrap}>
         {/* ── Summary row — HA glance-card style ── */}
-        <div style={summaryRow}>
+        <div className="ha-summary-row" style={summaryRow}>
           <SummaryCard value={filaments.length} label="Filaments"       color="var(--ha-primary-color)" />
           <SummaryCard value={totalInStock}     label="Spools Available" color="var(--ha-success)"   spoolColor="#43a047" />
           <SummaryCard value={totalOrdered}     label="On Order"        color="var(--ha-warning)"   spoolColor="#ff9800" />
-          <SummaryCard value={brandsSet.size}   label="Brands"          color="#7a7a7a"              />
+          <BrandsSummaryCard brands={uniqueBrands} />
         </div>
 
-        {(alerts.length > 0 || alertIgnores.length > 0) && (
-          <AlertBanner
-            alerts={alerts}
-            ignores={alertIgnores}
-            onIgnore={async (filamentType, colorName) => {
-              await ignoreStapleAlert(filamentType, colorName);
-              await reload();
-            }}
-            onUnignore={async (id) => {
-              await deleteAlertIgnore(id);
-              await reload();
-            }}
-          />
-        )}
+        <AlertBanner
+          alerts={alerts}
+          onIgnore={async (filamentType, colorName) => {
+            await ignoreStapleAlert(filamentType, colorName);
+            await reload();
+          }}
+        />
 
         <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
       </main>
+    </div>
+  );
+}
+
+function BrandsSummaryCard({ brands }: { brands: { brand: string; logoUrl: string }[] }) {
+  return (
+    <div className="ha-card" style={summaryCardStyle}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minHeight: 36 }}>
+        {brands.map((b) => (
+          <BrandLogo key={b.brand} brand={b.brand} url={b.logoUrl} size={30} />
+        ))}
+      </div>
+      <p style={{ fontSize: 11, color: "var(--ha-secondary-text)", marginTop: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+        Brands · {brands.length}
+      </p>
     </div>
   );
 }

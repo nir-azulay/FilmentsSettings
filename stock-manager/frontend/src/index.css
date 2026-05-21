@@ -152,6 +152,79 @@ a:hover { filter: brightness(0.88); }
   overflow: hidden;
 }
 
+/* ─── Desktop filament grid ───────────────────────────────────────────────── */
+.filament-desktop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+/* ─── Mobile: one filament per screen, horizontal swipe ───────────────────── */
+.filament-mobile-pager {
+  margin: 0 -4px;
+}
+
+.filament-mobile-pager__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.filament-mobile-carousel {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  gap: 0;
+  border-radius: var(--ha-card-radius);
+  /* hide scrollbar but keep swipe */
+  scrollbar-width: none;
+}
+.filament-mobile-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.filament-mobile-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  padding: 2px 0;
+}
+
+.filament-mobile-pager__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0 2px;
+}
+
+.filament-mobile-pager__nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 768px) {
+  .ha-summary-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .ha-toolbar {
+    padding: 0 12px !important;
+  }
+
+  .ha-main {
+    padding: 12px !important;
+  }
+}
+
 .ha-card {
   background: var(--ha-card-bg);
   border-radius: var(--ha-card-radius);

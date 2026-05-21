@@ -1,4 +1,7 @@
-import { darkenHex, isLightColor, normalizeHex } from "../colorVisual";
+import { darkenHex, normalizeHex } from "../colorVisual";
+
+/** User-provided spool silhouette (public/spool-silhouette.png), tinted per filament color */
+const SPOOL_MASK = "/spool-silhouette.png";
 
 type Props = {
   colorHex: string;
@@ -8,12 +11,26 @@ type Props = {
   muted?: boolean;
 };
 
-/** Side-view filament spool SVG */
+function spoolMaskStyle(fill: string, size: number): React.CSSProperties {
+  return {
+    width: size,
+    height: size,
+    backgroundColor: fill,
+    WebkitMaskImage: `url(${SPOOL_MASK})`,
+    maskImage: `url(${SPOOL_MASK})`,
+    WebkitMaskSize: "contain",
+    maskSize: "contain",
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+    WebkitMaskPosition: "center",
+    maskPosition: "center",
+  };
+}
+
 export function SpoolIcon({ colorHex, size = 36, count, muted = false }: Props) {
   const fill = normalizeHex(colorHex);
-  const rim = darkenHex(fill, 0.32);
-  const hole = muted ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.22)";
-  const opacity = muted ? 0.55 : 1;
+  const rim = darkenHex(fill, 0.28);
+  const opacity = muted ? 0.5 : 1;
 
   return (
     <div
@@ -23,27 +40,29 @@ export function SpoolIcon({ colorHex, size = 36, count, muted = false }: Props) 
         height: size,
         flexShrink: 0,
         opacity,
-        filter: muted ? "grayscale(0.25)" : undefined,
+        filter: muted ? "grayscale(0.35)" : undefined,
       }}
       title={count && count > 1 ? `${count} spools` : undefined}
+      aria-hidden
     >
-      <svg viewBox="0 0 32 40" width={size} height={size} aria-hidden>
-        <ellipse cx="16" cy="5" rx="13" ry="4" fill={rim} />
-        <path
-          d="M4 5 h24 a2 2 0 0 1 2 2 v26 a2 2 0 0 1-2 2 H4 a2 2 0 0 1-2-2 V7 a2 2 0 0 1 2-2z"
-          fill={fill}
-          stroke={rim}
-          strokeWidth="1.2"
-        />
-        <ellipse cx="16" cy="35" rx="13" ry="4" fill={rim} />
-        <ellipse cx="16" cy="20" rx="5" ry="11" fill={hole} />
-        <path
-          d="M16 9 v22"
-          stroke={isLightColor(fill) ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)"}
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
+      {/* subtle darker “rim” behind */}
+      <div
+        style={{
+          ...spoolMaskStyle(rim, size),
+          position: "absolute",
+          left: 0,
+          top: 1,
+          transform: "scale(1.06)",
+          opacity: 0.85,
+        }}
+      />
+      <div
+        style={{
+          ...spoolMaskStyle(fill, size),
+          position: "relative",
+          filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.2))",
+        }}
+      />
       {count !== undefined && count > 1 && (
         <span
           style={{
@@ -58,6 +77,7 @@ export function SpoolIcon({ colorHex, size = 36, count, muted = false }: Props) 
             background: "var(--ha-primary-text)",
             color: "#fff",
             boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+            zIndex: 2,
           }}
         >
           ×{count}
@@ -67,45 +87,8 @@ export function SpoolIcon({ colorHex, size = 36, count, muted = false }: Props) 
   );
 }
 
-/** Stacked spools for quantity at a glance (max 4 visible) */
-export function SpoolStack({ colorHex, count, size = 28 }: { colorHex: string; count: number; size?: number }) {
-  const n = Math.min(Math.max(count, 1), 4);
-  const offsets = [
-    { left: 0, z: 4 },
-    { left: 6, z: 3 },
-    { left: 12, z: 2 },
-    { left: 18, z: 1 },
-  ].slice(0, n);
-
-  return (
-    <div style={{ position: "relative", width: size + (n - 1) * 6, height: size, flexShrink: 0 }}>
-      {offsets.map((o, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            left: o.left,
-            top: 0,
-            zIndex: o.z,
-          }}
-        >
-          <SpoolIcon colorHex={colorHex} size={size - 4} />
-        </div>
-      ))}
-      {count > 4 && (
-        <span
-          style={{
-            position: "absolute",
-            right: -6,
-            bottom: 0,
-            fontSize: 11,
-            fontWeight: 700,
-            color: "var(--ha-primary-text)",
-          }}
-        >
-          +{count - 4}
-        </span>
-      )}
-    </div>
-  );
+/** One spool + ×N badge (same as summary totals) */
+export function SpoolStack({ colorHex, count, size = 32 }: { colorHex: string; count: number; size?: number }) {
+  const n = Math.max(count, 1);
+  return <SpoolIcon colorHex={colorHex} size={size} count={n > 1 ? n : undefined} />;
 }
