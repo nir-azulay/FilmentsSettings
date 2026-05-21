@@ -16,5 +16,7 @@ services:
     restart: unless-stopped
     ports:
       - "3000:80"
+      - "3080:80"   # alternate HTTP (use if :3000 still redirects in browser cache/HSTS)
+      - "3443:443"
     depends_on:
       - backend

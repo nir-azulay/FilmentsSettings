@@ -14,7 +14,11 @@
    docker compose up -d --build
    ```
 
-4. Open in browser: `http://<QNAP-IP>:3000`
+4. Open in browser:
+   - **HTTP (LAN):** `http://<QNAP-IP>:3000` or `http://<QNAP-IP>:3080`
+   - **HTTPS:** `https://<QNAP-IP>:3443` (self-signed certificate)
+
+   If the browser still jumps to HTTPS on port 3000, use **:3080** or clear cached redirects / HSTS for the NAS IP (Chrome: `chrome://net-internals/#hsts` → Delete domain `192.168.10.11`).
 
 5. Click **Import Profiles** in the UI to load all filament data.
 
