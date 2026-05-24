@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Log the resolved `DATABASE_URL`, file size, and row counts on startup so it is obvious which DB file the API actually opened and whether it contains data.
+
 ## 0.1.1
 
 - Move SQLite DB from `/data/filaments.db` to `/config/data/filaments.db` so the user-visible Samba share `\\homeassistant\addon_configs\filament_stock\` exposes it for backup, seeding, and inspection without needing SSH.
