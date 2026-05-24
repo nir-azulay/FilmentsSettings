@@ -24,8 +24,7 @@ FROM ${BUILD_FROM}
 
 ENV LANG=C.UTF-8 \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    FILAMENT_STOCK_DATA_DIR=/data
+    PYTHONDONTWRITEBYTECODE=1
 
 RUN apk add --no-cache \
         python3 \
@@ -44,7 +43,7 @@ COPY --from=frontend /build/dist/ /usr/share/nginx/html/
 
 COPY rootfs/ /
 
-RUN mkdir -p /data /var/log/nginx /var/lib/nginx/tmp
+RUN mkdir -p /config/data /var/log/nginx /var/lib/nginx/tmp
 
 EXPOSE 8099
 

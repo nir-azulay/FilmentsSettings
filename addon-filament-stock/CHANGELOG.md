@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3
+
+- Fix: Dockerfile carried a stale `ENV FILAMENT_STOCK_DATA_DIR=/data` from
+  v0.1.0 which overrode the Python default and made v0.1.1's switch to
+  `/config/data` a no-op. The container kept opening `/data/filaments.db`
+  (invisible to Samba, empty), while the user's seeded DB at
+  `/config/data/filaments.db` (visible to Samba) was ignored. Removed the
+  env var so the Python default takes effect.
+
 ## 0.1.2
 
 - Log the resolved `DATABASE_URL`, file size, and row counts on startup so it is obvious which DB file the API actually opened and whether it contains data.
