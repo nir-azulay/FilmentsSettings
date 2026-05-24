@@ -1,0 +1,348 @@
+/* ─── Home Assistant Exact Design Tokens (extracted live from HA instance) ── */
+:root {
+  /* Backgrounds — exact HA values */
+  --ha-app-bg:          #fafafa;   /* --primary-background-color */
+  --ha-sidebar-bg:      #ffffff;
+  --ha-card-bg:         #ffffff;   /* --card-background-color */
+  --ha-card-bg-hover:   #f3f3f3;   /* --ha-color-fill-neutral-quiet-hover */
+
+  /* Borders & dividers */
+  --ha-divider:         rgba(0, 0, 0, 0.12);  /* --divider-color */
+  --ha-border:          rgba(0, 0, 0, 0.12);  /* --outline-color */
+
+  /* Typography — exact HA values */
+  --ha-primary-text:    #141414;   /* --primary-text-color / --ha-color-text-primary */
+  --ha-secondary-text:  #5e5e5e;   /* --secondary-text-color */
+  --ha-disabled-text:   #bdbdbd;   /* --disabled-text-color */
+
+  /* Primary accent — exact HA primary */
+  --ha-primary-color:        #009ac7;   /* --primary-color */
+  --ha-primary-color-light:  #dff3fc;   /* --ha-color-fill-primary-normal-resting */
+  --ha-primary-color-dim:    #eff9fe;   /* --ha-color-fill-primary-quiet-resting */
+  --ha-primary-color-dark:   #006787;   /* --ha-color-primary-30 */
+
+  /* State colors — exact HA values */
+  --ha-success:    #43a047;   /* --success-color */
+  --ha-warning:    #ff9800;   /* --accent-color */
+  --ha-error:      #db4437;   /* --error-color */
+  --ha-info:       #039be5;   /* --info-color */
+
+  /* Semantic dims — HA fill tokens */
+  --ha-success-bg: #c2f2c1;   /* --ha-color-fill-success-normal-resting */
+  --ha-warning-bg: #ffe0c8;   /* --ha-color-fill-warning-normal-resting */
+  --ha-error-bg:   #ffdedc;   /* --ha-color-fill-danger-normal-resting */
+  --ha-info-bg:    #dff3fc;
+
+  /* Surface levels */
+  --ha-surface-default: #ffffff;    /* --ha-color-surface-default */
+  --ha-surface-low:     #f3f3f3;    /* --ha-color-surface-low */
+  --ha-surface-lower:   #e6e6e6;    /* --ha-color-surface-lower */
+
+  /* Radii — HA uses 12px for cards */
+  --ha-card-radius: 12px;
+  --ha-row-radius:  4px;
+  --ha-chip-radius: 16px;
+  --ha-btn-radius:  4px;
+
+  /* Shadows */
+  --ha-card-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12), 0 3px 1px -2px rgba(0,0,0,.2);
+  --ha-dialog-shadow: 0 24px 48px rgba(0,0,0,0.16);
+
+  /* Motion */
+  --ha-transition: 0.18s ease;
+
+  /* ── Legacy aliases ── */
+  --bg-primary:      var(--ha-app-bg);
+  --bg-secondary:    var(--ha-card-bg);
+  --bg-tertiary:     var(--ha-surface-low);
+  --bg-elevated:     #ffffff;
+  --bg-hover:        var(--ha-card-bg-hover);
+  --border:          var(--ha-divider);
+  --border-subtle:   var(--ha-border);
+  --text-primary:    var(--ha-primary-text);
+  --text-secondary:  var(--ha-secondary-text);
+  --text-muted:      var(--ha-disabled-text);
+  --accent:          var(--ha-primary-color);
+  --accent-hover:    var(--ha-primary-color-dark);
+  --accent-subtle:   var(--ha-primary-color-light);
+  --success:         var(--ha-success);
+  --success-subtle:  var(--ha-success-bg);
+  --warning:         var(--ha-warning);
+  --warning-subtle:  var(--ha-warning-bg);
+  --danger:          var(--ha-error);
+  --danger-subtle:   var(--ha-error-bg);
+  --radius-sm:  var(--ha-row-radius);
+  --radius-md:  8px;
+  --radius-lg:  var(--ha-card-radius);
+  --radius-xl:  var(--ha-chip-radius);
+  --shadow-sm:  0 1px 2px rgba(0,0,0,.1);
+  --shadow-md:  var(--ha-card-shadow);
+  --shadow-lg:  var(--ha-dialog-shadow);
+  --transition: var(--ha-transition);
+}
+
+/* ─── Reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+body {
+  font-family: "Roboto", "Noto", sans-serif;
+  background: var(--ha-app-bg);
+  color: var(--ha-primary-text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(194, 194, 194); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #b1b1b1; }
+
+/* ─── Selection ───────────────────────────────────────────────────────────── */
+::selection { background: var(--ha-primary-color-light); color: var(--ha-primary-color); }
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp  {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ─── Interactive ─────────────────────────────────────────────────────────── */
+button { font-family: inherit; }
+button:hover  { filter: brightness(0.94); }
+button:active { transform: scale(0.97); }
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--ha-primary-color) !important;
+  box-shadow: 0 0 0 1px var(--ha-primary-color-light);
+}
+a:hover { filter: brightness(0.88); }
+
+/* ─── HA app shell ────────────────────────────────────────────────────────── */
+.ha-app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--ha-app-bg);
+}
+
+/* ─── HA toolbar — matches HA's white top header with tab nav ────────────── */
+.ha-toolbar {
+  height: 56px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--ha-divider);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ─── HA card ─────────────────────────────────────────────────────────────── */
+.color-stock-row {
+  overflow: visible;
+}
+
+.color-stock-row__line {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  min-height: 44px;
+  flex-wrap: nowrap;
+}
+
+.color-stock-row__name {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-stock-row__stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.color-stock-row__count {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.color-stock-row__used-label {
+  font-size: 10px;
+  color: var(--ha-secondary-text);
+  white-space: nowrap;
+}
+
+.color-stock-row__actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ─── Desktop filament grid ───────────────────────────────────────────────── */
+.filament-desktop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+/* ─── Mobile: one filament per screen, horizontal swipe ───────────────────── */
+.filament-mobile-pager {
+  margin: 0 -4px;
+}
+
+.filament-mobile-pager__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.filament-mobile-carousel {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  gap: 0;
+  border-radius: var(--ha-card-radius);
+  /* hide scrollbar but keep swipe */
+  scrollbar-width: none;
+}
+.filament-mobile-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.filament-mobile-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+  padding: 2px 0;
+}
+
+.filament-mobile-pager__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0 2px;
+}
+
+.filament-mobile-pager__nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 768px) {
+  .ha-summary-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .ha-toolbar {
+    padding: 0 12px !important;
+  }
+
+  .ha-main {
+    padding: 12px !important;
+  }
+}
+
+.ha-card {
+  background: var(--ha-card-bg);
+  border-radius: var(--ha-card-radius);
+  box-shadow: var(--ha-card-shadow);
+  overflow: hidden;
+  transition: box-shadow var(--ha-transition);
+}
+.ha-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+}
+
+/* ─── HA entity row ───────────────────────────────────────────────────────── */
+.ha-entity-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--ha-divider);
+  transition: background var(--ha-transition);
+}
+.ha-entity-row:last-child { border-bottom: none; }
+.ha-entity-row:hover { background: var(--ha-surface-low); }
+
+/* ─── HA toggle switch ────────────────────────────────────────────────────── */
+.ha-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.ha-toggle input { opacity: 0; width: 0; height: 0; }
+.ha-toggle-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: #ccc;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.ha-toggle input:checked + .ha-toggle-track { background: var(--ha-primary-color); }
+.ha-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+.ha-toggle input:checked ~ .ha-toggle-thumb { transform: translateX(16px); }
+
+/* ─── HA chip / badge ─────────────────────────────────────────────────────── */
+.ha-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--ha-chip-radius);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* ─── HA section/card header ──────────────────────────────────────────────── */
+.ha-card-header {
+  padding: 16px 16px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ha-secondary-text);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,47 @@
+{
+  "title": "Filament Stock",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to the Filament Stock add-on",
+        "description": "The integration polls the add-on's REST API to expose each filament as a sensor and to provide use/restock services. If you installed the add-on with its default slug on Home Assistant OS, the default base URL should work as-is.",
+        "data": {
+          "base_url": "Base URL",
+          "poll_interval": "Poll interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the add-on at that URL. Make sure the Filament Stock add-on is installed and started."
+    },
+    "abort": {
+      "already_configured": "Filament Stock is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Filament Stock options",
+        "description": "Adjust how often Home Assistant polls the add-on for fresh stock data.",
+        "data": {
+          "poll_interval": "Poll interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "filament_total": {
+        "name": "Stock"
+      },
+      "low_stock_count": {
+        "name": "Filament low stock count"
+      }
+    },
+    "binary_sensor": {
+      "low_stock_alert": {
+        "name": "Filament low stock alert"
+      }
+    }
+  }
+}

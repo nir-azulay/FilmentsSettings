@@ -1,0 +1,6 @@
+#!/usr/bin/execlineb -S0
+# ==============================================================================
+# If the API service dies, shut the whole add-on container down so HA Supervisor
+# restarts it cleanly instead of leaving nginx serving a broken backend.
+# ==============================================================================
+s6-svscanctl -t /var/run/s6/services

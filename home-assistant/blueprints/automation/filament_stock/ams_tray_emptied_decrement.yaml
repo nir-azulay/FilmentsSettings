@@ -1,0 +1,131 @@
+blueprint:
+  name: Filament Stock - AMS tray emptied, decrement stock
+  description: >
+    When a Bambu Lab AMS tray transitions to "Empty" (i.e. you finished a
+    spool and physically removed it), find the Filament Stock color that
+    matches the tray's `filament_id` attribute and `color` attribute, then
+    call filament_stock.use_spool to decrement availability.
+
+    This uses the Bambu HACS integration's per-tray sensor whose state is the
+    loaded material name (e.g. "SUNLU PETG High Speed") and whose attributes
+    include `filament_id` (matches the add-on's filament_id) and
+    `color` (matches the add-on's color_hex).
+  domain: automation
+  source_url: https://github.com/nir-azulay/FilmentsSettings/blob/main/home-assistant/blueprints/automation/filament_stock/ams_tray_emptied_decrement.yaml
+  input:
+    tray_sensor:
+      name: AMS tray sensor
+      description: >
+        The Bambu Lab integration's per-tray sensor, e.g.
+        sensor.h2s_<serial>_ams_1_tray_4. Its state is the material name
+        ("SUNLU PETG High Speed", "Empty", etc.). Create one automation
+        instance per tray you want auto-decrementing.
+      selector:
+        entity:
+          domain: sensor
+    spools_to_use:
+      name: Spools to mark used
+      description: How many spools to subtract when the tray empties.
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 4
+          mode: box
+    notify_target:
+      name: Notify service
+      description: e.g. notify.mobile_app_<phone>. Leave blank to skip notification.
+      default: ""
+      selector:
+        text:
+
+mode: single
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input tray_sensor
+    to: "Empty"
+
+variables:
+  tray_sensor: !input tray_sensor
+  spools_to_use: !input spools_to_use
+  notify_target: !input notify_target
+  # Captured BEFORE the tray went empty -- "from_state" carries the previous
+  # tray contents including filament_id and color attributes.
+  prev_material: "{{ trigger.from_state.state }}"
+  prev_filament_id: "{{ trigger.from_state.attributes.filament_id | default('') }}"
+  prev_color_hex: "{{ trigger.from_state.attributes.color | default('') }}"
+
+condition:
+  # Skip if we had nothing meaningful loaded (already-Empty, Unknown, etc.).
+  - condition: template
+    value_template: >
+      {{ prev_material not in ('Empty','unknown','unavailable','none', None, '') }}
+  - condition: template
+    value_template: "{{ prev_filament_id | length > 0 }}"
+
+action:
+  # Resolve the Filament Stock sensor whose attributes.filament_id matches.
+  # filament_stock exposes one sensor.filament_* per filament with attribute
+  # "filament_id" mirroring the add-on's value.
+  - variables:
+      matched_filament_entity: >
+        {% set ns = namespace(found=none) %}
+        {% for st in states.sensor
+              if st.attributes.get('filament_id')|string == prev_filament_id|string
+              and st.entity_id.startswith('sensor.filament_') %}
+          {% set ns.found = st.entity_id %}
+        {% endfor %}
+        {{ ns.found }}
+      matched_color_name: >
+        {% set ns = namespace(found=none) %}
+        {% if matched_filament_entity %}
+          {% set colors = state_attr(matched_filament_entity, 'colors') or [] %}
+          {% set target = (prev_color_hex|string)[:7]|lower %}
+          {% for c in colors %}
+            {% set ch = (c.hex|default('')|string)[:7]|lower %}
+            {% if ch == target %}
+              {% set ns.found = c.name %}
+            {% endif %}
+          {% endfor %}
+          {# Fallback: single color on this filament -> use it #}
+          {% if ns.found is none and colors|length == 1 %}
+            {% set ns.found = colors[0].name %}
+          {% endif %}
+        {% endif %}
+        {{ ns.found }}
+  - if:
+      - condition: template
+        value_template: "{{ matched_filament_entity and matched_color_name }}"
+    then:
+      - service: filament_stock.use_spool
+        data:
+          filament_entity: "{{ matched_filament_entity }}"
+          color_name: "{{ matched_color_name }}"
+          amount: "{{ spools_to_use }}"
+      - if:
+          - condition: template
+            value_template: "{{ notify_target | length > 0 }}"
+        then:
+          - service: "{{ notify_target }}"
+            data:
+              title: "Spool finished"
+              message: >
+                {{ tray_sensor }} emptied -> decremented {{ spools_to_use }}
+                spool(s) of {{ matched_color_name }} on {{ matched_filament_entity }}.
+                Remaining: {{ states(matched_filament_entity) }} spools.
+    else:
+      # We couldn't auto-match. Notify so you can fix manually.
+      - if:
+          - condition: template
+            value_template: "{{ notify_target | length > 0 }}"
+        then:
+          - service: "{{ notify_target }}"
+            data:
+              title: "Spool finished (no Filament Stock match)"
+              message: >
+                {{ tray_sensor }} emptied; was loaded with "{{ prev_material }}"
+                (filament_id={{ prev_filament_id }}, color={{ prev_color_hex }})
+                but no matching Filament Stock entry was found. Decrement
+                manually from the dashboard.

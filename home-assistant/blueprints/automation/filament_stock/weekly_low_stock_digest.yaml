@@ -1,0 +1,68 @@
+blueprint:
+  name: Filament Stock - Weekly low-stock digest
+  description: >
+    Sends a weekly summary of all currently-firing filament low-stock alerts
+    to a notify service of your choice.
+  domain: automation
+  source_url: https://github.com/nir-azulay/FilmentsSettings/blob/main/home-assistant/blueprints/automation/filament_stock/weekly_low_stock_digest.yaml
+  input:
+    day_of_week:
+      name: Day of week
+      default: sun
+      selector:
+        select:
+          options:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            - sat
+            - sun
+    time_of_day:
+      name: Time of day
+      default: "09:00:00"
+      selector:
+        time:
+    notify_target:
+      name: Notify service (e.g. notify.mobile_app_iphone)
+      selector:
+        text:
+    alert_entity:
+      name: Low stock alert binary sensor
+      description: The integration creates binary_sensor.filament_low_stock_alert.
+      default: binary_sensor.filament_low_stock_alert
+      selector:
+        entity:
+          integration: filament_stock
+          domain: binary_sensor
+
+mode: single
+
+trigger:
+  - platform: time
+    at: !input time_of_day
+
+variables:
+  alert_entity: !input alert_entity
+  notify_target: !input notify_target
+  day_of_week: !input day_of_week
+  alerts: "{{ state_attr(alert_entity, 'alerts') or [] }}"
+
+condition:
+  - condition: template
+    value_template: "{{ now().strftime('%a').lower() == day_of_week }}"
+
+action:
+  - service: "{{ notify_target }}"
+    data:
+      title: "Filament weekly digest"
+      message: >
+        {%- if alerts | length == 0 %}
+        All filaments are above their low-stock threshold. Nothing to restock.
+        {%- else %}
+        {{ alerts | length }} filament color(s) are low:
+        {%- for a in alerts %}
+        - {{ a.brand }} {{ a.material }} / {{ a.color_name }} -- {{ a.current_stock }} available (threshold {{ a.threshold }})
+        {%- endfor %}
+        {%- endif %}

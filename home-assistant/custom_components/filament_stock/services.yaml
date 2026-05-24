@@ -1,0 +1,112 @@
+use_spool:
+  name: Use spool
+  description: Mark N spools of a color as used (increments quantity_used).
+  fields:
+    filament_entity:
+      name: Filament
+      description: A sensor.filament_* entity created by this integration.
+      required: true
+      selector:
+        entity:
+          integration: filament_stock
+          domain: sensor
+    color_name:
+      name: Color name
+      description: Case-insensitive match against the color name shown on the filament card.
+      required: true
+      example: Black
+      selector:
+        text:
+    amount:
+      name: Amount
+      description: Number of spools to mark used.
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+
+mark_arrived:
+  name: Mark arrived
+  description: Flip a color from ordered/out_of_stock to in_stock and optionally set its quantity.
+  fields:
+    filament_entity:
+      name: Filament
+      required: true
+      selector:
+        entity:
+          integration: filament_stock
+          domain: sensor
+    color_name:
+      name: Color name
+      required: true
+      selector:
+        text:
+    quantity:
+      name: Quantity (optional)
+      description: If set, overrides the stored quantity to this value.
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+          mode: box
+
+add_purchase:
+  name: Add purchase
+  description: Add N spools to a color (creates the color if it does not exist).
+  fields:
+    filament_entity:
+      name: Filament
+      required: true
+      selector:
+        entity:
+          integration: filament_stock
+          domain: sensor
+    color_name:
+      name: Color name
+      required: true
+      selector:
+        text:
+    amount:
+      name: Amount
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 50
+          mode: box
+    order_id:
+      name: Order ID (optional)
+      description: e.g. an Amazon order number to record alongside the purchase.
+      required: false
+      selector:
+        text:
+
+set_status:
+  name: Set color status
+  description: Force a color to in_stock, ordered, or out_of_stock.
+  fields:
+    filament_entity:
+      name: Filament
+      required: true
+      selector:
+        entity:
+          integration: filament_stock
+          domain: sensor
+    color_name:
+      name: Color name
+      required: true
+      selector:
+        text:
+    status:
+      name: Status
+      required: true
+      selector:
+        select:
+          options:
+            - in_stock
+            - ordered
+            - out_of_stock

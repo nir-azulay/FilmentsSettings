@@ -1,0 +1,113 @@
+blueprint:
+  name: Filament Stock - Alert when print starts with out-of-stock filament
+  description: >
+    When the Bambu printer transitions to "printing", scan every AMS tray
+    sensor and cross-check each tray's loaded filament (by `filament_id` +
+    `color` attributes) against the Filament Stock inventory. Sends a
+    high-priority notification listing any trays whose filament is currently
+    out of stock OR below its low-stock threshold.
+
+    Trays whose state is "Empty" or whose filament_id has no Filament Stock
+    match are skipped silently (we only alert on stuff we know is low).
+  domain: automation
+  source_url: https://github.com/nir-azulay/FilmentsSettings/blob/main/home-assistant/blueprints/automation/filament_stock/print_start_out_of_stock.yaml
+  input:
+    printer_stage_entity:
+      name: Printer current_stage sensor
+      description: >
+        e.g. sensor.h2s_<serial>_current_stage. The blueprint fires when this
+        sensor's state becomes "printing".
+      selector:
+        entity:
+          domain: sensor
+    tray_sensors:
+      name: AMS tray sensors to check
+      description: >
+        Pick every per-tray sensor on this printer (e.g. all 16 tray sensors
+        across your AMS units). The blueprint reads each tray's filament_id +
+        color attributes and matches them to the Filament Stock inventory.
+      selector:
+        entity:
+          domain: sensor
+          multiple: true
+    notify_target:
+      name: Notify service (e.g. notify.mobile_app_iphone)
+      selector:
+        text:
+    printing_state_value:
+      name: State value that means "printing"
+      default: printing
+      selector:
+        text:
+
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: !input printer_stage_entity
+    to: !input printing_state_value
+
+variables:
+  tray_sensors: !input tray_sensors
+  notify_target: !input notify_target
+  problems: >
+    {%- set ns = namespace(items=[]) %}
+    {%- for tray_eid in tray_sensors %}
+      {%- set material = states(tray_eid) %}
+      {%- if material not in ('Empty','unknown','unavailable','none', None, '') %}
+        {%- set fid = state_attr(tray_eid, 'filament_id') %}
+        {%- set hex_raw = state_attr(tray_eid, 'color') or '' %}
+        {%- set hex_short = (hex_raw|string)[:7]|lower %}
+        {%- if fid %}
+          {#- Find the Filament Stock sensor for this filament_id #}
+          {%- set match_ns = namespace(ent=none) %}
+          {%- for st in states.sensor
+                if st.attributes.get('filament_id')|string == fid|string
+                and st.entity_id.startswith('sensor.filament_') %}
+            {%- set match_ns.ent = st.entity_id %}
+          {%- endfor %}
+          {%- if match_ns.ent %}
+            {%- set colors = state_attr(match_ns.ent, 'colors') or [] %}
+            {%- set color_ns = namespace(c=none) %}
+            {%- for c in colors %}
+              {%- if (c.hex|default('')|string)[:7]|lower == hex_short %}
+                {%- set color_ns.c = c %}
+              {%- endif %}
+            {%- endfor %}
+            {%- if color_ns.c is none and colors|length == 1 %}
+              {%- set color_ns.c = colors[0] %}
+            {%- endif %}
+            {%- if color_ns.c %}
+              {%- set threshold = state_attr(match_ns.ent, 'low_stock_threshold') or 0 %}
+              {%- set avail = color_ns.c.available | default(0) %}
+              {%- set status = color_ns.c.status | default('in_stock') %}
+              {%- if status != 'in_stock' or avail <= threshold %}
+                {%- set label = state_attr(match_ns.ent, 'brand') ~ ' ' ~
+                                state_attr(match_ns.ent, 'material') ~ ' / ' ~
+                                color_ns.c.name ~ ' (status=' ~ status ~
+                                ', available=' ~ avail ~ ', threshold=' ~
+                                threshold ~ ', tray=' ~ tray_eid ~ ')' %}
+                {%- set ns.items = ns.items + [label] %}
+              {%- endif %}
+            {%- endif %}
+          {%- endif %}
+        {%- endif %}
+      {%- endif %}
+    {%- endfor %}
+    {{ ns.items }}
+
+condition:
+  - condition: template
+    value_template: "{{ problems | length > 0 }}"
+
+action:
+  - service: "{{ notify_target }}"
+    data:
+      title: "Print started with low/out-of-stock filament"
+      message: >
+        {{ problems | length }} loaded tray(s) are low or out of stock:
+        {%- for p in problems %}
+        - {{ p }}
+        {%- endfor %}
+      data:
+        priority: high

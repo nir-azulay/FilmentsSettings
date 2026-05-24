@@ -1,0 +1,16 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start nginx in the foreground; it serves the React bundle and reverse-proxies
+# /api/* to the FastAPI process on 127.0.0.1:8000.
+# ==============================================================================
+bashio::log.info "Waiting for API on 127.0.0.1:8000 ..."
+for _ in $(seq 1 30); do
+    if wget -q -O - http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+        bashio::log.info "API is up"
+        break
+    fi
+    sleep 1
+done
+
+bashio::log.info "Starting nginx on :8099 ..."
+exec nginx -c /etc/nginx/nginx.conf -g 'daemon off;'
