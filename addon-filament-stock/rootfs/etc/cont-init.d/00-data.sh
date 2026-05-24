@@ -1,8 +1,10 @@
 #!/usr/bin/with-contenv bashio
 # ==============================================================================
-# Ensure /data is present and writable before either service starts. /data is a
-# persistent volume managed by HA Supervisor and is included in HA snapshots.
+# Ensure /config/data exists and is writable before either service starts.
+# /config maps to \\homeassistant\addon_configs\filament_stock\ via Samba and is
+# included in HA snapshots; /config/data holds filaments.db.
 # ==============================================================================
-mkdir -p /data
-chmod 700 /data
-bashio::log.info "Data directory ready at /data"
+mkdir -p /config/data
+chmod 755 /config
+chmod 700 /config/data
+bashio::log.info "Data directory ready at /config/data"

@@ -1,5 +1,5 @@
 name: Filament Stock
-version: "0.1.0"
+version: "0.1.1"
 slug: filament_stock
 description: 3D printer filament inventory with per-color stock tracking and low-stock alerts. Exposes a panel inside Home Assistant via Ingress.
 url: https://github.com/nir-azulay/FilmentsSettings
@@ -18,6 +18,11 @@ homeassistant_api: false
 auth_api: false
 host_network: false
 ports: {}
-map: []
+# `addon_config` maps the add-on's /config to the user-visible Samba share at
+# \\homeassistant\addon_configs\filament_stock\. The SQLite DB lives in
+# /config/data/filaments.db so users can drop in a seed file or grab a copy
+# without needing SSH. HA snapshots include this directory.
+map:
+  - addon_config:rw
 options: {}
 schema: {}
