@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.5.1 -- recognise AMS 2 Pro / AMS HT / AMS Lite tray sensors
+
+The 0.5.0 regex only matched the classic `sensor.<printer>_ams_<n>_tray_<n>`
+naming. Users with newer AMS hardware (AMS 2 Pro, AMS HT, AMS Lite, AMS HUB)
+saw their additional units silently dropped from the panel because
+ha-bambulab uses a different entity-id slug for each model.
+
+Now matches all known variants:
+
+- `sensor.<printer>_ams_<n>_tray_<n>` -- classic AMS.
+- `sensor.<printer>_ams_pro_<n>_tray_<n>` / `_ams2pro_<n>_tray_<n>` -- AMS 2 Pro.
+- `sensor.<printer>_ams_ht_<n>_tray_<n>` -- AMS HT.
+- `sensor.<printer>_ams_lite_<n>_tray_<n>` -- AMS Lite.
+- `sensor.<printer>_ams_hub_<n>_tray_<n>` -- AMS HUB.
+
+Plus a fallback for future hardware: any `sensor.<...>_tray_<n>` whose
+attributes carry Bambu tray markers (`filament_id`, `tray_info_idx`,
+`tray_uuid`, `tray_type`, `tray_sub_brands`, or `tray_color`) is treated
+as a tray with a best-effort AMS index sniffed from its entity_id. So
+the next AMS model that ships will surface even before we cut a new
+add-on release.
+
+Tray location labels now distinguish hardware:
+
+- Classic AMS: `AMS 1 · Slot 3`.
+- AMS 2 Pro: `AMS 2 Pro #1 · Slot 4` (the `#` makes the unit index visually
+  distinct from the model name).
+- Same for `AMS HT #2 · Slot 1`, `AMS Lite #1 · Slot 2`, etc.
+
+Frontend grouping was updated to group by the rendered unit label (so an
+`AMS #1` and an `AMS 2 Pro #1` on the same printer get separate blocks
+even though they share `ams_idx = 1`).
+
+New diagnostic endpoint: `GET /api/ams/debug` returns every sensor whose
+entity_id mentions `ams`, `tray`, or `spool`, tagged with how (or whether)
+the matcher recognised it -- handy for triaging hardware that still
+slips through.
+
 ## 0.5.0 -- AMS status panel (live view of what's loaded in each tray)
 
 A new **AMS Status** panel at the top of the dashboard shows the current

@@ -28,18 +28,58 @@ router = APIRouter(tags=["ams"])
 _log = logging.getLogger("filament_stock.ams")
 
 # ── Tray entity-id matching ──────────────────────────────────────────────────
-# The ha-bambulab integration exposes per-tray sensors like
-#   sensor.h2s_<serial>_ams_<ams_idx>_tray_<tray_idx>
-# (ams_idx is 1-based per unit; tray_idx is 1-4) and an "external spool" sensor
-#   sensor.h2s_<serial>_external_spool   (sometimes _vt_tray, depending on
-#   integration version)
-# We match both shapes and synthesise a stable (ams_idx, tray_idx) tuple.
+# The ha-bambulab integration uses different entity-id schemes depending on
+# the AMS hardware model:
+#
+#   Classic AMS (the original 4-bay):
+#     sensor.<printer>_ams_<ams_idx>_tray_<tray_idx>
+#
+#   AMS 2 Pro / AMS HT / AMS Lite:
+#     sensor.<printer>_ams_pro_<ams_idx>_tray_<tray_idx>
+#     sensor.<printer>_ams2pro_<ams_idx>_tray_<tray_idx>
+#     sensor.<printer>_ams_ht_<ams_idx>_tray_<tray_idx>
+#     sensor.<printer>_ams_lite_<ams_idx>_tray_<tray_idx>
+#     (variant slug between `_ams` and `_<ams_idx>_tray_` depends on the
+#     ha-bambulab release; the version-agnostic match is "contains _tray_<n>
+#     somewhere and exposes Bambu tray attributes" -- see _FALLBACK_TRAY_RE.)
+#
+#   External spool / virtual tray:
+#     sensor.<printer>_external_spool        (newer)
+#     sensor.<printer>_vt_tray               (older)
+#     sensor.<printer>_external_tray         (some forks)
+#
+# We try the structured matches first so we extract a clean (printer, ams_idx,
+# tray_idx) tuple; if those miss we fall back to entity_id-keyword + Bambu
+# attribute sniffing, so future hardware models work without a code change.
 _AMS_TRAY_RE = re.compile(
-    r"^sensor\.(?P<printer>.+?)_ams_(?P<ams>\d+)_tray_(?P<tray>\d+)$"
+    r"^sensor\.(?P<printer>.+?)"
+    r"_(?P<variant>ams(?:_pro|2pro|_ht|_lite|_hub)?)"
+    r"_(?P<ams>\d+)_tray_(?P<tray>\d+)$"
+)
+# Last-resort matcher: anything that mentions "_tray_<n>" and lives on a sensor
+# whose attributes look like a Bambu tray (we test that in _parse_tray).
+_FALLBACK_TRAY_RE = re.compile(
+    r"^sensor\.(?P<printer>.+?)_tray_(?P<tray>\d+)$"
 )
 _EXTERNAL_TRAY_RE = re.compile(
     r"^sensor\.(?P<printer>.+?)_(?:external_spool|vt_tray|external_tray)$"
 )
+
+# Attribute keys ha-bambulab puts on tray sensors. Presence of any one of
+# these is what tells us a "_tray_<n>" sensor really belongs to Bambu (and
+# not, say, some random custom integration that happens to use the same word).
+_BAMBU_TRAY_ATTRS = (
+    "filament_id",
+    "tray_info_idx",
+    "tray_uuid",
+    "tray_type",
+    "tray_sub_brands",
+    "tray_color",
+)
+
+
+def _looks_like_bambu_tray(attrs: dict[str, Any]) -> bool:
+    return any(k in attrs for k in _BAMBU_TRAY_ATTRS)
 
 # State values that mean "nothing loaded" rather than a real filament name.
 _EMPTY_STATES = {"empty", "unknown", "unavailable", "none", ""}
@@ -80,20 +120,62 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
     """Convert one HA state dict into our tray shape, or None if it isn't a
     Bambu AMS tray entity at all."""
     entity_id = entity.get("entity_id", "")
-    ams_match = _AMS_TRAY_RE.match(entity_id)
-    ext_match = _EXTERNAL_TRAY_RE.match(entity_id) if not ams_match else None
-    if not ams_match and not ext_match:
-        return None
-
     attrs = entity.get("attributes") or {}
     state = entity.get("state")
+
+    ams_match = _AMS_TRAY_RE.match(entity_id)
+    ext_match = _EXTERNAL_TRAY_RE.match(entity_id) if not ams_match else None
+    fallback_match = (
+        _FALLBACK_TRAY_RE.match(entity_id)
+        if not ams_match and not ext_match and _looks_like_bambu_tray(attrs)
+        else None
+    )
+    if not ams_match and not ext_match and not fallback_match:
+        return None
+
     loaded = _is_loaded(state)
 
     if ams_match:
         printer = ams_match.group("printer")
+        variant = ams_match.group("variant")  # "ams" | "ams_pro" | "ams2pro" | ...
         ams_idx: int | None = int(ams_match.group("ams"))
         tray_idx = int(ams_match.group("tray"))
-        location_label = f"AMS {ams_idx} · Slot {tray_idx}"
+        # Pretty-print the variant slug for the UI. "AMS" gets the
+        # `AMS <idx>` form (the index is the unit number), the named
+        # variants get `AMS 2 Pro #<idx>` to make the index visually
+        # distinct from the model name.
+        if variant == "ams":
+            variant_label = "AMS"
+            unit_suffix = f" {ams_idx}"
+        else:
+            variant_label = {
+                "ams_pro": "AMS 2 Pro",
+                "ams2pro": "AMS 2 Pro",
+                "ams_ht": "AMS HT",
+                "ams_lite": "AMS Lite",
+                "ams_hub": "AMS HUB",
+            }.get(variant, "AMS")
+            unit_suffix = f" #{ams_idx}"
+        location_label = f"{variant_label}{unit_suffix} · Slot {tray_idx}"
+        kind = "ams"
+    elif fallback_match:
+        # We have a "_tray_<n>" sensor with Bambu attributes but its entity_id
+        # doesn't match any known _ams_<n>_ scheme. Best we can do is treat the
+        # whole prefix as the printer/AMS identifier and surface the raw
+        # entity_id so the user can tell us if our regex still misses
+        # something on their hardware.
+        printer = fallback_match.group("printer")
+        ams_idx = None
+        tray_idx = int(fallback_match.group("tray"))
+        # Try to lift an AMS index out of the entity_id, e.g.
+        # "h2s_xxx_ams_pro_2_tray_3" -> 2. Best-effort only.
+        m = re.search(r"_(?:ams|ams_pro|ams2pro|ams_ht|ams_lite|ams_hub)_(\d+)_", entity_id)
+        if m:
+            ams_idx = int(m.group(1))
+        location_label = (
+            f"AMS {ams_idx} · Slot {tray_idx}" if ams_idx is not None
+            else f"Tray {tray_idx}"
+        )
         kind = "ams"
     else:
         assert ext_match is not None
@@ -287,3 +369,90 @@ async def get_ams_trays(db: Session = Depends(get_db)):
         )
 
     return {"available": True, "trays": trays}
+
+
+@router.get("/ams/debug")
+async def debug_ams_candidates():
+    """Diagnostic endpoint: return every sensor whose entity_id mentions
+    'ams' or 'tray', tagged with how (or whether) our matcher recognised it.
+
+    Use this when an AMS hardware variant doesn't show up on the main panel
+    so we can extend the regex / attribute list. Read-only; safe to call any
+    time.
+
+    Response shape::
+
+        {
+          "ok": true,
+          "matched_count": 4,
+          "unmatched_count": 1,
+          "candidates": [
+            {
+              "entity_id": "sensor.h2s_xxx_ams_pro_2_tray_3",
+              "state": "Bambu PLA Matte",
+              "attribute_keys": ["filament_id", "tray_type", ...],
+              "matched_by": "ams_regex"  // or "fallback_regex" / "external_regex" / null
+            },
+            ...
+          ]
+        }
+    """
+    try:
+        states = await get_all_states()
+    except HAClientError as exc:
+        _log.warning("AMS debug unavailable: %s", exc)
+        return {"ok": False, "error": str(exc), "candidates": []}
+
+    out: list[dict[str, Any]] = []
+    matched_count = 0
+    unmatched_count = 0
+    for st in states:
+        entity_id = st.get("entity_id", "")
+        if not entity_id.startswith("sensor."):
+            continue
+        if "ams" not in entity_id and "tray" not in entity_id and "spool" not in entity_id:
+            continue
+        attrs = st.get("attributes") or {}
+        matched_by: str | None = None
+        if _AMS_TRAY_RE.match(entity_id):
+            matched_by = "ams_regex"
+        elif _EXTERNAL_TRAY_RE.match(entity_id):
+            matched_by = "external_regex"
+        elif _FALLBACK_TRAY_RE.match(entity_id) and _looks_like_bambu_tray(attrs):
+            matched_by = "fallback_regex"
+        if matched_by:
+            matched_count += 1
+        else:
+            unmatched_count += 1
+        out.append(
+            {
+                "entity_id": entity_id,
+                "state": st.get("state"),
+                "attribute_keys": sorted(attrs.keys()),
+                # A small subset of attribute values that are useful for
+                # disambiguation -- never include the whole attribute blob
+                # since some entities carry large arrays.
+                "useful_attrs": {
+                    k: attrs.get(k)
+                    for k in (
+                        "filament_id",
+                        "tray_info_idx",
+                        "tray_type",
+                        "tray_sub_brands",
+                        "color",
+                        "tray_color",
+                        "remain",
+                    )
+                    if k in attrs
+                },
+                "matched_by": matched_by,
+            }
+        )
+
+    out.sort(key=lambda e: (e["matched_by"] is None, e["entity_id"]))
+    return {
+        "ok": True,
+        "matched_count": matched_count,
+        "unmatched_count": unmatched_count,
+        "candidates": out,
+    }
