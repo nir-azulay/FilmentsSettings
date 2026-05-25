@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.2 -- color name is actually visible
+
+Fixes the color-row layout regression introduced in 0.4.1: applying
+`display: inline-flex` inline on the `.color-stock-row__name` span cancelled
+its `flex: 1 1 0` from the stylesheet, collapsing the span to zero width on
+narrow cards so the color-name text and the new swatch chip both clipped to
+nothing. On mobile / panel widths the row looked like just `[spool icon]
+[Spool pill] [Refill pill]` with no name at all.
+
+The swatch chip is gone (it was the cause of the collapse). The color name
+now renders as a bold 15px span with a high-contrast white text-shadow so it
+stays legible over both light and dark tinted row backgrounds, with
+`min-width: 80px` / `flex: 1 1 80px` so it never fully collapses again.
+Hovering the name still shows a `"<Color name> • #hex"` tooltip.
+
+Frontend-only change; no backend, database, or API impact.
+
 ## 0.4.1 -- color swatch chip on color rows
 
 Each color row in the filament card now shows a small flat color-swatch chip
