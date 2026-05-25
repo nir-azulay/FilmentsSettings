@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Connect to the Filament Stock add-on",
-        "description": "The integration polls the add-on's REST API to expose each filament as a sensor and to provide use/restock services. If you installed the add-on with its default slug on Home Assistant OS, the default base URL should work as-is.",
+        "description": "Leave the default URL to auto-discover the add-on on the HA docker network (the integration will try several known hostnames). Override only if you run the add-on elsewhere (e.g. on a separate host).",
         "data": {
           "base_url": "Base URL",
           "poll_interval": "Poll interval (seconds)"
