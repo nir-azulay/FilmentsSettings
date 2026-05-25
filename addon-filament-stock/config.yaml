@@ -1,5 +1,5 @@
 name: Filament Stock
-version: "0.7.2"
+version: "0.7.3"
 slug: filament_stock
 description: 3D printer filament inventory with per-color stock tracking and low-stock alerts. Exposes a panel inside Home Assistant via Ingress.
 url: https://github.com/nir-azulay/FilmentsSettings
@@ -10,7 +10,7 @@ arch:
   - aarch64
 init: false
 boot: auto
-panel_icon: mdi:printer-3d
+panel_icon: mdi:printer-3d-nozzle
 panel_title: Filaments
 ingress: true
 ingress_port: 8099
