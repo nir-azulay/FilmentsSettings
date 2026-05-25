@@ -9,9 +9,9 @@ const BRAND_BG: Record<string, string> = {
   CC3D: "#2a2a2c",
 };
 
-/** Convert a site-absolute logo path (e.g. "/logos/logo-sunlu.png" stored in
- * the DB from the QNAP days) into a relative path so it resolves correctly
- * behind HA Ingress, where the app is mounted under /api/hassio_ingress/<TOKEN>/. */
+/** Convert a site-absolute logo path (e.g. "/logos/logo-sunlu.png") into a
+ * relative path so it resolves correctly behind HA Ingress, where the app is
+ * mounted under /api/hassio_ingress/<TOKEN>/. */
 export function resolveLogoUrl(url: string | undefined): string | undefined {
   if (!url) return url;
   if (/^[a-z]+:\/\//i.test(url) || url.startsWith("//") || url.startsWith("data:")) return url;

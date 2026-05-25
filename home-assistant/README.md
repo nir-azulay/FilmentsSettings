@@ -57,10 +57,10 @@ The add-on stores SQLite at `/config/data/filaments.db` inside its container. On
 
 To inspect or back up the DB: mount that Samba path from your Mac/PC and copy the file.
 
-## Migrating from the standalone QNAP install
+## Seeding the database from a backup
 
 1. Stop the HA add-on.
-2. Copy your existing `filaments.db` (from `stock-manager/backend/data/filaments.db` on QNAP, or wherever you keep it) into `\\homeassistant\addon_configs\<hash>_filament_stock\data\filaments.db`, overwriting the empty seed file.
+2. Drop your existing `filaments.db` into `\\homeassistant\addon_configs\<hash>_filament_stock\data\filaments.db`, overwriting the empty seed file.
 3. Start the HA add-on. Schema migrations in [`../addon-filament-stock/app/db_schema.py`](../addon-filament-stock/app/db_schema.py) bring older databases forward on first start.
 4. Confirm row counts in **Log tab -> `DB ready:` line**.
 

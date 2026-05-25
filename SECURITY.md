@@ -8,7 +8,6 @@ This is a small personal project; only the latest release is supported. Please u
 |---|---|
 | `addon-filament-stock/` -- latest tag / `main` | Yes |
 | `home-assistant/custom_components/filament_stock/` -- latest tag / `main` | Yes |
-| `stock-manager/` -- latest tag / `main` | Yes |
 | Older versions | No |
 
 ## Reporting a Vulnerability
@@ -23,7 +22,7 @@ I will acknowledge receipt within a few days, work with you on a fix on a privat
 ## Scope
 
 In-scope:
-- The FastAPI backend in [`addon-filament-stock/app/`](addon-filament-stock/app/) and [`stock-manager/backend/app/`](stock-manager/backend/app/)
+- The FastAPI backend in [`addon-filament-stock/app/`](addon-filament-stock/app/)
 - The HA custom integration in [`home-assistant/custom_components/filament_stock/`](home-assistant/custom_components/filament_stock/)
 - The HA add-on container surface (Dockerfile, nginx config, s6 services)
 

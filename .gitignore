@@ -11,7 +11,7 @@ __pycache__/
 venv/
 env/
 
-# --- Node / Vite (handled per-project under stock-manager/, but defense in depth) ---
+# --- Node / Vite ---
 node_modules/
 dist/
 .vite/
@@ -49,7 +49,3 @@ desktop.ini
 *.db-journal
 *.db-shm
 *.db-wal
-# stock-manager keeps its DB under backend/data/, which we DO commit a structure
-# for but never the file itself
-stock-manager/backend/data/*.db
-stock-manager/deploy/backend/data/*.db

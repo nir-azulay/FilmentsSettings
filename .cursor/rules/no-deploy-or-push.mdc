@@ -1,24 +1,18 @@
 ---
-description: Do not deploy to QNAP or push to git unless the user explicitly asks
+description: Do not push to git unless the user explicitly asks
 alwaysApply: true
 ---
 
-# Deploy and Git — User Must Ask First
+# Git — User Must Ask First
 
-Do **not** deploy to QNAP or push to GitHub unless the user **explicitly** requests it in the current message (e.g. “deploy to QNAP”, “push to git”, “commit and push”).
-
-## QNAP deploy (off by default)
-
-- Do not rsync/scp to `192.168.10.11`, rebuild Docker images, or `docker compose up` on the NAS after routine code changes.
-- Local edits and local `npm run build` / tests are fine when useful to verify work.
-- When the user asks to deploy, use the existing path: `/share/Container/FilmentsManagement/` and the project’s frontend/backend layout.
+Do **not** push to GitHub or create commits unless the user **explicitly** requests it in the current message (e.g. "push to git", "commit and push", "open a PR").
 
 ## Git (off by default)
 
 - Do not `git commit`, `git push`, or open PRs unless the user explicitly asks.
 - Showing `git status` / diff to explain changes is fine; staging and committing require explicit request.
-- Follow the user’s git safety rules when they do ask for commits or pushes.
+- Follow the user's git safety rules when they do ask for commits or pushes.
 
 ## After completing work
 
-- Summarize what changed locally and remind the user they can ask to deploy or push when ready — do not do either automatically.
+- Summarize what changed locally and remind the user they can ask to push when ready — do not push automatically.

@@ -35,7 +35,6 @@ TIMESTAMP = str(int(time.time()))
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
 DEPLOY_DIR = REPO_ROOT / "DeployPack"
-STOCK_DIR = REPO_ROOT / "stock-manager" / "deploy" / "backend" / "profiles" / "SUNLU" / "PETG-HS"
 TEMPLATE_PATH = SCRIPT_DIR / "baseline_full_filament.json"
 
 ALL_H2S_NOZZLES = [
@@ -358,9 +357,8 @@ def main() -> None:
         generate_filament(fil, template)
 
     DEPLOY_DIR.mkdir(parents=True, exist_ok=True)
-    STOCK_DIR.mkdir(parents=True, exist_ok=True)
-    copy_to([DEPLOY_DIR, STOCK_DIR])
-    print(f"Copied to {DEPLOY_DIR} and {STOCK_DIR}")
+    copy_to([DEPLOY_DIR])
+    print(f"Copied to {DEPLOY_DIR}")
 
 
 if __name__ == "__main__":

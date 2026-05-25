@@ -178,7 +178,7 @@ Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat fold
 ### Current DeployPack contents (this repo)
 
 - **SUNLU PETG HS only:** 4 base + 4 base `.info` + 4 user `.preset` pairs + 1 Calibrated pair + 4 process pairs = **26** profile files (`.json` / `.info`), plus `deploy.ps1`.
-- Regenerate from repo root: `python3 SUNLU/PETG-HS/gen_sunlu_petg_hs.py` (writes `SUNLU/PETG-HS/`, `DeployPack/`, and `stock-manager/deploy/backend/profiles/SUNLU/PETG-HS/`).
+- Regenerate from repo root: `python3 SUNLU/PETG-HS/gen_sunlu_petg_hs.py` (writes `SUNLU/PETG-HS/` and `DeployPack/`).
 
 ## 7. Project Folder Structure (this repo)
 
@@ -196,7 +196,7 @@ Copy all new files to `c:\GitHub\filments settings\DeployPack\` as a **flat fold
 │       ├── SUNLU PETG HS @Bambu Lab H2S 0.{2,4,6,8} nozzle.preset.{json,info}
 │       ├── SUNLU PETG HS Calibrated.{json,info}
 │       └── SUNLU PETG HS 0.{10,20,30,40}mm @H2S … nozzle.{json,info}  (process)
-└── stock-manager/deploy/backend/profiles/SUNLU/PETG-HS/   (Docker copy of same flat files)
+└── addon-filament-stock/, home-assistant/   (HA add-on + integration, unrelated to BambuStudio profiles)
 ```
 
 ## 8. JSON Formatting Rules
