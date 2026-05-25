@@ -1,11 +1,55 @@
-# Python bytecode (from local syntax checks against addon-filament-stock/app/*)
+# --- Python ---
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
 
-# macOS Finder cruft
+# --- Node / Vite (handled per-project under stock-manager/, but defense in depth) ---
+node_modules/
+dist/
+.vite/
+.vite-temp/
+
+# --- macOS / Windows / Linux file managers ---
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
 
-# Editor / OS scratch
+# --- Editors / IDEs ---
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 *.swp
 *.swo
+*~
+
+# --- Local-only artifacts ---
+*.log
+*.bak
+*.tmp
+*.orig
+
+# --- Project-specific ---
+# SQLite DBs are user data, never commit
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+# stock-manager keeps its DB under backend/data/, which we DO commit a structure
+# for but never the file itself
+stock-manager/backend/data/*.db
+stock-manager/deploy/backend/data/*.db
