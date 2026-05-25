@@ -13,6 +13,7 @@ SEED_FILAMENTS = [
             "brand": "Jayo",
             "material": "PLA Pro Cold White",
             "filament_type": "PLA",
+            "brand_logo_url": "/logos/logo-jayo.png",
         },
         "colors": [
             {"color_name": "Cold White", "color_hex": "#F5F5F0", "quantity": 2},

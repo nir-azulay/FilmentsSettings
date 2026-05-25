@@ -4,6 +4,7 @@ const BRAND_BG: Record<string, string> = {
   SUNLU: "#00a8a8",
   Inslogic: "#ffffff",
   Isanmate: "#ffffff",
+  Jayo: "#ffffff",
   "Bambu Lab": "#ffffff",
   Bambu: "#ffffff",
   GolGeo: "#f5e400",
