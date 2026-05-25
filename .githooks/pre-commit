@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Repo-managed pre-commit hook.
+#
+# Auto-keeps addon-filament-stock/profiles/ in sync with the canonical
+# BambuStudio profile sources in SUNLU/ and Inslogic/. Whenever a commit
+# touches a .json or .info file under either of those folders, this hook
+# re-runs sync_profiles.sh and stages the resulting changes alongside the
+# original edit -- so the add-on image always carries the same profile set
+# you committed.
+#
+# Install once per clone:   ./scripts/install-git-hooks.sh
+# (sets git config core.hooksPath = .githooks)
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Only act when staged changes touch profile sources.
+if ! git diff --cached --name-only -z \
+        | tr '\0' '\n' \
+        | grep -E '^(SUNLU/|Inslogic/).*\.(json|info)$' >/dev/null; then
+    exit 0
+fi
+
+if [[ ! -x addon-filament-stock/sync_profiles.sh ]]; then
+    echo "pre-commit: addon-filament-stock/sync_profiles.sh missing or not executable" >&2
+    exit 1
+fi
+
+echo "pre-commit: syncing addon-filament-stock/profiles/ from SUNLU/ + Inslogic/..."
+if ! ./addon-filament-stock/sync_profiles.sh >/dev/null; then
+    echo "pre-commit: sync_profiles.sh failed; aborting commit." >&2
+    exit 1
+fi
+
+# Stage whatever changed. We always stage the whole profiles/ directory so
+# additions, deletions, and modifications all flow through to the commit.
+git add -A addon-filament-stock/profiles/
+
+# Useful summary so the commit message author can sanity-check.
+changed=$(git diff --cached --name-only -- addon-filament-stock/profiles/ | wc -l | tr -d ' ')
+if [[ "$changed" -gt 0 ]]; then
+    echo "pre-commit: staged $changed file(s) in addon-filament-stock/profiles/"
+fi

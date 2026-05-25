@@ -182,3 +182,40 @@ export async function importProfiles(): Promise<{ imported: number; skipped: num
   const res = await fetch(`${BASE}/import`, { method: "POST" });
   return res.json();
 }
+
+// ─── BambuStudio profile bundle ────────────────────────────────────────────
+// Each value in `summary` is a 1- or 2-element string array (Standard
+// extruder, optional High Flow extruder) as stored in Bambu profile JSON.
+
+export interface ProfileNozzleEntry {
+  nozzle_mm: string;       // "0.2" | "0.4" | "0.6" | "0.8"
+  layer_height_mm: string; // "0.10" | "0.20" | "0.30" | "0.40"
+  file_name: string;
+  info_file: string | null;
+}
+
+export interface ProfileMetadata {
+  available: boolean;
+  product: string;
+  files: string[];
+  base_file?: string | null;
+  base_info?: string | null;
+  preset_file?: string | null;
+  preset_info?: string | null;
+  nozzles: ProfileNozzleEntry[];
+  summary: Record<string, string[] | string | null>;
+}
+
+export async function fetchProfileMetadata(filamentId: number): Promise<ProfileMetadata> {
+  const res = await fetch(`${BASE}/filaments/${filamentId}/profile`);
+  return res.json();
+}
+
+/** Browser-friendly download URLs (resolved against document.baseURI so they
+ *  work behind HA Ingress just like the API calls). */
+export function profileFileUrl(filamentId: number, fileName: string): string {
+  return `${BASE}/filaments/${filamentId}/profile/file/${encodeURIComponent(fileName)}`;
+}
+export function profileZipUrl(filamentId: number): string {
+  return `${BASE}/filaments/${filamentId}/profile/zip`;
+}

@@ -7,7 +7,7 @@ from sqlalchemy import text
 
 from .database import Base, engine, DATA_DIR, DATABASE_URL
 from .db_schema import apply_sqlite_migrations
-from .routers import alert_ignores, filaments, maintenance, stock
+from .routers import alert_ignores, filaments, maintenance, profiles, stock
 
 _log = logging.getLogger("filament_stock")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -45,6 +45,7 @@ app.include_router(filaments.router, prefix="/api")
 app.include_router(stock.router, prefix="/api")
 app.include_router(maintenance.router, prefix="/api")
 app.include_router(alert_ignores.router, prefix="/api")
+app.include_router(profiles.router, prefix="/api")
 
 
 @app.get("/api/health")

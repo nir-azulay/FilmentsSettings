@@ -9,7 +9,7 @@
 
 ## Filament Stock for Home Assistant
 
-Inventory dashboard, low-stock alerts, and full Home Assistant integration so your AMS trays auto-decrement spools, your push notifications fire when a print starts on a depleted color, and your weekly digest shows what to restock.
+Inventory dashboard, low-stock alerts, and full Home Assistant integration so your AMS trays auto-decrement spools, your push notifications fire when a print starts on a depleted color, and your weekly digest shows what to restock. Tracks **spools and refills independently per color** -- the same color can hold both packaging types side by side.
 
 **[Setup guide -> home-assistant/README.md](home-assistant/README.md)**
 
@@ -23,6 +23,23 @@ Components:
 Per-filament folders contain Bambu Studio user profile JSONs, process presets, and the manufacturer TDS PDF. A Python generator script drives them so changes propagate consistently across all four nozzle sizes (0.2 / 0.4 / 0.6 / 0.8mm).
 
 The full workflow for adding a new filament is documented in [`.cursor/rules/add-filament.mdc`](.cursor/rules/add-filament.mdc).
+
+## First-time setup (contributors / maintainers)
+
+If you're going to edit profile JSONs in `SUNLU/` or `Inslogic/`, install the
+repo's git hooks once per clone so the add-on's bundled profile mirror stays in
+sync automatically:
+
+```bash
+./scripts/install-git-hooks.sh
+```
+
+That sets `core.hooksPath` to `.githooks/` for this repo (no global git
+config touched). The `pre-commit` hook re-runs `addon-filament-stock/sync_profiles.sh`
+whenever a commit modifies a profile source file, and stages the resulting
+`addon-filament-stock/profiles/` changes alongside your edits. See
+[`addon-filament-stock/README.md`](addon-filament-stock/README.md#keeping-the-bundle-in-sync)
+for details.
 
 ## Author
 

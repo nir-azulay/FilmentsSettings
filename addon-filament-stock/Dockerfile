@@ -39,6 +39,10 @@ RUN pip3 install --no-cache-dir --break-system-packages -r /app/requirements.txt
 
 COPY app/ /app/app/
 
+# BambuStudio profile bundles -- served by the in-app downloader. Refresh
+# from the canonical SUNLU/ and Inslogic/ folders with sync_profiles.sh.
+COPY profiles/ /app/profiles/
+
 COPY --from=frontend /build/dist/ /usr/share/nginx/html/
 
 COPY rootfs/ /

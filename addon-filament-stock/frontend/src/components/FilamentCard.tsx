@@ -12,6 +12,7 @@ import {
 } from "../stockUtils";
 import BrandLogo from "./BrandLogo";
 import DeleteColorModal from "./DeleteColorModal";
+import FilamentProfilePanel from "./FilamentProfilePanel";
 import { SpoolIcon, SpoolStack } from "./SpoolIcon";
 import TrashIconButton from "./TrashIconButton";
 
@@ -37,6 +38,7 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
   const orderedQty  = filamentOrderedQty(filament.colors);
   const isLow       = filamentHasLowStock(filament, staplePools, ignoredStaples);
   const matColor    = getMaterialColor(filament.filament_type);
+  const [showProfile, setShowProfile] = useState(false);
 
   return (
     <div className="ha-card" style={cardWrap}>
@@ -114,6 +116,17 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
           </svg>
           History & Log
         </button>
+        <button
+          onClick={() => setShowProfile((s) => !s)}
+          style={profileBtn}
+          title="View filament configuration and download BambuStudio profile"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          {showProfile ? "Hide profile" : "Profile"}
+        </button>
         {filament.amazon_url && (
           <a href={filament.amazon_url} target="_blank" rel="noopener" style={buyBtn}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -132,6 +145,8 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
           Delete
         </button>
       </div>
+
+      {showProfile && <FilamentProfilePanel filament={filament} />}
     </div>
   );
 }
@@ -647,6 +662,12 @@ const buyBtn: React.CSSProperties = {
   background: "rgba(255,152,0,0.12)", color: "var(--ha-warning)",
   border: "none", borderRadius: 4, fontSize: 13, fontWeight: 500,
   textDecoration: "none", cursor: "pointer",
+};
+const profileBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 5, padding: "7px 12px",
+  background: "rgba(0,0,0,0.04)", color: "var(--ha-primary-text)",
+  border: "1px solid var(--ha-divider)", borderRadius: 4,
+  fontSize: 13, fontWeight: 500, cursor: "pointer",
 };
 const receiveBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,

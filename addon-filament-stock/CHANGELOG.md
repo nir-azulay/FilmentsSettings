@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.4.0 -- in-app filament configuration & BambuStudio profile downloader
+
+Each filament card now has a **Profile** button that expands an inline panel
+showing:
+
+- The stock-tracking metadata you've configured (brand, material, density,
+  nozzle/bed temps, low-stock threshold, Amazon URL).
+- The BambuStudio profile bundle that ships with the add-on for this filament,
+  if there is one: the base filament profile + user preset + per-nozzle process
+  presets, summarised with the key fields (nozzle/bed temp, max volumetric
+  speed, retraction, Tg) split out for Standard and High Flow extruders.
+- One-click downloads:
+  - **Per file** (single JSON per nozzle size, plus the base/preset files).
+  - **Full bundle** as a `.zip` ready to drop into BambuStudio's
+    `user/<id>/{filament,filament/base,process}` folders.
+
+Bundled profiles cover the filaments tracked in the maintainer's repo (SUNLU
+PETG/PETG HS/PLA/PA E-PA/TPU 95A, Inslogic ASA/Matte PLA/Nebulux PLA/PETG
+Pro/PLA Pro/Silk PLA/TPU 95A) targeting the **Bambu Lab H2S**. Filaments
+without a bundled profile show a friendly empty state pointing at the
+`.cursor/rules/add-filament.mdc` workflow.
+
+New backend pieces:
+
+- `app/profile_bundle.py` -- on-disk profile lookup with exact-product matching
+  (so `SUNLU PETG` and `SUNLU PETG HS` stay disambiguated despite the shared
+  prefix), with path-traversal hardening on file downloads.
+- `app/routers/profiles.py` -- `GET /api/filaments/{id}/profile` (metadata),
+  `GET /api/filaments/{id}/profile/file/{name}` (single file), and
+  `GET /api/filaments/{id}/profile/zip` (full bundle).
+- Profile files live at `/app/profiles/` inside the image, baked in from
+  `addon-filament-stock/profiles/` at build time. Refresh that mirror from the
+  canonical `SUNLU/` and `Inslogic/` source folders with
+  [`sync_profiles.sh`](sync_profiles.sh) before re-building.
+
 ## 0.3.0 -- per-color spool/refill counters
 
 `packaging_type` is no longer a filament-level setting. Each color row now
@@ -41,7 +76,7 @@ What you get:
 - FastAPI + React + SQLite, packaged as a Home Assistant Supervisor add-on, served exclusively via HA Ingress (no exposed ports).
 - React UI compiled to a static bundle at build time and shipped by nginx.
 - SQLite database at `/config/data/filaments.db`, visible to the Samba share at `\\homeassistant\addon_configs\<hash>_filament_stock\data\`, included in HA snapshots automatically.
-- Schema migrations in `app/db_schema.py` upgrade older databases on first start (including ones imported from the standalone Docker version of the app).
+- Schema migrations in `app/db_schema.py` upgrade older databases on first start.
 - Startup log line `DB ready: DATABASE_URL=... file_size=... filaments=... color_stocks=...` so it's obvious which file got opened and how many rows it has.
 - Multi-arch images: `amd64`, `aarch64`.
 - s6-overlay supervises both FastAPI and nginx; either dying restarts the container.
