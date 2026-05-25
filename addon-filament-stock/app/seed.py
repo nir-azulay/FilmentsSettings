@@ -38,6 +38,16 @@ SEED_FILAMENTS = [
             {"color_name": "White", "color_hex": "#FFFFFF", "quantity": 1},
         ],
     },
+    {
+        "filament": {
+            "brand": "Generic",
+            "material": "ABS",
+            "filament_type": "ABS",
+        },
+        "colors": [
+            {"color_name": "Black", "color_hex": "#1A1A1A", "quantity": 3},
+        ],
+    },
 ]
 
 
