@@ -11,6 +11,7 @@ import {
 } from "./api";
 import AlertBanner from "./components/AlertBanner";
 import AmsPanel from "./components/AmsPanel";
+import CreateFilamentDialog from "./components/CreateFilamentDialog";
 import Dashboard from "./components/Dashboard";
 import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
 import { SpoolIcon } from "./components/SpoolIcon";
@@ -35,6 +36,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const reload = useCallback(async () => {
     const [f, a, ign] = await Promise.all([fetchFilaments(), fetchAlerts(), fetchAlertIgnores()]);
@@ -104,6 +106,12 @@ export default function App() {
               {importMsg.text}
             </span>
           )}
+          <button onClick={() => setShowCreateDialog(true)} style={addFilamentBtn}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Filament
+          </button>
           <button onClick={handleImport} disabled={importing} style={syncBtn}>
             {importing ? (
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -143,6 +151,13 @@ export default function App() {
 
         <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
       </main>
+
+      {showCreateDialog && (
+        <CreateFilamentDialog
+          onClose={() => setShowCreateDialog(false)}
+          onCreated={reload}
+        />
+      )}
     </div>
   );
 }
@@ -204,6 +219,17 @@ const loaderRing: React.CSSProperties = {
 };
 const toolbarTitle: React.CSSProperties = {
   fontSize: 18, fontWeight: 400, color: "var(--ha-primary-text)", letterSpacing: 0,
+};
+const addFilamentBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 6,
+  padding: "8px 16px",
+  background: "none",
+  color: "var(--ha-primary-color)",
+  border: "1px solid var(--ha-primary-color)",
+  borderRadius: "var(--ha-btn-radius)",
+  fontSize: 13, fontWeight: 500,
+  cursor: "pointer",
+  letterSpacing: "0.01em",
 };
 const syncBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,

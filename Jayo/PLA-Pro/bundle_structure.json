@@ -1,0 +1,17 @@
+{
+    "bundle_id": "2189385007_Jayo PLA Pro Cold White_1779739384",
+    "bundle_type": "filament config bundle",
+    "filament_name": "Jayo PLA Pro Cold White",
+    "filament_vendor": [
+        {
+            "filament_path": [
+                "Jayo/Jayo PLA Pro Cold White @Bambu Lab H2S 0.2 nozzle.json",
+                "Jayo/Jayo PLA Pro Cold White @Bambu Lab H2S 0.4 nozzle.json",
+                "Jayo/Jayo PLA Pro Cold White @Bambu Lab H2S 0.6 nozzle.json",
+                "Jayo/Jayo PLA Pro Cold White @Bambu Lab H2S 0.8 nozzle.json"
+            ],
+            "vendor": "Jayo"
+        }
+    ],
+    "version": "02.06.01.50"
+}

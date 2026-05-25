@@ -91,6 +91,10 @@ export async function createFilament(data: Partial<Filament>): Promise<Filament>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
   return res.json();
 }
 

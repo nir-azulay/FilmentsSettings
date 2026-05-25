@@ -310,8 +310,8 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
 
         {/* ══ IN STOCK ══ Two pills (spool / refill), each with Add + Use */}
         {status === "in_stock" && (
-          <>
-            <div style={pillRow}>
+          <div style={pillRow}>
+            <div style={pillStack}>
               <PackagingPill
                 kind="spool"
                 remaining={remainingSpool}
@@ -334,9 +334,9 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
                 onUse={handleUseRefill}
                 disabled={saving}
               />
-              <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
             </div>
-          </>
+            <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
+          </div>
         )}
 
         {/* ══ ORDERED layout ══ */}
@@ -615,8 +615,11 @@ const stepBtn: React.CSSProperties = {
   fontSize: 14, cursor: "pointer", lineHeight: 1,
 };
 const pillRow: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
-  marginLeft: "auto",
+  display: "flex", alignItems: "center", gap: 6,
+  marginLeft: "auto", flexShrink: 0,
+};
+const pillStack: React.CSSProperties = {
+  display: "flex", flexDirection: "column", gap: 4,
 };
 const packagingPillWrap: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,

@@ -8,6 +8,7 @@ from sqlalchemy import text
 from .database import Base, engine, DATA_DIR, DATABASE_URL
 from .db_schema import apply_sqlite_migrations
 from .routers import alert_ignores, ams, assignments, filaments, maintenance, profiles, stock
+from .seed import seed_filaments
 
 _log = logging.getLogger("filament_stock")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -15,6 +16,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 os.makedirs(DATA_DIR, exist_ok=True)
 Base.metadata.create_all(bind=engine)
 apply_sqlite_migrations()
+seed_filaments()
 
 # Startup diagnostic so we always see which DB file the API is actually using
 # and how many rows it has -- saves a lot of "why is it empty?" debugging.
