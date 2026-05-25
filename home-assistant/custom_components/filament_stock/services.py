@@ -36,8 +36,13 @@ ATTR_AMOUNT = "amount"
 ATTR_QUANTITY = "quantity"
 ATTR_ORDER_ID = "order_id"
 ATTR_STATUS = "status"
+ATTR_PACKAGING = "packaging"
 
 _STATUS_VALUES = [STATUS_IN_STOCK, STATUS_ORDERED, STATUS_OUT_OF_STOCK]
+_PACKAGING_SPOOL = "spool"
+_PACKAGING_REFILL = "refill"
+_PACKAGING_AUTO = "auto"  # decrement spool first, then refill
+_PACKAGING_VALUES = [_PACKAGING_SPOOL, _PACKAGING_REFILL, _PACKAGING_AUTO]
 
 _SCHEMA_TARGET = {
     vol.Required(ATTR_FILAMENT_ENTITY): cv.entity_id,
@@ -45,12 +50,22 @@ _SCHEMA_TARGET = {
 }
 
 USE_SPOOL_SCHEMA = vol.Schema(
-    {**_SCHEMA_TARGET, vol.Optional(ATTR_AMOUNT, default=1): vol.All(int, vol.Range(min=1))}
+    {
+        **_SCHEMA_TARGET,
+        vol.Optional(ATTR_AMOUNT, default=1): vol.All(int, vol.Range(min=1)),
+        # auto = decrement whichever counter has stock (spool first). spool/refill
+        # forces a specific counter. Existing blueprints that omit this default to
+        # "auto" so old refill-only filaments still get decremented correctly.
+        vol.Optional(ATTR_PACKAGING, default=_PACKAGING_AUTO): vol.In(_PACKAGING_VALUES),
+    }
 )
 MARK_ARRIVED_SCHEMA = vol.Schema(
     {
         **_SCHEMA_TARGET,
         vol.Optional(ATTR_QUANTITY): vol.All(int, vol.Range(min=0)),
+        vol.Optional(ATTR_PACKAGING, default=_PACKAGING_SPOOL): vol.In(
+            [_PACKAGING_SPOOL, _PACKAGING_REFILL]
+        ),
     }
 )
 ADD_PURCHASE_SCHEMA = vol.Schema(
@@ -58,6 +73,9 @@ ADD_PURCHASE_SCHEMA = vol.Schema(
         **_SCHEMA_TARGET,
         vol.Required(ATTR_AMOUNT): vol.All(int, vol.Range(min=1)),
         vol.Optional(ATTR_ORDER_ID): cv.string,
+        vol.Optional(ATTR_PACKAGING, default=_PACKAGING_SPOOL): vol.In(
+            [_PACKAGING_SPOOL, _PACKAGING_REFILL]
+        ),
     }
 )
 SET_STATUS_SCHEMA = vol.Schema(
@@ -160,6 +178,7 @@ def _handle_use_spool(hass: HomeAssistant):
         entity_id = call.data[ATTR_FILAMENT_ENTITY]
         color_name = call.data[ATTR_COLOR_NAME]
         amount = int(call.data[ATTR_AMOUNT])
+        packaging = call.data.get(ATTR_PACKAGING, _PACKAGING_AUTO)
 
         resolved = _resolve_filament_id(hass, entity_id)
         if not resolved:
@@ -175,12 +194,56 @@ def _handle_use_spool(hass: HomeAssistant):
             )
             return
         current = _current_color(coordinator, filament_id, color_id) or {}
-        new_used = (current.get("quantity_used") or 0) + amount
-        new_used = min(new_used, current.get("quantity") or new_used)
-        await coordinator.api.update_color(color_id, {"quantity_used": new_used})
+        payload = _split_use_payload(current, amount, packaging)
+        if not payload:
+            _LOGGER.warning(
+                "filament_stock.use_spool: no %s stock for color %r",
+                packaging,
+                color_name,
+            )
+            return
+        await coordinator.api.update_color(color_id, payload)
         await coordinator.async_request_refresh()
 
     return _handle
+
+
+def _split_use_payload(
+    current: dict[str, Any], amount: int, packaging: str
+) -> dict[str, int]:
+    """Decide which counters to bump given the user's packaging preference."""
+    qty_spool = current.get("quantity") or 0
+    used_spool = current.get("quantity_used") or 0
+    qty_refill = current.get("quantity_refill") or 0
+    used_refill = current.get("used_refill") or 0
+    avail_spool = max(0, qty_spool - used_spool)
+    avail_refill = max(0, qty_refill - used_refill)
+
+    payload: dict[str, int] = {}
+    remaining = amount
+
+    if packaging == _PACKAGING_SPOOL:
+        take = min(remaining, avail_spool)
+        if take > 0:
+            payload["quantity_used"] = used_spool + take
+        return payload
+
+    if packaging == _PACKAGING_REFILL:
+        take = min(remaining, avail_refill)
+        if take > 0:
+            payload["used_refill"] = used_refill + take
+        return payload
+
+    # auto: spool first, refill for the rest
+    take_spool = min(remaining, avail_spool)
+    if take_spool > 0:
+        payload["quantity_used"] = used_spool + take_spool
+        remaining -= take_spool
+    if remaining > 0:
+        take_refill = min(remaining, avail_refill)
+        if take_refill > 0:
+            payload["used_refill"] = used_refill + take_refill
+    return payload
 
 
 def _handle_mark_arrived(hass: HomeAssistant):
@@ -188,6 +251,7 @@ def _handle_mark_arrived(hass: HomeAssistant):
         entity_id = call.data[ATTR_FILAMENT_ENTITY]
         color_name = call.data[ATTR_COLOR_NAME]
         quantity = call.data.get(ATTR_QUANTITY)
+        packaging = call.data.get(ATTR_PACKAGING, _PACKAGING_SPOOL)
 
         resolved = _resolve_filament_id(hass, entity_id)
         if not resolved:
@@ -198,7 +262,8 @@ def _handle_mark_arrived(hass: HomeAssistant):
             return
         payload: dict[str, Any] = {"status": STATUS_IN_STOCK}
         if quantity is not None:
-            payload["quantity"] = int(quantity)
+            key = "quantity_refill" if packaging == _PACKAGING_REFILL else "quantity"
+            payload[key] = int(quantity)
         await coordinator.api.update_color(color_id, payload)
         await coordinator.async_request_refresh()
 
@@ -211,20 +276,24 @@ def _handle_add_purchase(hass: HomeAssistant):
         color_name = call.data[ATTR_COLOR_NAME]
         amount = int(call.data[ATTR_AMOUNT])
         order_id = call.data.get(ATTR_ORDER_ID)
+        packaging = call.data.get(ATTR_PACKAGING, _PACKAGING_SPOOL)
 
         resolved = _resolve_filament_id(hass, entity_id)
         if not resolved:
             return
         coordinator, filament_id = resolved
         # The backend POST /api/filaments/{id}/colors merges by name when the
-        # color already exists (see app/routers/filaments.py find_color_by_name),
-        # so we can always POST with the requested name regardless of whether
-        # the color is new.
+        # color already exists (see app/routers/filaments.py find_color_by_name)
+        # and adds to whichever counter is in the payload, so we just route the
+        # amount into the right field.
         payload: dict[str, Any] = {
             "color_name": color_name,
-            "quantity": amount,
             "status": STATUS_IN_STOCK,
         }
+        if packaging == _PACKAGING_REFILL:
+            payload["quantity_refill"] = amount
+        else:
+            payload["quantity"] = amount
         if order_id:
             payload["order_id"] = order_id
         await coordinator.api.add_color(filament_id, payload)

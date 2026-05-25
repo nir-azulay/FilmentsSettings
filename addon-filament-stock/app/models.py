@@ -22,7 +22,6 @@ class Filament(Base):
     brand_logo_url = Column(String, default="")
     notes = Column(String, default="")
     low_stock_threshold = Column(Integer, default=1)
-    packaging_type = Column(String, nullable=False, default="spool")  # spool | refill
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     colors = relationship("ColorStock", back_populates="filament", cascade="all, delete-orphan")
@@ -30,13 +29,13 @@ class Filament(Base):
 
     @property
     def current_stock(self) -> int:
-        """Available spools (in_stock colors, quantity minus opened/used)."""
+        """Total available units across in_stock colors (spool + refill combined)."""
         total = 0
         for c in self.colors:
             status = c.status or "in_stock"
             if status != "in_stock":
                 continue
-            total += max(0, (c.quantity or 0) - (c.quantity_used or 0))
+            total += c.available_total
         return total
 
 
@@ -47,13 +46,31 @@ class ColorStock(Base):
     filament_id = Column(Integer, ForeignKey("filaments.id"), nullable=False)
     color_name = Column(String, nullable=False)
     color_hex = Column(String, default="#808080")
-    quantity = Column(Integer, default=0)
+    # Spool counters (the original quantity/quantity_used columns -- kept as
+    # the spool counters so existing integrations and history keep working).
+    quantity = Column(Integer, default=0, nullable=False)
+    quantity_used = Column(Integer, default=0, nullable=False)
+    # Refill counters added in add-on 0.3.0. Refill = the inner cardboard core
+    # of a Bambu-style refill pack, no plastic spool around it.
+    quantity_refill = Column(Integer, default=0, nullable=False)
+    used_refill = Column(Integer, default=0, nullable=False)
     status = Column(String, default="in_stock")  # in_stock | ordered | out_of_stock
     order_id = Column(String, nullable=True)  # e.g. Amazon order number
-    quantity_used = Column(Integer, default=0)  # spools consumed
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     filament = relationship("Filament", back_populates="colors")
+
+    @property
+    def available_spool(self) -> int:
+        return max(0, (self.quantity or 0) - (self.quantity_used or 0))
+
+    @property
+    def available_refill(self) -> int:
+        return max(0, (self.quantity_refill or 0) - (self.used_refill or 0))
+
+    @property
+    def available_total(self) -> int:
+        return self.available_spool + self.available_refill
 
 
 class StockEntry(Base):

@@ -1,7 +1,7 @@
 {
   "domain": "filament_stock",
   "name": "Filament Stock",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "documentation": "https://github.com/nir-azulay/FilmentsSettings/tree/main/home-assistant/custom_components/filament_stock",
   "issue_tracker": "https://github.com/nir-azulay/FilmentsSettings/issues",
   "codeowners": ["@nir-azulay"],

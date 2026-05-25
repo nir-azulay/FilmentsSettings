@@ -1,14 +1,23 @@
 from datetime import datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, computed_field
+
+
+# `PackagingType` is the new per-action discriminator used by stock services
+# (use_spool, add_purchase, set_status) to say which counter to touch.
+PackagingType = Literal["spool", "refill"]
 
 
 class ColorStockBase(BaseModel):
     color_name: str
     color_hex: str = "#808080"
-    quantity: int = 0
-    quantity_used: int = 0
+    # Spool counters (the original quantity / quantity_used columns).
+    quantity: int = Field(default=0, ge=0)
+    quantity_used: int = Field(default=0, ge=0)
+    # Refill counters (added in add-on 0.3.0).
+    quantity_refill: int = Field(default=0, ge=0)
+    used_refill: int = Field(default=0, ge=0)
     status: str = "in_stock"  # in_stock | ordered | out_of_stock
     order_id: Optional[str] = None
 
@@ -22,6 +31,8 @@ class ColorStockUpdate(BaseModel):
     color_hex: Optional[str] = None
     quantity: Optional[int] = None
     quantity_used: Optional[int] = None
+    quantity_refill: Optional[int] = None
+    used_refill: Optional[int] = None
     status: Optional[str] = None
     order_id: Optional[str] = None
 
@@ -29,14 +40,24 @@ class ColorStockUpdate(BaseModel):
 class ColorStockResponse(ColorStockBase):
     id: int
     filament_id: int
-    quantity_used: int = 0
-    order_id: Optional[str] = None
     created_at: datetime
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def available_spool(self) -> int:
+        return max(0, (self.quantity or 0) - (self.quantity_used or 0))
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def available_refill(self) -> int:
+        return max(0, (self.quantity_refill or 0) - (self.used_refill or 0))
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def available_total(self) -> int:
+        return self.available_spool + self.available_refill
+
     model_config = {"from_attributes": True}
-
-
-FilamentPackaging = Literal["spool", "refill"]
 
 
 class FilamentBase(BaseModel):
@@ -52,7 +73,6 @@ class FilamentBase(BaseModel):
     brand_logo_url: str = ""
     notes: str = ""
     low_stock_threshold: int = 1
-    packaging_type: FilamentPackaging = "spool"
 
 
 class FilamentCreate(FilamentBase):
@@ -72,7 +92,6 @@ class FilamentUpdate(BaseModel):
     brand_logo_url: Optional[str] = None
     notes: Optional[str] = None
     low_stock_threshold: Optional[int] = None
-    packaging_type: Optional[FilamentPackaging] = None
 
 
 class FilamentResponse(FilamentBase):

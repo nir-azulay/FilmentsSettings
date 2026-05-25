@@ -6,20 +6,31 @@ const BASE = "api";
 
 export type ColorStatus = "in_stock" | "ordered" | "out_of_stock";
 
+/** Per-color packaging counters were introduced in add-on 0.3.0. Older APIs
+ *  return only quantity/quantity_used; treat the new fields as 0 if absent. */
 export interface ColorStock {
   id: number;
   filament_id: number;
   color_name: string;
   color_hex: string;
+  /** Spool count (the full bagged-on-plastic-spool form). */
   quantity: number;
   quantity_used: number;
+  /** Refill count (Bambu-style inner cardboard core, no plastic spool). */
+  quantity_refill?: number;
+  used_refill?: number;
+  /** Server-computed convenience values. */
+  available_spool?: number;
+  available_refill?: number;
+  available_total?: number;
   /** Omitted on older deployed APIs; UI treats missing as in_stock */
   status?: ColorStatus;
   order_id: string | null;
   created_at: string;
 }
 
-export type FilamentPackaging = "spool" | "refill";
+/** Per-action discriminator used for service calls and UI controls. */
+export type PackagingType = "spool" | "refill";
 
 export interface Filament {
   id: number;
@@ -35,8 +46,6 @@ export interface Filament {
   brand_logo_url: string;
   notes: string;
   low_stock_threshold: number;
-  /** Full spool vs refill-only; omitted on older API → treat as spool */
-  packaging_type?: FilamentPackaging;
   current_stock: number;
   colors: ColorStock[];
   created_at: string;
@@ -98,7 +107,16 @@ export async function deleteFilament(id: number): Promise<void> {
   await fetch(`${BASE}/filaments/${id}`, { method: "DELETE" });
 }
 
-export async function addColor(filamentId: number, data: { color_name: string; color_hex: string; quantity: number; status?: string }): Promise<ColorStock> {
+export async function addColor(
+  filamentId: number,
+  data: {
+    color_name: string;
+    color_hex: string;
+    quantity?: number;
+    quantity_refill?: number;
+    status?: string;
+  },
+): Promise<ColorStock> {
   const res = await fetch(`${BASE}/filaments/${filamentId}/colors`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

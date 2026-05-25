@@ -74,8 +74,12 @@ def add_color(filament_id: int, payload: ColorStockCreate, db: Session = Depends
     existing = find_color_by_name(db, filament_id, payload.color_name)
     if existing:
         data = payload.model_dump()
-        add_qty = data.get("quantity") or 0
-        existing.quantity = (existing.quantity or 0) + add_qty
+        # Adds accumulate into the respective counter; spool and refill are
+        # independent.
+        add_spool = data.get("quantity") or 0
+        add_refill = data.get("quantity_refill") or 0
+        existing.quantity = (existing.quantity or 0) + add_spool
+        existing.quantity_refill = (existing.quantity_refill or 0) + add_refill
         if data.get("color_hex"):
             existing.color_hex = data["color_hex"]
         if existing.status != "in_stock" and data.get("status") == "in_stock":
@@ -152,7 +156,6 @@ def _to_response(filament: Filament) -> FilamentResponse:
         brand_logo_url=filament.brand_logo_url,
         notes=filament.notes,
         low_stock_threshold=filament.low_stock_threshold,
-        packaging_type=getattr(filament, "packaging_type", None) or "spool",
         current_stock=filament.current_stock,
         colors=filament.colors,
         created_at=filament.created_at,

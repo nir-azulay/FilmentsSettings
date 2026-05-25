@@ -3,11 +3,16 @@ import { ColorStatus, ColorStock, Filament, addColor, deleteColor, updateColor }
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
 import { colorTint, getColorVisual } from "../colorVisual";
 import { deleteDangerBtn } from "../deleteDangerButton";
-import { filamentHasLowStock, filamentInStockQty, filamentOrderedQty } from "../stockUtils";
+import {
+  availableRefill,
+  availableSpool,
+  filamentHasLowStock,
+  filamentInStockQty,
+  filamentOrderedQty,
+} from "../stockUtils";
 import BrandLogo from "./BrandLogo";
 import DeleteColorModal from "./DeleteColorModal";
 import { SpoolIcon, SpoolStack } from "./SpoolIcon";
-import PackagingTypeControl, { packagingBadgeLabel } from "./PackagingTypeControl";
 import TrashIconButton from "./TrashIconButton";
 
 interface Props {
@@ -75,18 +80,10 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
       {/* specs */}
       <div style={specsRow}>
         <SpecBadge label={filament.filament_type} color={matColor} />
-        <SpecBadge
-          label={packagingBadgeLabel(filament)}
-          color={filament.packaging_type === "refill" ? "#ff9800" : "#607d8b"}
-        />
         {filament.nozzle_temp_min && filament.nozzle_temp_max &&
           <SpecBadge label={`${filament.nozzle_temp_min}–${filament.nozzle_temp_max}°C`} />}
         {filament.bed_temp && <SpecBadge label={`Bed ${filament.bed_temp}°C`} />}
         {filament.density && <SpecBadge label={`${filament.density} g/cm³`} />}
-      </div>
-
-      <div style={{ padding: "0 16px 10px" }}>
-        <PackagingTypeControl filament={filament} onUpdate={onUpdate} compact />
       </div>
 
       {/* ── Inline color rows ── */}
@@ -150,6 +147,8 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   const [hovered, setHovered] = useState(false);
   const [qty, setQty] = useState(color.quantity);
   const [qtyUsed, setQtyUsed] = useState(color.quantity_used ?? 0);
+  const [qtyRefill, setQtyRefill] = useState(color.quantity_refill ?? 0);
+  const [usedRefill, setUsedRefill] = useState(color.used_refill ?? 0);
   const [status, setStatus] = useState<ColorStatus>(color.status ?? "in_stock");
   const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -158,10 +157,14 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   useEffect(() => {
     setQty(color.quantity);
     setQtyUsed(color.quantity_used ?? 0);
+    setQtyRefill(color.quantity_refill ?? 0);
+    setUsedRefill(color.used_refill ?? 0);
     setStatus(color.status ?? "in_stock");
-  }, [color.id, color.quantity, color.quantity_used, color.status]);
+  }, [color.id, color.quantity, color.quantity_used, color.quantity_refill, color.used_refill, color.status]);
 
-  const remaining = qty - qtyUsed;
+  const remainingSpool = availableSpool({ ...color, quantity: qty, quantity_used: qtyUsed });
+  const remainingRefill = availableRefill({ ...color, quantity_refill: qtyRefill, used_refill: usedRefill });
+  const remainingTotal = remainingSpool + remainingRefill;
 
   const handleQtyChange = async (newQty: number) => {
     setQty(newQty);
@@ -185,15 +188,45 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
     setSaving(false);
   };
 
-  const handleMarkUsed = async () => {
+  const handleUseSpool = async () => {
     const newUsed = Math.min(qtyUsed + 1, qty);
     setQtyUsed(newUsed);
     setSaving(true);
-    await updateColor(color.id, { quantity_used: newUsed });
-    if (newUsed >= qty) {
+    const updates: Parameters<typeof updateColor>[1] = { quantity_used: newUsed };
+    // Only auto-flip to out_of_stock when both counters are exhausted.
+    if (newUsed >= qty && remainingRefill <= 0) {
       setStatus("out_of_stock");
-      await updateColor(color.id, { quantity_used: newUsed, status: "out_of_stock" });
+      updates.status = "out_of_stock";
     }
+    await updateColor(color.id, updates);
+    await onUpdate();
+    setSaving(false);
+  };
+
+  const handleAddRefill = async () => {
+    const newQty = qtyRefill + 1;
+    setQtyRefill(newQty);
+    setSaving(true);
+    const updates: Parameters<typeof updateColor>[1] = { quantity_refill: newQty };
+    if (status === "out_of_stock") {
+      setStatus("in_stock");
+      updates.status = "in_stock";
+    }
+    await updateColor(color.id, updates);
+    await onUpdate();
+    setSaving(false);
+  };
+
+  const handleUseRefill = async () => {
+    const newUsed = Math.min(usedRefill + 1, qtyRefill);
+    setUsedRefill(newUsed);
+    setSaving(true);
+    const updates: Parameters<typeof updateColor>[1] = { used_refill: newUsed };
+    if (newUsed >= qtyRefill && remainingSpool <= 0) {
+      setStatus("out_of_stock");
+      updates.status = "out_of_stock";
+    }
+    await updateColor(color.id, updates);
     await onUpdate();
     setSaving(false);
   };
@@ -207,12 +240,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   const handleMarkOrdered = async () => {
     setStatus("ordered");
     await updateColor(color.id, { status: "ordered" });
-    await onUpdate();
-  };
-
-  const handleMarkOutOfStock = async () => {
-    setStatus("out_of_stock");
-    await updateColor(color.id, { status: "out_of_stock" });
     await onUpdate();
   };
 
@@ -245,8 +272,8 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
       onMouseLeave={() => setHovered(false)}
     >
       <div className="color-stock-row__line">
-        {status === "in_stock" && remaining > 0 ? (
-          <SpoolStack colorHex={color.color_hex} count={remaining} size={28} />
+        {status === "in_stock" && remainingTotal > 0 ? (
+          <SpoolStack colorHex={color.color_hex} count={remainingTotal} size={28} />
         ) : (
           <SpoolIcon colorHex={color.color_hex} size={32} muted={status !== "in_stock"} />
         )}
@@ -255,35 +282,32 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
           {color.color_name}
         </span>
 
-        {/* ══ IN STOCK — single line ══ */}
+        {/* ══ IN STOCK ══ Two pills (spool / refill), each with Add + Use */}
         {status === "in_stock" && (
           <>
-            <div className="color-stock-row__stats">
-              <span
-                className="color-stock-row__count"
-                style={{
-                  color: remaining <= 0 ? "var(--ha-error)" : vis.accent,
-                  background: colorTint(color.color_hex, 0.22),
-                }}
-                title={remaining === 1 ? "1 spool left" : `${remaining} spools left`}
-              >
-                {remaining}
-              </span>
-              <span className="color-stock-row__used-label">{qtyUsed}/{qty}</span>
-            </div>
-            <div className="color-stock-row__actions">
-              <button type="button" onClick={handleAddSpool} disabled={saving} style={addSpoolBtnCompact} title="Add 1 spool">
-                + Add
-              </button>
-              <button
-                type="button"
-                onClick={handleMarkUsed}
-                disabled={remaining <= 0}
-                style={{ ...useBtnCompact, opacity: remaining <= 0 ? 0.4 : 1, cursor: remaining <= 0 ? "not-allowed" : "pointer" }}
-                title="Mark 1 spool as used"
-              >
-                Use
-              </button>
+            <div style={pillRow}>
+              <PackagingPill
+                kind="spool"
+                remaining={remainingSpool}
+                used={qtyUsed}
+                total={qty}
+                accent={vis.accent}
+                tint={colorTint(color.color_hex, 0.22)}
+                onAdd={handleAddSpool}
+                onUse={handleUseSpool}
+                disabled={saving}
+              />
+              <PackagingPill
+                kind="refill"
+                remaining={remainingRefill}
+                used={usedRefill}
+                total={qtyRefill}
+                accent={vis.accent}
+                tint="rgba(255,152,0,0.18)"
+                onAdd={handleAddRefill}
+                onUse={handleUseRefill}
+                disabled={saving}
+              />
               <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
             </div>
           </>
@@ -301,7 +325,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
               </div>
               <button onClick={() => handleQtyChange(qty + 1)} style={stepBtn}>+</button>
             </div>
-            {/* Arrived button — always visible */}
             <button onClick={handleReceive} style={receiveBtn}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
@@ -316,8 +339,11 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
         {status === "out_of_stock" && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "nowrap" }}>
             <span style={{ fontSize: 11, color: "var(--ha-error)", fontWeight: 600 }}>Out of stock</span>
-            <button type="button" onClick={handleAddSpool} disabled={saving} style={addSpoolBtnCompact} title="Add spools back to stock">
-              + Add
+            <button type="button" onClick={handleAddSpool} disabled={saving} style={addSpoolBtnCompact} title="Add 1 spool to stock">
+              + Spool
+            </button>
+            <button type="button" onClick={handleAddRefill} disabled={saving} style={addRefillBtnCompact} title="Add 1 refill to stock">
+              + Refill
             </button>
             <button onClick={handleMarkOrdered} style={reorderBtn}>↺ Reorder</button>
             <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
@@ -333,6 +359,66 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
           onConfirm={executeDeleteColor}
         />
       )}
+    </div>
+  );
+}
+
+/* ── Per-packaging-type pill (Spool or Refill) ───────────────────────────── */
+interface PackagingPillProps {
+  kind: "spool" | "refill";
+  remaining: number;
+  used: number;
+  total: number;
+  accent: string;
+  tint: string;
+  onAdd: () => Promise<void>;
+  onUse: () => Promise<void>;
+  disabled?: boolean;
+}
+
+function PackagingPill({ kind, remaining, used, total, accent, tint, onAdd, onUse, disabled }: PackagingPillProps) {
+  const isRefill = kind === "refill";
+  const label = isRefill ? "Refill" : "Spool";
+  const labelColor = isRefill ? "#e65100" : accent;
+  const useBtnStyle = isRefill ? useRefillBtnCompact : useBtnCompact;
+  const addBtnStyle = isRefill ? addRefillBtnCompact : addSpoolBtnCompact;
+  const empty = total === 0;
+  const exhausted = remaining <= 0 && total > 0;
+
+  return (
+    <div style={{
+      ...packagingPillWrap,
+      opacity: empty ? 0.45 : 1,
+      borderColor: empty ? "var(--ha-divider)" : isRefill ? "#ffb74d" : "var(--ha-divider)",
+    }}>
+      <span style={{ fontSize: 9, fontWeight: 700, color: labelColor, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        {label}
+      </span>
+      <span
+        style={{
+          ...packagingPillCount,
+          color: exhausted ? "var(--ha-error)" : labelColor,
+          background: empty ? "rgba(0,0,0,0.04)" : tint,
+        }}
+        title={total === 0 ? `No ${label.toLowerCase()}s tracked` : `${remaining} ${label.toLowerCase()}(s) left`}
+      >
+        {remaining}
+      </span>
+      <span style={{ fontSize: 10, color: "var(--ha-secondary-text)", minWidth: 24, textAlign: "right" }}>
+        {used}/{total}
+      </span>
+      <button type="button" onClick={onAdd} disabled={disabled} style={addBtnStyle} title={`Add 1 ${label.toLowerCase()}`}>
+        +
+      </button>
+      <button
+        type="button"
+        onClick={onUse}
+        disabled={disabled || exhausted || empty}
+        style={{ ...useBtnStyle, opacity: exhausted || empty ? 0.35 : 1, cursor: exhausted || empty ? "not-allowed" : "pointer" }}
+        title={`Mark 1 ${label.toLowerCase()} as used`}
+      >
+        Use
+      </button>
     </div>
   );
 }
@@ -502,11 +588,19 @@ const stepBtn: React.CSSProperties = {
   borderRadius: 4, color: "var(--ha-primary-text)",
   fontSize: 14, cursor: "pointer", lineHeight: 1,
 };
-const deleteBtn: React.CSSProperties = {
-  background: "none", border: "none",
-  color: "var(--ha-disabled-text)", cursor: "pointer",
-  padding: "2px 4px", borderRadius: 4, marginLeft: 4,
-  display: "flex", alignItems: "center",
+const pillRow: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+  marginLeft: "auto",
+};
+const packagingPillWrap: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: 4,
+  padding: "4px 6px", borderRadius: 8,
+  border: "1px solid var(--ha-divider)",
+  background: "rgba(0,0,0,0.02)",
+};
+const packagingPillCount: React.CSSProperties = {
+  minWidth: 18, padding: "1px 6px", borderRadius: 4,
+  fontSize: 12, fontWeight: 700, textAlign: "center",
 };
 const addRowBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 5,
@@ -577,6 +671,24 @@ const useBtnCompact: React.CSSProperties = {
   fontSize: 11, fontWeight: 600,
   background: "#ffe0c8", color: "#7e2900",
   border: "1px solid #ffbb89",
+  whiteSpace: "nowrap",
+};
+const addRefillBtnCompact: React.CSSProperties = {
+  ...{
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    padding: "4px 8px", borderRadius: 6,
+    fontSize: 11, fontWeight: 600,
+    whiteSpace: "nowrap", cursor: "pointer",
+  },
+  background: "#ffe0b2", color: "#bf360c",
+  border: "1px solid #ffb74d",
+};
+const useRefillBtnCompact: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  padding: "4px 8px", borderRadius: 6,
+  fontSize: 11, fontWeight: 600,
+  background: "#fff3e0", color: "#bf360c",
+  border: "1px solid #ffb74d",
   whiteSpace: "nowrap",
 };
 const reorderBtn: React.CSSProperties = {

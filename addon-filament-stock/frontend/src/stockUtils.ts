@@ -1,6 +1,6 @@
 import type { ColorStock, Filament } from "./api";
 
-/** Legacy QNAP API omits status; treat missing as in_stock. */
+/** Older API payloads may omit status; treat missing as in_stock. */
 export function colorStatus(c: ColorStock): string {
   return c.status ?? "in_stock";
 }
@@ -14,8 +14,17 @@ export function isOrderedColor(c: ColorStock): boolean {
   return colorStatus(c) === "ordered";
 }
 
-export function availableQty(c: ColorStock): number {
+export function availableSpool(c: ColorStock): number {
   return Math.max(0, (c.quantity ?? 0) - (c.quantity_used ?? 0));
+}
+
+export function availableRefill(c: ColorStock): number {
+  return Math.max(0, (c.quantity_refill ?? 0) - (c.used_refill ?? 0));
+}
+
+/** Total units a color contributes to "do I have material to print" checks. */
+export function availableQty(c: ColorStock): number {
+  return availableSpool(c) + availableRefill(c);
 }
 
 export function filamentInStockQty(colors: ColorStock[]): number {
@@ -23,7 +32,10 @@ export function filamentInStockQty(colors: ColorStock[]): number {
 }
 
 export function filamentOrderedQty(colors: ColorStock[]): number {
-  return colors.filter(isOrderedColor).reduce((s, c) => s + (c.quantity ?? 0), 0);
+  // Both spool and refill purchases count as "on order" until they arrive.
+  return colors
+    .filter(isOrderedColor)
+    .reduce((s, c) => s + (c.quantity ?? 0) + (c.quantity_refill ?? 0), 0);
 }
 
 /** Matches per-card badges and color-row "remaining" spools. */

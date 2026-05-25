@@ -1,6 +1,6 @@
 use_spool:
   name: Use spool
-  description: Mark N spools of a color as used (increments quantity_used).
+  description: Mark N units of a color as used (decrements spool, refill, or whichever counter has stock).
   fields:
     filament_entity:
       name: Filament
@@ -19,7 +19,7 @@ use_spool:
         text:
     amount:
       name: Amount
-      description: Number of spools to mark used.
+      description: Number of units to mark used.
       required: false
       default: 1
       selector:
@@ -27,6 +27,17 @@ use_spool:
           min: 1
           max: 50
           mode: box
+    packaging:
+      name: Packaging
+      description: Which counter to decrement. "auto" uses spool first then refill -- recommended for AMS-triggered automations where you can't tell which form is loaded.
+      required: false
+      default: auto
+      selector:
+        select:
+          options:
+            - auto
+            - spool
+            - refill
 
 mark_arrived:
   name: Mark arrived
@@ -46,17 +57,27 @@ mark_arrived:
         text:
     quantity:
       name: Quantity (optional)
-      description: If set, overrides the stored quantity to this value.
+      description: If set, overrides the stored quantity (of the chosen packaging type) to this value.
       required: false
       selector:
         number:
           min: 0
           max: 100
           mode: box
+    packaging:
+      name: Packaging
+      description: Which counter the quantity applies to.
+      required: false
+      default: spool
+      selector:
+        select:
+          options:
+            - spool
+            - refill
 
 add_purchase:
   name: Add purchase
-  description: Add N spools to a color (creates the color if it does not exist).
+  description: Add N units of a color (spool or refill). Creates the color if it does not exist.
   fields:
     filament_entity:
       name: Filament
@@ -84,6 +105,16 @@ add_purchase:
       required: false
       selector:
         text:
+    packaging:
+      name: Packaging
+      description: Whether the purchased units are spools or refills.
+      required: false
+      default: spool
+      selector:
+        select:
+          options:
+            - spool
+            - refill
 
 set_status:
   name: Set color status

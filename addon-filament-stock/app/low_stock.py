@@ -19,9 +19,16 @@ def is_monitored_color_name(color_name: str) -> bool:
 
 
 def color_available_qty(color: ColorStock) -> int:
+    """Total available units for a color: spools left + refills left.
+
+    Refills count toward stock-on-hand just like spools do for the purposes of
+    "do I have material to print with" checks.
+    """
     if (color.status or "in_stock") != "in_stock":
         return 0
-    return max(0, (color.quantity or 0) - (color.quantity_used or 0))
+    spool_left = max(0, (color.quantity or 0) - (color.quantity_used or 0))
+    refill_left = max(0, (getattr(color, "quantity_refill", 0) or 0) - (getattr(color, "used_refill", 0) or 0))
+    return spool_left + refill_left
 
 
 def staple_pool_key(filament_type: str, color_name: str) -> tuple[str, str]:

@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.3.0 -- per-color spool/refill counters
+
+`packaging_type` is no longer a filament-level setting. Each color row now
+carries independent **spool** and **refill** counters, so the same color of
+the same filament can have e.g. 2 spools + 3 refills tracked side by side.
+
+Schema migration runs automatically on first start:
+
+- For every existing color, if its parent filament was marked as `refill`,
+  the existing `quantity` / `quantity_used` values are moved into the new
+  `quantity_refill` / `used_refill` columns; the spool counters reset to 0.
+- `filaments.packaging_type` is dropped (SQLite `ALTER TABLE DROP COLUMN`;
+  silently kept on pre-3.35 SQLite which HA does not ship).
+
+API:
+
+- `GET /filaments` returns each color with `quantity`, `quantity_used`,
+  `quantity_refill`, `used_refill`, plus server-computed `available_spool`,
+  `available_refill`, `available_total`.
+- `POST /filaments/{id}/colors` accepts both `quantity` and `quantity_refill`;
+  when merging into an existing color, each counter accumulates independently.
+- `PUT /colors/{id}` accepts the new fields too.
+
+Companion integration `filament_stock` 0.3.0 exposes the new counters as
+sensor attributes (`total_spool`, `total_refill`, per-color
+`available_spool` / `available_refill`) and adds a `packaging:
+auto|spool|refill` option to the `use_spool`, `mark_arrived`, and
+`add_purchase` services.
+
+UI: the per-filament packaging toggle is gone; each color row shows two
+side-by-side pills (Spool / Refill) with their own Add and Use buttons.
+
 ## 0.2.0 -- first public release
 
 First version intended for outside users. The pre-release `0.1.x` series was internal-only iteration while bringing the add-on up on the maintainer's HA OS install.

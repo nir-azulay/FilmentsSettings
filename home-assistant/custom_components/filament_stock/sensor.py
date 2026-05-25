@@ -24,6 +24,13 @@ from .const import DOMAIN, MANUFACTURER, STATUS_IN_STOCK
 from .coordinator import FilamentStockCoordinator
 
 
+def _color_available_total(c: dict[str, Any]) -> int:
+    """Sum of spool-left + refill-left for one color row."""
+    spool_left = max(0, (c.get("quantity") or 0) - (c.get("quantity_used") or 0))
+    refill_left = max(0, (c.get("quantity_refill") or 0) - (c.get("used_refill") or 0))
+    return spool_left + refill_left
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -97,11 +104,13 @@ class FilamentStockSensor(CoordinatorEntity[FilamentStockCoordinator], SensorEnt
         f = self._filament
         if not f:
             return None
+        # Total = spool available + refill available (across in_stock colors).
+        # Add-on 0.3.0+ returns the refill counters; older payloads default to 0.
         total = 0
         for c in f.get("colors", []):
             if (c.get("status") or STATUS_IN_STOCK) != STATUS_IN_STOCK:
                 continue
-            total += max(0, (c.get("quantity") or 0) - (c.get("quantity_used") or 0))
+            total += _color_available_total(c)
         return total
 
     @property
@@ -110,9 +119,18 @@ class FilamentStockSensor(CoordinatorEntity[FilamentStockCoordinator], SensorEnt
         if not f:
             return {}
         colors = []
+        total_spool = 0
+        total_refill = 0
         for c in f.get("colors", []):
             qty = c.get("quantity") or 0
             used = c.get("quantity_used") or 0
+            qty_refill = c.get("quantity_refill") or 0
+            used_refill = c.get("used_refill") or 0
+            avail_spool = max(0, qty - used)
+            avail_refill = max(0, qty_refill - used_refill)
+            if (c.get("status") or STATUS_IN_STOCK) == STATUS_IN_STOCK:
+                total_spool += avail_spool
+                total_refill += avail_refill
             colors.append(
                 {
                     "name": c.get("color_name"),
@@ -120,7 +138,12 @@ class FilamentStockSensor(CoordinatorEntity[FilamentStockCoordinator], SensorEnt
                     "status": c.get("status") or STATUS_IN_STOCK,
                     "quantity": qty,
                     "used": used,
-                    "available": max(0, qty - used),
+                    "available_spool": avail_spool,
+                    "quantity_refill": qty_refill,
+                    "used_refill": used_refill,
+                    "available_refill": avail_refill,
+                    # Sum -- used by templates that just want "how much material".
+                    "available": avail_spool + avail_refill,
                     "order_id": c.get("order_id"),
                 }
             )
@@ -129,13 +152,14 @@ class FilamentStockSensor(CoordinatorEntity[FilamentStockCoordinator], SensorEnt
             "brand": f.get("brand"),
             "material": f.get("material"),
             "filament_type": f.get("filament_type"),
-            "packaging_type": f.get("packaging_type") or "spool",
             "density": f.get("density"),
             "bed_temp": f.get("bed_temp"),
             "nozzle_temp_min": f.get("nozzle_temp_min"),
             "nozzle_temp_max": f.get("nozzle_temp_max"),
             "amazon_url": f.get("amazon_url") or None,
             "low_stock_threshold": f.get("low_stock_threshold"),
+            "total_spool": total_spool,
+            "total_refill": total_refill,
             "colors": colors,
             "colors_count": len(colors),
         }

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { ColorStatus, ColorStock, Filament, StockEntry, addColor, addStockEvent, deleteColor, fetchHistory, updateColor } from "../api";
 import { getColorSuggestions, lookupColorHex } from "../colorMap";
 import BrandLogo from "./BrandLogo";
-import PackagingTypeControl from "./PackagingTypeControl";
 import { filamentAvailableSpools } from "../stockUtils";
 import DeleteColorModal from "./DeleteColorModal";
 import TrashIconButton from "./TrashIconButton";
@@ -103,10 +102,6 @@ export default function StockManager({ filament, onClose, onUpdate, onRequestDel
             </svg>
           </button>
         </div>
-
-        <section style={{ ...section, paddingTop: 10, paddingBottom: 10 }}>
-          <PackagingTypeControl filament={filament} onUpdate={onUpdate} />
-        </section>
 
         {/* ── Colors section ── */}
         <section style={section}>
