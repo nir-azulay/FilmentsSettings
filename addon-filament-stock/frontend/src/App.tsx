@@ -251,14 +251,13 @@ const btnSpinner: React.CSSProperties = {
 };
 const mainWrap: React.CSSProperties = {
   padding: "16px",
-  maxWidth: 1440,
   width: "100%",
   margin: "0 auto",
   flex: 1,
 };
 const summaryRow: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
   gap: 12,
   marginBottom: 16,
 };
