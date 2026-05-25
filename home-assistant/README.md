@@ -8,8 +8,8 @@ Built and maintained by **[Nir Azulay](https://github.com/nir-azulay)**. MIT lic
 
 | Component | Path | What it does |
 |---|---|---|
-| **Add-on** | [`../addon-filament-stock/`](../addon-filament-stock/) | Docker container with a FastAPI backend + React UI, served inside HA via Ingress. Stores `filaments.db` at `/config/data/filaments.db` (visible to Samba, included in HA snapshots). Adds a **Filaments** panel to your HA sidebar. |
-| **Custom integration** | [`custom_components/filament_stock/`](custom_components/filament_stock/) | Polls the add-on and exposes one `sensor.filament_*` per filament, a `binary_sensor.filament_low_stock_alert`, and four services (`use_spool`, `add_purchase`, `set_status`, `mark_arrived`). |
+| **Add-on** | [`../addon-filament-stock/`](../addon-filament-stock/) | Docker container with a FastAPI backend + React UI, served inside HA via Ingress. Stores `filaments.db` at `/config/data/filaments.db` (visible to Samba, included in HA snapshots). Tracks spools and refills independently per color. Adds a **Filaments** panel to your HA sidebar. |
+| **Custom integration** | [`custom_components/filament_stock/`](custom_components/filament_stock/) | Polls the add-on and exposes one `sensor.filament_*` per filament (with per-color spool/refill breakdowns in attributes), a `binary_sensor.filament_low_stock_alert`, and four services (`use_spool`, `add_purchase`, `set_status`, `mark_arrived`). |
 | **Blueprints** | [`blueprints/automation/filament_stock/`](blueprints/automation/filament_stock/) | Three importable automations: AMS tray emptied -> decrement stock; print-start out-of-stock alert; weekly low-stock digest. |
 
 Why three pieces? The HA Supervisor add-on protocol requires `repository.json` and the add-on folder at the repo root, so [`addon-filament-stock/`](../addon-filament-stock/) sits there. The integration and blueprints (consumed by HACS and the blueprint importer, both of which accept arbitrary paths) live under [`home-assistant/`](.) to keep them logically grouped.

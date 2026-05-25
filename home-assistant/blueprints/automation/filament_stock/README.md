@@ -20,6 +20,12 @@ The Bambu HACS integration exposes per-tray sensors whose attributes include `fi
 - Moving a spool to a different tray re-binds automatically.
 - Unknown filaments (no Filament Stock match) are skipped silently.
 
+## Spool vs refill on tray-empty
+
+An AMS tray going empty does not tell you whether the consumed unit was a full spool or a refill -- the printer can't distinguish them. The `ams_tray_emptied_decrement` blueprint therefore calls `filament_stock.use_spool` with its default `packaging: auto`, which drains the matching color's **spool** counter first and falls back to **refill** only after spools are exhausted. This matches the common case (most users keep more spools than refills around) without needing extra UI input on the blueprint.
+
+If you want different behaviour for a specific automation, copy the blueprint, hard-code `packaging: spool` or `packaging: refill` in the service call inside the YAML, and import the copy as a new blueprint.
+
 ## Import
 
 For each `.yaml` above:
