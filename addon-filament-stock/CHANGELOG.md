@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.5.3 -- AMS panel: friendly device names, hardware models, clean numbering
+
+The AMS Status panel now looks up each tray entity in Home Assistant's
+device registry (via `POST /api/template`) and uses the registry data for
+the labels instead of guessing from the entity_id. With this:
+
+- Group titles show the printer's friendly name from HA -- e.g. `H2S 3D
+  Printer · AMS 1` instead of `h2s_0938bc5c2200107 · AMS 1`. When no
+  device info is available the printer slug is still title-cased
+  (e.g. `H2S 0938bc5c2200107`) so it never falls back to lowercase noise.
+- Each tray's hardware model is taken from `device_attr(..., 'model')`
+  and normalised: `AMS`, `AMS 2 Pro`, `AMS HT`, `AMS Lite`, `AMS HUB`.
+- The external spool tile no longer has its device suffix
+  (`_externalspool`) appearing in the group title.
+- AMS units with ha-bambulab's internal device IDs (e.g. `128`, `129`)
+  are now **renumbered in display order**: an AMS 2 Pro #1 and #2,
+  not AMS 128 and AMS 129. The renumbering is per-bucket (per-printer
+  + per-model) so a classic AMS 1 and an AMS 2 Pro #1 on the same
+  printer don't collide.
+- The `#<n>` suffix on named variants is only shown when there's more
+  than one unit of that model on the same printer -- single-unit
+  setups just say `AMS 2 Pro`, not `AMS 2 Pro #1`.
+- `remain_pct` values of `-1` (or any value outside 0..100) -- which
+  ha-bambulab uses to mean "unknown" for Generic / non-RFID filaments
+  -- are now hidden instead of rendered as red "-1%" pills.
+
+New backend pieces:
+
+- `app/ha_client.py`: `render_template()` POSTs to HA Core's
+  `/api/template` (rendering only, no service calls or state mutations)
+  so we can read device-registry fields the plain `/api/states` doesn't
+  expose.
+- `app/routers/ams.py`: `_fetch_device_info()` renders a single Jinja2
+  template that returns `{entity_id: {name, model, manufacturer,
+  via_name, ...}}` for every tray we care about in one call,
+  `_enrich_with_device_info()` annotates each tray with `printer_label`
+  / `model_label`, `_renumber_ams_units()` collapses internal AMS device
+  IDs to sequential 1-based numbers, `_pretty_model()` /
+  `_strip_ams_suffix()` / `_slug_to_label()` are the formatting helpers.
+  All best-effort: if the template call fails, the panel still renders
+  with the old entity-id-derived labels.
+
+Frontend:
+
+- `api.ts` `AmsTray` gains optional `printer_label`, `model_label`,
+  `device_name`.
+- `components/AmsPanel.tsx` grouping now keys on `printer_label`.
+- No new dependencies.
+
 ## 0.5.2 -- recognise more external-spool entity-id names
 
 0.5.0 only matched three specific external-spool entity-id endings

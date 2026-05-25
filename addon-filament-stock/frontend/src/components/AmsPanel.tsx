@@ -285,18 +285,19 @@ interface TrayGroup {
 function groupTrays(trays: AmsTray[]): TrayGroup[] {
   const map = new Map<string, TrayGroup>();
   for (const t of trays) {
-    // Group by the part of the location_label before "· Slot", so that an
-    // "AMS 1", an "AMS 2 Pro #1", and an "AMS HT #1" on the same printer
-    // each get their own block instead of being lumped by ams_idx alone.
+    // Group by (printer_label, unit-prefix-of-location-label) so that on the
+    // same printer an "AMS 1", an "AMS 2 Pro #1", and an "External spool"
+    // each get their own block.
+    const printerLabel = t.printer_label || t.printer;
     const unitPart = t.location_label.split("·")[0].trim() || "AMS";
     const key =
       t.kind === "external"
-        ? `${t.printer}__ext`
-        : `${t.printer}__${unitPart}`;
+        ? `${printerLabel}__ext`
+        : `${printerLabel}__${unitPart}`;
     const title =
       t.kind === "external"
-        ? `${t.printer} · External spool`
-        : `${t.printer} · ${unitPart}`;
+        ? `${printerLabel} · External spool`
+        : `${printerLabel} · ${unitPart}`;
     if (!map.has(key)) map.set(key, { key, title, trays: [] });
     map.get(key)!.trays.push(t);
   }

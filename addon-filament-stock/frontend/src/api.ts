@@ -254,7 +254,16 @@ export type AmsTrayStock = AmsTrayStockMatched | AmsTrayStockUnmatched;
 
 export interface AmsTray {
   entity_id: string;
+  /** Raw printer prefix derived from entity_id (kept for grouping fallback). */
   printer: string;
+  /** Friendly printer name from the HA device registry. e.g. "H2S 3D Printer".
+   *  Falls back to a prettified `printer` when the registry lookup is unavailable. */
+  printer_label?: string;
+  /** Hardware model from the HA device registry, normalised to a short label.
+   *  e.g. "AMS", "AMS 2 Pro", "AMS HT", "External spool". */
+  model_label?: string;
+  /** Friendly name of the AMS hardware device itself (rarely needed by the UI). */
+  device_name?: string;
   kind: "ams" | "external";
   ams_idx: number | null;
   tray_idx: number;

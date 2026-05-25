@@ -9,10 +9,15 @@ We only need a tiny subset:
 * ``GET /states`` -- the full state machine snapshot, which already includes
   every entity's last attributes. The Bambu Lab HACS integration's per-tray
   sensors live in this list, so one call is enough to render the AMS view.
+* ``POST /template`` -- render a Jinja2 template. We use this to pull the
+  device-registry info (manufacturer / model / friendly name) for each AMS
+  entity, which the plain REST ``/api/states`` does not expose. ``POST``
+  on this endpoint only RENDERS templates -- it does not call services or
+  modify anything in HA.
 
-The client is read-only: no POSTs, no service calls. That keeps the add-on
-safe to ship with the broad ``homeassistant_api`` permission (which would
-otherwise let it mutate anything in HA).
+The client is read-only: no service calls and no state mutations. That keeps
+the add-on safe to ship with the broad ``homeassistant_api`` permission
+(which would otherwise let it mutate anything in HA).
 """
 
 from __future__ import annotations
@@ -101,3 +106,42 @@ async def get_all_states() -> list[dict[str, Any]]:
         )
     _log.debug("Fetched %d states from HA Core", len(payload))
     return payload
+
+
+async def render_template(template: str) -> str:
+    """Render a Jinja2 template via HA Core ``POST /api/template``.
+
+    Returns the rendered string. We use this purely to read device-registry
+    info (which the REST ``/api/states`` endpoint doesn't include) by
+    iterating ``states.sensor`` and calling ``device_attr(state.entity_id,
+    'model')`` etc. for the entities we care about.
+
+    POST /template only RENDERS the template; HA does not execute any service
+    calls or otherwise mutate state. We deliberately don't expose a
+    ``call_service`` helper -- the add-on stays read-only.
+    """
+    headers = {
+        "Authorization": f"Bearer {_token()}",
+        "Content-Type": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.post(
+                f"{SUPERVISOR_BASE}/template",
+                headers=headers,
+                json={"template": template},
+            )
+    except httpx.HTTPError as exc:
+        raise HAClientError(f"cannot reach Supervisor: {exc!r}") from exc
+
+    if resp.status_code == 401:
+        raise HAClientError(
+            "Supervisor rejected SUPERVISOR_TOKEN on /template (HTTP 401)."
+        )
+    if resp.status_code >= 400:
+        body = (resp.text or "")[:200]
+        raise HAClientError(
+            f"HA Core /template returned HTTP {resp.status_code}: {body}"
+        )
+    # /template returns the rendered text as the raw response body, not JSON.
+    return resp.text

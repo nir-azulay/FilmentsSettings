@@ -21,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..ha_client import HAClientError, get_all_states
+from ..ha_client import HAClientError, get_all_states, render_template
 from ..models import ColorStock, Filament
 
 router = APIRouter(tags=["ams"])
@@ -339,6 +339,122 @@ def _stock_summary_for(tray: dict[str, Any], db: Session) -> dict[str, Any]:
     return base
 
 
+# ── Device-registry lookup via /api/template ─────────────────────────────────
+# HA's plain /api/states response does not expose device metadata. The
+# easiest way to get model/manufacturer/name without pulling in a WebSocket
+# client is to render a Jinja2 template that loops over the entities we
+# want and emits a small JSON map. Keys are entity_ids; values are
+# {"name": ..., "model": ..., "manufacturer": ..., "via_device_id": ...}.
+#
+# We restrict the template's loop to a small list of entity_ids (the ones we
+# already classified as Bambu trays) so it stays cheap even on installs with
+# thousands of entities.
+
+
+def _entity_ids_jinja_list(entity_ids: list[str]) -> str:
+    """Render a Python list of strings as a Jinja2 list literal -- e.g.
+    ['sensor.a', 'sensor.b']. Used to inject the list into the template
+    body. Safe because we already validated entity_ids match our matcher
+    regexes (so no quotes / newlines / control chars)."""
+    inner = ", ".join(f"'{eid}'" for eid in entity_ids)
+    return f"[{inner}]"
+
+
+def _build_device_info_template(entity_ids: list[str]) -> str:
+    eids = _entity_ids_jinja_list(entity_ids)
+    # device_attr() returns None for entities without an associated device,
+    # so wrap each call in iif() to keep the JSON valid. We render JSON by
+    # hand because Jinja's `tojson` filter is not consistently available
+    # across HA template contexts.
+    return (
+        "{% set out = namespace(parts=[]) %}"
+        "{% for eid in " + eids + " %}"
+        "{% set did = device_id(eid) %}"
+        "{% set name = device_attr(did, 'name_by_user') or device_attr(did, 'name') %}"
+        "{% set model = device_attr(did, 'model') %}"
+        "{% set manuf = device_attr(did, 'manufacturer') %}"
+        "{% set via   = device_attr(did, 'via_device_id') %}"
+        "{% set vname = device_attr(via, 'name_by_user') or device_attr(via, 'name') %}"
+        "{% set part %}"
+        '"{{ eid }}": {'
+        '"device_id": {{ (did or "")|tojson }}, '
+        '"name": {{ (name or "")|tojson }}, '
+        '"model": {{ (model or "")|tojson }}, '
+        '"manufacturer": {{ (manuf or "")|tojson }}, '
+        '"via_device_id": {{ (via or "")|tojson }}, '
+        '"via_name": {{ (vname or "")|tojson }}'
+        "}"
+        "{% endset %}"
+        "{% set out.parts = out.parts + [part] %}"
+        "{% endfor %}"
+        "{ {{ out.parts | join(', ') }} }"
+    )
+
+
+async def _fetch_device_info(entity_ids: list[str]) -> dict[str, dict[str, str]]:
+    """Render a template that joins each entity to its device-registry row
+    and returns ``{entity_id: {name, model, manufacturer, via_name, ...}}``.
+
+    Empty / None values are returned as empty strings to keep callers simple.
+    Returns an empty dict on any rendering or parsing failure -- this is a
+    nice-to-have lookup; the rest of the AMS view stays functional without it.
+    """
+    if not entity_ids:
+        return {}
+    try:
+        body = await render_template(_build_device_info_template(entity_ids))
+    except HAClientError as exc:
+        _log.warning("device-info template render failed: %s", exc)
+        return {}
+    body = (body or "").strip()
+    if not body:
+        return {}
+    import json as _json
+    try:
+        parsed = _json.loads(body)
+    except _json.JSONDecodeError as exc:
+        _log.warning("device-info template returned non-JSON: %s (body=%r)", exc, body[:200])
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+    return parsed
+
+
+# ── Bambu hardware-model normalisation ───────────────────────────────────────
+
+# Map raw `device_attr(..., 'model')` strings from ha-bambulab to a pretty
+# label. Lower-cased substring match -- ha-bambulab has used different
+# strings across releases ("AMS 2 PRO", "AMS-2-Pro", etc.).
+_MODEL_LABEL_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("ams 2 pro", "AMS 2 Pro"),
+    ("ams2 pro", "AMS 2 Pro"),
+    ("ams-2-pro", "AMS 2 Pro"),
+    ("ams2pro", "AMS 2 Pro"),
+    ("ams ht", "AMS HT"),
+    ("ams-ht", "AMS HT"),
+    ("ams ht1", "AMS HT"),
+    ("ams hub", "AMS HUB"),
+    ("ams-hub", "AMS HUB"),
+    ("ams lite", "AMS Lite"),
+    ("ams-lite", "AMS Lite"),
+    # The generic "AMS" or "AMS1" comes last so it doesn't shadow the
+    # specific variants above.
+    ("ams", "AMS"),
+)
+
+
+def _pretty_model(raw_model: str | None) -> str | None:
+    if not raw_model:
+        return None
+    s = raw_model.strip().lower()
+    if not s:
+        return None
+    for needle, label in _MODEL_LABEL_PATTERNS:
+        if needle in s:
+            return label
+    return raw_model.strip()
+
+
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 
@@ -385,12 +501,32 @@ async def get_ams_trays(db: Session = Depends(get_db)):
         tray["stock"] = _stock_summary_for(tray, db)
         trays.append(tray)
 
+    # Enrich with device-registry info (hardware model, printer device name,
+    # etc.) so the UI can say "AMS 2 Pro #1" instead of "AMS 128". Best-effort:
+    # _fetch_device_info silently returns {} on any failure so the rest of the
+    # panel keeps working.
+    device_info = await _fetch_device_info([t["entity_id"] for t in trays])
+    _enrich_with_device_info(trays, device_info)
+
+    # Now that we know the real hardware groups, normalise the ams_idx within
+    # each (printer_label, model) bucket so users see "AMS 2 Pro #1" / "#2"
+    # instead of "AMS 128" / "AMS 129".
+    _renumber_ams_units(trays)
+
+    # Drop nonsense `remain_pct` values that ha-bambulab uses to mean
+    # "unknown" (typically -1, occasionally 255 on older firmware).
+    for t in trays:
+        rp = t.get("remain_pct")
+        if rp is None or rp < 0 or rp > 100:
+            t["remain_pct"] = None
+
     # Stable ordering: external spool last, otherwise (printer, ams, tray).
     trays.sort(
         key=lambda t: (
             t["kind"] != "ams",
-            t.get("printer") or "",
-            t.get("ams_idx") or 99,
+            t.get("printer_label") or t.get("printer") or "",
+            t.get("model_label") or "",
+            t.get("ams_idx") if t.get("ams_idx") is not None else 99,
             t.get("tray_idx") or 0,
         )
     )
@@ -407,6 +543,165 @@ async def get_ams_trays(db: Session = Depends(get_db)):
         )
 
     return {"available": True, "trays": trays}
+
+
+# ── Enrichment helpers ───────────────────────────────────────────────────────
+
+
+def _enrich_with_device_info(
+    trays: list[dict[str, Any]], device_info: dict[str, dict[str, str]]
+) -> None:
+    """Annotate each tray with `device_name`, `model_label`, `printer_label`.
+
+    `printer_label` is the friendly name of the AMS device's *parent*
+    (`via_device`) -- which on ha-bambulab is the printer itself. That gives
+    us "H2S" or "H2S 3D Printer" instead of "h2s_<hex serial>_externalspool".
+    """
+    for t in trays:
+        info = device_info.get(t["entity_id"]) or {}
+        raw_model = info.get("model") or ""
+        device_name = info.get("name") or ""
+        via_name = info.get("via_name") or ""
+
+        pretty = _pretty_model(raw_model)
+        # External spool isn't really an AMS hardware row; force its model
+        # label to the friendly "External spool" no matter what HA reports.
+        if t["kind"] == "external":
+            t["model_label"] = "External spool"
+        else:
+            t["model_label"] = pretty or "AMS"
+
+        t["device_name"] = device_name
+        # Prefer the parent (printer) name. Fall back to the entity's own
+        # device name minus any "AMS" / "external" suffix, then to the raw
+        # printer slug we already extracted from the entity_id.
+        printer_label = (
+            via_name
+            or _strip_ams_suffix(device_name)
+            or _slug_to_label(t.get("printer") or "")
+        )
+        t["printer_label"] = printer_label or "Printer"
+
+        # Rebuild the location_label using the friendly model name.
+        if t["kind"] == "external":
+            t["location_label"] = "External spool"
+        else:
+            ams_idx = t.get("ams_idx")
+            if t["model_label"] == "AMS":
+                # Classic AMS keeps "AMS <n>" form.
+                t["location_label"] = (
+                    f"AMS {ams_idx} · Slot {t['tray_idx']}"
+                    if ams_idx is not None
+                    else f"AMS · Slot {t['tray_idx']}"
+                )
+            else:
+                # Named variants use "AMS 2 Pro #<n>" -- the # makes the
+                # unit index visually distinct from the model name. The
+                # actual <n> is filled in later by _renumber_ams_units().
+                t["location_label"] = (
+                    f"{t['model_label']} · Slot {t['tray_idx']}"
+                )
+
+
+def _renumber_ams_units(trays: list[dict[str, Any]]) -> None:
+    """Replace ha-bambulab's internal AMS device IDs (e.g. 128, 129) with
+    1-based sequence numbers per (printer, model). External spools are
+    skipped.
+
+    Mutates each AMS tray's `ams_idx` and `location_label` in-place.
+    """
+    # Group AMS trays by (printer_label, model_label).
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for t in trays:
+        if t["kind"] != "ams":
+            continue
+        key = (t.get("printer_label") or "", t.get("model_label") or "AMS")
+        groups.setdefault(key, []).append(t)
+
+    for (printer_label, model_label), members in groups.items():
+        # Discover the distinct raw ams_idx values within this bucket and
+        # assign each a 1-based sequence number, sorted ascending.
+        raw_indices = sorted(
+            {t["ams_idx"] for t in members if t.get("ams_idx") is not None}
+        )
+        idx_map = {raw: pos + 1 for pos, raw in enumerate(raw_indices)}
+        # Only renumber when there's something to clean up: either the
+        # original indices are not already a clean 1..N sequence, or any
+        # raw index is suspiciously large (>= 10 -- real AMS units never
+        # go that high).
+        suspicious = any(raw >= 10 for raw in raw_indices)
+        already_clean = raw_indices == list(range(1, len(raw_indices) + 1))
+        do_renumber = suspicious or not already_clean
+
+        for t in members:
+            raw_idx = t.get("ams_idx")
+            new_idx = idx_map.get(raw_idx, raw_idx) if do_renumber else raw_idx
+            t["ams_idx"] = new_idx
+            if model_label == "AMS":
+                t["location_label"] = (
+                    f"AMS {new_idx} · Slot {t['tray_idx']}"
+                    if new_idx is not None
+                    else f"AMS · Slot {t['tray_idx']}"
+                )
+            else:
+                # Only show the #<n> suffix when this bucket has more than
+                # one unit; otherwise the suffix is noise.
+                if len(raw_indices) > 1:
+                    t["location_label"] = (
+                        f"{model_label} #{new_idx} · Slot {t['tray_idx']}"
+                    )
+                else:
+                    t["location_label"] = (
+                        f"{model_label} · Slot {t['tray_idx']}"
+                    )
+
+
+# ── Printer-name normalisation helpers ───────────────────────────────────────
+
+_AMS_SUFFIX_RE = re.compile(
+    r"\s*(?:"
+    r"externalspool|external_spool|external|external_tray|external_filament"
+    r"|vt_tray|virtual_tray|virtual_spool"
+    r"|ams\s*\d*|ams\s*pro|ams\s*ht|ams\s*lite|ams\s*hub|ams\s*2\s*pro"
+    r")\s*$",
+    re.IGNORECASE,
+)
+
+
+def _strip_ams_suffix(name: str) -> str:
+    """Trim trailing AMS / external-spool words from a device name.
+
+    "H2S 0938BC5C2200107 ExternalSpool"  -> "H2S 0938BC5C2200107"
+    "H2S 0938BC5C2200107 AMS 1"          -> "H2S 0938BC5C2200107"
+    "H2S 0938BC5C2200107 AMS 2 Pro #1"   -> "H2S 0938BC5C2200107"
+    """
+    if not name:
+        return ""
+    stripped = name.strip()
+    # Strip up to 2 trailing AMS/external tokens (e.g. "AMS 2 Pro" then "#1").
+    for _ in range(3):
+        new = _AMS_SUFFIX_RE.sub("", stripped).rstrip(" -·#")
+        if new == stripped:
+            break
+        stripped = new
+    return stripped
+
+
+def _slug_to_label(slug: str) -> str:
+    """Make a snake_case slug human-friendly:
+    "h2s_0938bc5c2200107_externalspool" -> "H2S 0938bc5c2200107"
+    """
+    if not slug:
+        return ""
+    label = slug.replace("_", " ").strip()
+    label = _AMS_SUFFIX_RE.sub("", label).rstrip(" -·#")
+    # Title-case the first token if it's a short printer prefix like "h2s",
+    # "p1p", "x1c", etc. (mix of letters and digits, <=5 chars). Leave long
+    # hex serial-number tokens alone.
+    parts = label.split()
+    if parts and len(parts[0]) <= 5 and any(c.isalpha() for c in parts[0]):
+        parts[0] = parts[0].upper()
+    return " ".join(parts)
 
 
 @router.get("/ams/debug")
