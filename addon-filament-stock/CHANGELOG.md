@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.2 -- recognise more external-spool entity-id names
+
+0.5.0 only matched three specific external-spool entity-id endings
+(`_external_spool`, `_vt_tray`, `_external_tray`); on some Bambu printers
+and ha-bambulab forks the external spool is exposed under a different
+name and was silently dropped.
+
+External-spool matcher now recognises:
+
+- `_external_spool`, `_external_spool_tray`, `_external_tray`
+- `_ext_spool`, `_ext_tray`
+- `_vt_tray`, `_virtual_tray`, `_virtual_spool`
+- `_x1_external`, `_external`
+
+Plus an attribute-based fallback: any `sensor.*` whose entity_id contains
+`external`, `vt_tray`, or `virtual`, and whose attributes carry Bambu
+tray markers (`filament_id`, `tray_info_idx`, `tray_uuid`, `tray_type`,
+`tray_sub_brands`, or `tray_color`), now classifies as the external
+spool. So if a future ha-bambulab release renames it again, the panel
+keeps working without a code change.
+
+The `/api/ams/debug` endpoint now tags these matches separately
+(`external_attr_fallback` vs `external_regex`) so the next mismatch is
+easy to triage.
+
 ## 0.5.1 -- recognise AMS 2 Pro / AMS HT / AMS Lite tray sensors
 
 The 0.5.0 regex only matched the classic `sensor.<printer>_ams_<n>_tray_<n>`

@@ -61,9 +61,23 @@ _AMS_TRAY_RE = re.compile(
 _FALLBACK_TRAY_RE = re.compile(
     r"^sensor\.(?P<printer>.+?)_tray_(?P<tray>\d+)$"
 )
+# External spool entity-id schemes seen across ha-bambulab versions and
+# forks. We also fall back to an attribute-sniffing match below
+# (see _looks_like_external_spool) so that future names work without code
+# changes.
 _EXTERNAL_TRAY_RE = re.compile(
-    r"^sensor\.(?P<printer>.+?)_(?:external_spool|vt_tray|external_tray)$"
+    r"^sensor\.(?P<printer>.+?)_(?:"
+    r"external_spool|external_spool_tray|external_tray"
+    r"|ext_spool|ext_tray"
+    r"|vt_tray|virtual_tray|virtual_spool"
+    r"|x1_external|external"
+    r")$"
 )
+
+# Heuristic for "this is an external-spool sensor we missed with the regex
+# above" -- entity_id mentions external/vt/spool somewhere and the sensor
+# carries Bambu tray attributes.
+_EXTERNAL_KEYWORD_RE = re.compile(r"(?:external|vt_tray|virtual)")
 
 # Attribute keys ha-bambulab puts on tray sensors. Presence of any one of
 # these is what tells us a "_tray_<n>" sensor really belongs to Bambu (and
@@ -130,7 +144,20 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
         if not ams_match and not ext_match and _looks_like_bambu_tray(attrs)
         else None
     )
-    if not ams_match and not ext_match and not fallback_match:
+    # Attribute-based fallback for the external spool. We get here when the
+    # printer's external-spool sensor lives at a name we haven't seen yet
+    # (e.g. "_x1_spool", "_h2s_external_filament", whatever). We rely on the
+    # entity_id mentioning external/vt/virtual AND the sensor exposing the
+    # Bambu tray attribute set.
+    external_fallback = (
+        not ams_match
+        and not ext_match
+        and not fallback_match
+        and entity_id.startswith("sensor.")
+        and _EXTERNAL_KEYWORD_RE.search(entity_id) is not None
+        and _looks_like_bambu_tray(attrs)
+    )
+    if not ams_match and not ext_match and not fallback_match and not external_fallback:
         return None
 
     loaded = _is_loaded(state)
@@ -177,11 +204,22 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
             else f"Tray {tray_idx}"
         )
         kind = "ams"
-    else:
-        assert ext_match is not None
+    elif ext_match:
         printer = ext_match.group("printer")
         ams_idx = None
         tray_idx = 0  # external spool has no slot index; use 0 for stable sort
+        location_label = "External spool"
+        kind = "external"
+    else:
+        # external_fallback: sensor.<printer>_<...something external...>
+        # We can't extract a clean printer name, so we lift the longest
+        # plausible prefix (everything between "sensor." and the first
+        # external/vt/virtual keyword).
+        body = entity_id[len("sensor."):]
+        m = _EXTERNAL_KEYWORD_RE.search(body)
+        printer = body[: m.start()].rstrip("_") if m else body
+        ams_idx = None
+        tray_idx = 0
         location_label = "External spool"
         kind = "external"
 
@@ -419,7 +457,9 @@ async def debug_ams_candidates():
         elif _EXTERNAL_TRAY_RE.match(entity_id):
             matched_by = "external_regex"
         elif _FALLBACK_TRAY_RE.match(entity_id) and _looks_like_bambu_tray(attrs):
-            matched_by = "fallback_regex"
+            matched_by = "tray_attr_fallback"
+        elif _EXTERNAL_KEYWORD_RE.search(entity_id) and _looks_like_bambu_tray(attrs):
+            matched_by = "external_attr_fallback"
         if matched_by:
             matched_count += 1
         else:
