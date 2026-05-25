@@ -64,7 +64,12 @@ def seed_filaments() -> None:
                 .first()
             )
             if existing:
-                _log.info("Seed skip (exists): %s %s", info["brand"], info["material"])
+                if info.get("brand_logo_url") and existing.brand_logo_url != info["brand_logo_url"]:
+                    existing.brand_logo_url = info["brand_logo_url"]
+                    db.commit()
+                    _log.info("Seed updated logo: %s %s", info["brand"], info["material"])
+                else:
+                    _log.info("Seed skip (exists): %s %s", info["brand"], info["material"])
                 continue
 
             filament = Filament(**info)
