@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { AmsTray, AmsTraysResponse, fetchAmsTrays } from "../api";
+import { AmsTray, AmsTraysResponse, fetchAmsTrays, unassignTray } from "../api";
+import AssignTrayDialog from "./AssignTrayDialog";
 import { SpoolIcon } from "./SpoolIcon";
 
 const POLL_MS = 15000; // 15s -- same cadence as a typical HA sensor refresh
@@ -8,13 +9,20 @@ interface Props {
   /** Called when the user clicks the "in stock" pill so the parent can scroll
    *  to / highlight the matching filament card. Optional. */
   onJumpToFilament?: (filamentDbId: number) => void;
+  /** Called after a successful assign/unassign so the parent can refresh
+   *  filament cards whose counters changed. Optional. */
+  onStockChanged?: () => void;
 }
 
-export default function AmsPanel({ onJumpToFilament }: Props) {
+export default function AmsPanel({ onJumpToFilament, onStockChanged }: Props) {
   const [data, setData] = useState<AmsTraysResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [assignTarget, setAssignTarget] = useState<AmsTray | null>(null);
+  // Per-tray transient state so the Unassign button can show a spinner
+  // without re-rendering the whole panel.
+  const [unassigning, setUnassigning] = useState<string | null>(null);
 
   const load = useCallback(async (initial: boolean) => {
     if (initial) setLoading(true);
@@ -34,6 +42,32 @@ export default function AmsPanel({ onJumpToFilament }: Props) {
       setRefreshing(false);
     }
   }, []);
+
+  const handleUnassign = useCallback(
+    async (tray: AmsTray) => {
+      if (!tray.assignment) return;
+      const label = `${tray.assignment.brand} ${tray.assignment.material} · ${tray.assignment.color_name}`;
+      if (!window.confirm(`Unassign ${label} from ${tray.location_label}?\n\nThe ${tray.assignment.packaging} will be added back to your stock.`)) {
+        return;
+      }
+      setUnassigning(tray.entity_id);
+      try {
+        await unassignTray(tray.entity_id);
+        await load(false);
+        onStockChanged?.();
+      } catch (exc) {
+        window.alert(`Failed to unassign: ${(exc as Error).message}`);
+      } finally {
+        setUnassigning(null);
+      }
+    },
+    [load, onStockChanged],
+  );
+
+  const handleAssigned = useCallback(async () => {
+    await load(false);
+    onStockChanged?.();
+  }, [load, onStockChanged]);
 
   useEffect(() => {
     void load(true);
@@ -116,12 +150,27 @@ export default function AmsPanel({ onJumpToFilament }: Props) {
             </div>
             <div style={trayGrid}>
               {g.trays.map((t) => (
-                <TrayCard key={t.entity_id} tray={t} onJumpToFilament={onJumpToFilament} />
+                <TrayCard
+                  key={t.entity_id}
+                  tray={t}
+                  onJumpToFilament={onJumpToFilament}
+                  onAssign={() => setAssignTarget(t)}
+                  onUnassign={() => void handleUnassign(t)}
+                  unassigning={unassigning === t.entity_id}
+                />
               ))}
             </div>
           </div>
         ))}
       </div>
+
+      {assignTarget && (
+        <AssignTrayDialog
+          tray={assignTarget}
+          onClose={() => setAssignTarget(null)}
+          onAssigned={() => void handleAssigned()}
+        />
+      )}
     </section>
   );
 }
@@ -165,11 +214,18 @@ function Header({
 function TrayCard({
   tray,
   onJumpToFilament,
+  onAssign,
+  onUnassign,
+  unassigning,
 }: {
   tray: AmsTray;
   onJumpToFilament?: (filamentDbId: number) => void;
+  onAssign: () => void;
+  onUnassign: () => void;
+  unassigning: boolean;
 }) {
   const swatch = tray.loaded ? tray.color_hex ?? "#9e9e9e" : "#cfd8dc";
+  const assignment = tray.assignment ?? null;
 
   return (
     <div style={trayCard(tray.loaded)}>
@@ -208,6 +264,68 @@ function TrayCard({
       </div>
 
       {tray.loaded && <StockBadge tray={tray} onJumpToFilament={onJumpToFilament} />}
+
+      {assignment && (
+        <AssignmentOverlay
+          assignment={assignment}
+          onJumpToFilament={onJumpToFilament}
+        />
+      )}
+
+      <div style={actionsRow}>
+        <button
+          type="button"
+          onClick={onAssign}
+          style={assignBtn(!!assignment)}
+          title={assignment ? "Replace the current assignment" : "Tell the add-on which spool from your stock is in this tray"}
+        >
+          {assignment ? "Replace" : "Assign from stock"}
+        </button>
+        {assignment && (
+          <button
+            type="button"
+            onClick={onUnassign}
+            disabled={unassigning}
+            style={unassignBtn}
+            title="Remove this assignment and restore the spool to your stock"
+          >
+            {unassigning ? "…" : "Unassign"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AssignmentOverlay({
+  assignment,
+  onJumpToFilament,
+}: {
+  assignment: NonNullable<AmsTray["assignment"]>;
+  onJumpToFilament?: (filamentDbId: number) => void;
+}) {
+  const fdb = assignment.filament_db_id;
+  const clickable = onJumpToFilament && fdb !== null;
+  return (
+    <div
+      style={{ ...assignedBadge, cursor: clickable ? "pointer" : "default" }}
+      onClick={() => {
+        if (clickable && fdb !== null) onJumpToFilament(fdb);
+      }}
+      title={clickable ? "Click to jump to this filament in your stock" : ""}
+    >
+      <span style={assignedBadgeIcon}>★</span>
+      <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        From your stock:{" "}
+        <strong>
+          {assignment.brand} {assignment.material} · {assignment.color_name}
+        </strong>{" "}
+        <span style={assignedMeta}>
+          ({assignment.packaging}
+          {assignment.pushed_to_printer ? ", pushed" : ""}
+          {assignment.push_error ? ", push failed" : ""})
+        </span>
+      </span>
     </div>
   );
 }
@@ -469,4 +587,50 @@ const emptyText: React.CSSProperties = {
   fontSize: 12,
   color: "var(--ha-secondary-text)",
   padding: "8px 0",
+};
+const assignedBadge: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 500,
+  padding: "4px 8px",
+  borderRadius: 6,
+  background: "rgba(156,39,176,0.10)",
+  color: "#6a1b9a",
+  border: "1px solid rgba(156,39,176,0.3)",
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+};
+const assignedBadgeIcon: React.CSSProperties = {
+  fontSize: 12,
+  color: "#7b1fa2",
+};
+const assignedMeta: React.CSSProperties = {
+  opacity: 0.8,
+  fontWeight: 400,
+};
+const actionsRow: React.CSSProperties = {
+  display: "flex",
+  gap: 6,
+  marginTop: 2,
+};
+const assignBtn = (hasAssignment: boolean): React.CSSProperties => ({
+  flex: 1,
+  padding: "5px 10px",
+  fontSize: 11,
+  fontWeight: 600,
+  background: hasAssignment ? "rgba(0,0,0,0.04)" : "rgba(3,169,244,0.08)",
+  color: hasAssignment ? "var(--ha-primary-text)" : "#0277bd",
+  border: hasAssignment ? "1px solid var(--ha-divider)" : "1px solid rgba(3,169,244,0.35)",
+  borderRadius: 6,
+  cursor: "pointer",
+});
+const unassignBtn: React.CSSProperties = {
+  padding: "5px 10px",
+  fontSize: 11,
+  fontWeight: 500,
+  background: "transparent",
+  color: "var(--ha-secondary-text)",
+  border: "1px solid var(--ha-divider)",
+  borderRadius: 6,
+  cursor: "pointer",
 };

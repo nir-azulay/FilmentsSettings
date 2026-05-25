@@ -252,6 +252,29 @@ export interface AmsTrayStockUnmatched {
 
 export type AmsTrayStock = AmsTrayStockMatched | AmsTrayStockUnmatched;
 
+/** A user-declared "I loaded this spool from my stock into this tray" link.
+ *  Added in add-on 0.6.0. The same object is returned from /assign,
+ *  attached to each tray in /ams/trays, and listed by /assignment-history. */
+export interface TrayAssignment {
+  id: number;
+  entity_id: string;
+  location_label: string;
+  color_stock_id: number;
+  packaging: PackagingType;
+  pushed_to_printer: boolean;
+  push_error: string;
+  assigned_at: string | null;
+  unassigned_at: string | null;
+  notes: string;
+  /** Joined-in filament/color info for convenient UI rendering. */
+  filament_db_id: number | null;
+  brand: string | null;
+  material: string | null;
+  filament_type: string | null;
+  color_name: string | null;
+  color_hex: string | null;
+}
+
 export interface AmsTray {
   entity_id: string;
   /** Raw printer prefix derived from entity_id (kept for grouping fallback). */
@@ -287,6 +310,9 @@ export interface AmsTray {
   remain_pct: number | null;
   last_updated: string | null;
   stock: AmsTrayStock;
+  /** Set when the user has assigned a spool from local stock to this tray
+   *  via the add-on. Null when no assignment is live. Added in 0.6.0. */
+  assignment?: TrayAssignment | null;
 }
 
 export interface AmsTraysResponse {
@@ -294,6 +320,131 @@ export interface AmsTraysResponse {
   /** Set when available=false to explain why (e.g. Supervisor unreachable). */
   error?: string;
   trays: AmsTray[];
+}
+
+// ─── AMS tray assignment (add-on 0.6.0) ───────────────────────────────────
+// Lets the UI tell the backend "I just loaded this spool from my stock into
+// this AMS tray". The backend decrements the corresponding ColorStock
+// counter and (optionally) calls bambu_lab.set_filament so the printer's
+// AMS display updates too.
+
+export interface AssignSuggestion {
+  filament_db_id: number;
+  color_stock_id: number;
+  brand: string;
+  material: string;
+  filament_type: string;
+  color_name: string;
+  color_hex: string;
+  available_spool: number;
+  available_refill: number;
+  status: ColorStatus;
+  /** True when this filament's type/material contains the tray's current
+   *  material substring (e.g. tray is PETG and filament is "PETG HS"). The
+   *  backend already sorted by this so the UI doesn't need to re-sort, but
+   *  it's exposed so we can render a "match" hint on the first few rows. */
+  material_match: boolean;
+  /** Lower = shown earlier. Tier 0 = material match with spools available,
+   *  Tier 1 = material match with refills, Tier 2 = spools, Tier 3 = refills,
+   *  Tier 4 = ordered/etc. */
+  tier: number;
+}
+
+export interface AssignSuggestionsResponse {
+  entity_id: string;
+  material_hint: string | null;
+  current_assignment: TrayAssignment | null;
+  suggestions: AssignSuggestion[];
+}
+
+export interface AssignTrayRequest {
+  color_stock_id: number;
+  packaging: PackagingType;
+  /** When true, also call bambu_lab.set_filament so the printer's AMS
+   *  display updates. The push may fail (printer offline, ha-bambulab
+   *  not installed) -- the local stock decrement happens either way and
+   *  the failure is surfaced in the response. */
+  push_to_printer?: boolean;
+  location_label?: string;
+  notes?: string;
+}
+
+export interface AssignTrayResponse {
+  assignment: TrayAssignment;
+  color: {
+    id: number;
+    filament_id: number;
+    color_name: string;
+    color_hex: string;
+    quantity: number;
+    quantity_used: number;
+    quantity_refill: number;
+    used_refill: number;
+    available_spool: number;
+    available_refill: number;
+    available_total: number;
+  };
+  push_to_printer: {
+    requested: boolean;
+    /** null when push wasn't requested, true on success, false on failure. */
+    ok: boolean | null;
+    error: string;
+  };
+}
+
+export async function fetchAssignSuggestions(
+  entityId: string,
+  materialHint?: string | null,
+): Promise<AssignSuggestionsResponse> {
+  const params = new URLSearchParams();
+  if (materialHint) params.set("material_hint", materialHint);
+  const qs = params.toString();
+  const url =
+    `${BASE}/ams/trays/${encodeURIComponent(entityId)}/suggestions` +
+    (qs ? `?${qs}` : "");
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to load suggestions (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
+export async function assignTray(
+  entityId: string,
+  data: AssignTrayRequest,
+): Promise<AssignTrayResponse> {
+  const res = await fetch(
+    `${BASE}/ams/trays/${encodeURIComponent(entityId)}/assign`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      detail = body?.detail ?? detail;
+    } catch {
+      // ignore body parse errors
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+export async function unassignTray(
+  entityId: string,
+): Promise<{ ok: boolean; had_assignment: boolean }> {
+  const res = await fetch(
+    `${BASE}/ams/trays/${encodeURIComponent(entityId)}/unassign`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to unassign (HTTP ${res.status})`);
+  }
+  return res.json();
 }
 
 export async function fetchAmsTrays(): Promise<AmsTraysResponse> {

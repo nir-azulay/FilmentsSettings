@@ -1,5 +1,99 @@
 # Changelog
 
+## 0.6.0 -- "I just loaded this spool" tray assignment + optional printer push
+
+You can now tell the add-on which physical spool from your stock you put
+into an AMS tray. Each tray card in the AMS panel grows two new buttons:
+
+- **Assign from stock** — opens a picker filtered by the tray's current
+  material (PETG tray → PETG filaments first, then PLA, etc.). Pick a
+  filament + color, choose spool or refill, optionally tick **Also tell
+  the printer**, and click Assign. The add-on:
+  1. Decrements the chosen ColorStock's spool or refill counter (so your
+     in-stock totals stay accurate).
+  2. Writes a `TrayAssignment` row that links the AMS entity to the
+     ColorStock row.
+  3. *(If you ticked the box)* calls `bambu_lab.set_filament` on the HA
+     side, which pushes the new tray metadata to the printer over MQTT
+     — your AMS display updates to show a Bambu-recognised generic
+     filament (`Generic PETG` etc.) with your stock's nozzle temp range
+     and color.
+
+- **Unassign** — closes the live assignment and **restores** the
+  spool/refill to your stock counter. Does NOT clear the tray on the
+  printer side; assign a different spool to overwrite the AMS slot
+  metadata.
+
+A small purple "From your stock: SUNLU PETG HS · Black (spool, pushed)"
+badge appears below each tray that has a live assignment. Click it to
+jump to the matching filament card.
+
+### How push-to-printer works
+
+When you tick **Also tell the printer** the add-on calls
+`bambu_lab.set_filament` with:
+
+| Field | Value |
+|---|---|
+| `entity_id` | the tray sensor (e.g. `sensor.h2s_ams_1_tray_3`) |
+| `tray_info_idx` | a generic Bambu filament ID — `GFL99` (Generic PLA), `GFG99` (Generic PETG), `GFB99` (Generic ASA), `GFN99` (Generic PA), `GFU99` (Generic TPU), `GFB98` (Generic ABS), `GFC99` (Generic PC), picked from your filament's `filament_type` + `material` |
+| `tray_color` | `RRGGBBFF` derived from the ColorStock's `color_hex` |
+| `tray_type` | `PLA` / `PETG` / `ASA` / `PA` / `TPU` / `ABS` / `PC` |
+| `nozzle_temp_min` / `nozzle_temp_max` | from the local Filament row, clamped to Bambu's 160-300°C range |
+
+Why generic IDs and not your specific brand? Bambu's firmware uses
+`tray_info_idx` to look up curated print profiles. Sending one of your
+local IDs (e.g. `P759ffa0` for SUNLU PETG HS) would just show
+"Unknown" on the AMS display. Sending `GFG99` lets the printer treat
+the spool as a generic PETG with your nozzle temps, which is exactly
+what you want — and the link back to your specific brand is kept
+locally on the assignment row.
+
+If the printer push fails (printer offline, ha-bambulab not installed,
+the integration's service signature changed), the **local assignment
+is still saved** and you get a clear error message in the dialog. The
+counter decrement is never rolled back by a push failure.
+
+### Backend
+
+New module `app/bambu_mapping.py` holds the material-to-Bambu family
+table (extend `_FAMILY_RULES` to add more materials), plus tiny helpers
+for the color and nozzle-temp normalisation.
+
+New table `tray_assignments`:
+
+```
+id, entity_id, location_label, color_stock_id, packaging,
+pushed_to_printer, push_error, assigned_at, unassigned_at, notes
+```
+
+Soft-deleted via `unassigned_at IS NULL` so the assignment history is
+preserved (see `GET /ams/trays/{entity_id}/assignment-history`).
+
+New endpoints:
+
+```
+GET  /api/ams/trays/{entity_id}/suggestions?material_hint=PETG
+POST /api/ams/trays/{entity_id}/assign
+POST /api/ams/trays/{entity_id}/unassign
+GET  /api/ams/trays/{entity_id}/assignment-history
+```
+
+`GET /api/ams/trays` now also includes the live assignment on each
+tray (single batch query — O(1) extra DB cost regardless of tray
+count).
+
+`HaClient.call_service(domain, service, payload)` is the new mutation
+path — strictly opt-in per request, never invoked unless the user
+ticks "Also tell the printer".
+
+### Sanity-checked
+
+Backend smoke test exercises the assign/unassign counter math, the
+material mapping for every supported family (PLA / PETG / ASA / PA /
+TPU + unknown fallback), the color hex normaliser, and the nozzle-temp
+clamping. Frontend builds cleanly with no TypeScript errors.
+
 ## 0.5.4 -- detect duplicate-suffixed AMS tray entities + friendly_name labels
 
 Fixes the panel silently dropping half the trays on printers with multiple

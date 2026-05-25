@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..ha_client import HAClientError, get_all_states, render_template
 from ..models import ColorStock, Filament
+from .assignments import get_current_assignments_map
 
 router = APIRouter(tags=["ams"])
 _log = logging.getLogger("filament_stock.ams")
@@ -609,6 +610,13 @@ async def get_ams_trays(db: Session = Depends(get_db)):
         rp = t.get("remain_pct")
         if rp is None or rp < 0 or rp > 100:
             t["remain_pct"] = None
+
+    # Annotate each tray with its current "I loaded this from my stock"
+    # assignment, if any. One query for all trays via the helper -- O(1)
+    # extra DB cost regardless of the number of trays. Added in 0.6.0.
+    assignment_map = get_current_assignments_map(db)
+    for t in trays:
+        t["assignment"] = assignment_map.get(t["entity_id"])
 
     # Stable ordering: external spool last, otherwise (printer, ams, tray).
     trays.sort(

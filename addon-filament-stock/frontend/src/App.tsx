@@ -139,7 +139,7 @@ export default function App() {
           }}
         />
 
-        <AmsPanel onJumpToFilament={jumpToFilament} />
+        <AmsPanel onJumpToFilament={jumpToFilament} onStockChanged={() => void reload()} />
 
         <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
       </main>

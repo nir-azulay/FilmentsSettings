@@ -98,3 +98,42 @@ class StapleAlertIgnore(Base):
     filament_type = Column(String, nullable=False)  # PLA, PETG, ASA
     color_key = Column(String, nullable=False)  # black, white (normalized)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class TrayAssignment(Base):
+    """User-declared mapping from a Bambu AMS tray (or external spool) to a
+    specific ColorStock row in our local DB.
+
+    Added in add-on 0.6.0 for the "I just loaded this spool" workflow.
+
+    Lifecycle:
+      * On assign: a new row is inserted with `unassigned_at=NULL`. Any prior
+        live row for the same `entity_id` is closed (its `unassigned_at` set
+        to now) and its counter is incremented back.
+      * On unassign: `unassigned_at` is set, the counter is incremented back.
+
+    The history of past assignments is kept for the timeline view.
+
+    `pushed_to_printer` records whether we also fired the
+    `bambu_lab.set_filament` service when this assignment was made -- purely
+    informational; the local stock decrement happens either way.
+    """
+
+    __tablename__ = "tray_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    entity_id = Column(String, nullable=False, index=True)
+    # Free-text label so the history view stays readable even after the AMS
+    # unit numbering changes (e.g. a user adds a second AMS HT and the old
+    # one's display index shifts from #1 to #2).
+    location_label = Column(String, default="", nullable=False)
+    color_stock_id = Column(Integer, ForeignKey("color_stocks.id"), nullable=False)
+    # "spool" | "refill" -- which counter we decremented.
+    packaging = Column(String, nullable=False)
+    pushed_to_printer = Column(Integer, default=0, nullable=False)  # 0/1
+    push_error = Column(String, default="", nullable=False)  # last push error, if any
+    assigned_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    unassigned_at = Column(DateTime, nullable=True, index=True)
+    notes = Column(String, default="", nullable=False)
+
+    color_stock = relationship("ColorStock")

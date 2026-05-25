@@ -15,9 +15,13 @@ We only need a tiny subset:
   on this endpoint only RENDERS templates -- it does not call services or
   modify anything in HA.
 
-The client is read-only: no service calls and no state mutations. That keeps
-the add-on safe to ship with the broad ``homeassistant_api`` permission
-(which would otherwise let it mutate anything in HA).
+From add-on 0.6.0 we also expose ``call_service()`` -- a thin wrapper around
+``POST /api/services/<domain>/<service>``. The only consumer is the
+"assign filament from stock to AMS tray" workflow, which optionally pushes
+the new tray metadata to the printer via ``bambu_lab.set_filament``. The
+function is intentionally generic so it can be reused for any future
+opt-in printer-push features, but callers should treat it as the
+"mutates HA state" path and guard it with explicit user consent.
 """
 
 from __future__ import annotations
@@ -145,3 +149,66 @@ async def render_template(template: str) -> str:
         )
     # /template returns the rendered text as the raw response body, not JSON.
     return resp.text
+
+
+async def call_service(
+    domain: str,
+    service: str,
+    payload: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Call ``POST /api/services/<domain>/<service>`` on HA Core via Supervisor.
+
+    Returns the (possibly empty) list of states HA reports as changed by the
+    service call. Most write services -- including ``bambu_lab.set_filament``
+    -- return ``[]`` synchronously and dispatch the actual work in the
+    background, so the empty list is normal.
+
+    Raises ``HAClientError`` on any transport / auth / 4xx / 5xx failure so the
+    router layer can surface a clean error to the UI.
+
+    This is the only function in this module that *mutates* HA state. Calls
+    should only be reachable from code paths the user has explicitly opted
+    into (e.g. an "also push to printer" checkbox in the assign dialog).
+    """
+    headers = {
+        "Authorization": f"Bearer {_token()}",
+        "Content-Type": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.post(
+                f"{SUPERVISOR_BASE}/services/{domain}/{service}",
+                headers=headers,
+                json=payload,
+            )
+    except httpx.HTTPError as exc:
+        raise HAClientError(f"cannot reach Supervisor: {exc!r}") from exc
+
+    if resp.status_code == 401:
+        raise HAClientError(
+            "Supervisor rejected SUPERVISOR_TOKEN on /services (HTTP 401)."
+        )
+    if resp.status_code == 404:
+        raise HAClientError(
+            f"HA service '{domain}.{service}' not found (HTTP 404)."
+            " Is the ha-bambulab integration installed and the printer added?"
+        )
+    if resp.status_code >= 400:
+        body = (resp.text or "")[:300]
+        raise HAClientError(
+            f"HA service '{domain}.{service}' returned HTTP {resp.status_code}:"
+            f" {body}"
+        )
+
+    try:
+        data = resp.json()
+    except ValueError:
+        # Some HA versions return an empty body on success; treat as no changes.
+        return []
+    if not isinstance(data, list):
+        # /services always responds with a list; anything else means the API
+        # contract changed and we want to know about it.
+        raise HAClientError(
+            f"HA /services returned unexpected type {type(data).__name__}"
+        )
+    return data
