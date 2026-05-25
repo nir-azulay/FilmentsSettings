@@ -23,6 +23,7 @@ SEED_FILAMENTS = [
             "brand": "Isanmate",
             "material": "PLA Pro",
             "filament_type": "PLA",
+            "brand_logo_url": "/logos/logo-isanmate.png",
         },
         "colors": [
             {"color_name": "Black", "color_hex": "#1A1A1A", "quantity": 2},
