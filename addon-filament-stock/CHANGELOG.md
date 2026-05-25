@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.5.4 -- detect duplicate-suffixed AMS tray entities + friendly_name labels
+
+Fixes the panel silently dropping half the trays on printers with multiple
+AMS units of the same model.
+
+ha-bambulab assigns the same base entity_id slug to both AMS 2 Pros on a
+printer (because their internal AMS index is `1` for both); Home Assistant
+disambiguates by appending `_2`, `_3`, ... to the second / third / Nth
+copy. So two AMS 2 Pros produce eight tray entities:
+
+```
+sensor.<printer>_ams_1_tray_{1..4}      (AMS 2 Pro #1)
+sensor.<printer>_ams_1_tray_{1..4}_2    (AMS 2 Pro #2)
+```
+
+The 0.5.3 regex only matched the un-suffixed form, so the second AMS 2
+Pro's four trays were silently dropped from the panel.
+
+Now:
+
+- `_AMS_TRAY_RE` and `_FALLBACK_TRAY_RE` accept an optional trailing
+  `_<n>` group (`dupe`) that we use as an `instance_idx` discriminator
+  (defaults to 1, suffix `_2` -> 2, `_3` -> 3, ...).
+- `_renumber_ams_units` now buckets AMS units by `(ams_idx, instance_idx)`
+  instead of `ams_idx` alone, so two AMS 2 Pros that both have raw
+  `ams_idx=1` produce two distinct unit cards instead of collapsing.
+- Tray dicts carry a new `unit_label` field (e.g. `"AMS 2 Pro #1"`) which
+  the frontend now uses as the grouping key, replacing the old
+  string-split heuristic.
+
+Bonus: the panel now prefers HA's `friendly_name` attribute on tray
+sensors when available. ha-bambulab sets it to e.g. `"AMS 2 Pro #1 Tray
+1"`, which is the gold-standard label and removes any chance of the
+add-on guessing the wrong hardware model name. The model label
+extracted from `friendly_name` also feeds the model-label resolution
+chain ahead of the device-registry `model` field, since friendly_name
+is always populated whereas device-registry lookups can fail.
+
+Smoke-tested against the actual entity_id set reported by ha-bambulab
+on a printer with 2x AMS 2 Pro + 2x AMS HT + external spool: all 11
+trays parse, group as 5 distinct units, with correct labels.
+
 ## 0.5.3 -- AMS panel: friendly device names, hardware models, clean numbering
 
 The AMS Status panel now looks up each tray entity in Home Assistant's

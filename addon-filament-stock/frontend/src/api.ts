@@ -262,8 +262,18 @@ export interface AmsTray {
   /** Hardware model from the HA device registry, normalised to a short label.
    *  e.g. "AMS", "AMS 2 Pro", "AMS HT", "External spool". */
   model_label?: string;
+  /** The AMS unit's full label including instance suffix when multiple of the
+   *  same model exist on the printer. e.g. "AMS 2 Pro #1", "AMS HT #2",
+   *  "External spool". Use this as the grouping key. */
+  unit_label?: string;
   /** Friendly name of the AMS hardware device itself (rarely needed by the UI). */
   device_name?: string;
+  /** Disambiguator HA assigns when multiple devices want the same entity_id
+   *  slug (1 = no suffix, 2 = `_2`, 3 = `_3`, ...). Used internally to tell
+   *  two AMS 2 Pros apart since their tray entity_ids only differ by this. */
+  instance_idx?: number;
+  /** Raw `friendly_name` attribute from HA, e.g. "AMS 2 Pro #1 Tray 1". */
+  friendly_name?: string;
   kind: "ams" | "external";
   ams_idx: number | null;
   tray_idx: number;

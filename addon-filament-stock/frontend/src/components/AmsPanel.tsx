@@ -285,19 +285,16 @@ interface TrayGroup {
 function groupTrays(trays: AmsTray[]): TrayGroup[] {
   const map = new Map<string, TrayGroup>();
   for (const t of trays) {
-    // Group by (printer_label, unit-prefix-of-location-label) so that on the
-    // same printer an "AMS 1", an "AMS 2 Pro #1", and an "External spool"
-    // each get their own block.
+    // Group by (printer_label, unit_label). unit_label is the AMS unit's
+    // canonical name -- "AMS 2 Pro #1", "AMS HT #2", "External spool" -- so
+    // two AMS 2 Pros on the same printer (whose tray entity_ids only differ
+    // by HA's `_2` duplicate suffix) get distinct blocks.
     const printerLabel = t.printer_label || t.printer;
-    const unitPart = t.location_label.split("·")[0].trim() || "AMS";
-    const key =
-      t.kind === "external"
-        ? `${printerLabel}__ext`
-        : `${printerLabel}__${unitPart}`;
-    const title =
-      t.kind === "external"
-        ? `${printerLabel} · External spool`
-        : `${printerLabel} · ${unitPart}`;
+    // Fall back to the entity-id-derived label when unit_label is missing
+    // (e.g. an older backend that doesn't set it).
+    const unitLabel = t.unit_label || t.location_label.split("·")[0].trim() || "AMS";
+    const key = `${printerLabel}__${unitLabel}`;
+    const title = `${printerLabel} · ${unitLabel}`;
     if (!map.has(key)) map.set(key, { key, title, trays: [] });
     map.get(key)!.trays.push(t);
   }

@@ -54,12 +54,18 @@ _log = logging.getLogger("filament_stock.ams")
 _AMS_TRAY_RE = re.compile(
     r"^sensor\.(?P<printer>.+?)"
     r"_(?P<variant>ams(?:_pro|2pro|_ht|_lite|_hub)?)"
-    r"_(?P<ams>\d+)_tray_(?P<tray>\d+)$"
+    r"_(?P<ams>\d+)_tray_(?P<tray>\d+)"
+    # HA appends "_2", "_3", ... when two devices try to claim the same
+    # entity_id slug. ha-bambulab does this for AMS 2 Pro #2's trays
+    # because both AMS 2 Pros' tray entities want to be named
+    # ..._ams_1_tray_<n>. Capture the suffix so we can use it as a
+    # secondary AMS-instance discriminator below.
+    r"(?:_(?P<dupe>\d+))?$"
 )
 # Last-resort matcher: anything that mentions "_tray_<n>" and lives on a sensor
 # whose attributes look like a Bambu tray (we test that in _parse_tray).
 _FALLBACK_TRAY_RE = re.compile(
-    r"^sensor\.(?P<printer>.+?)_tray_(?P<tray>\d+)$"
+    r"^sensor\.(?P<printer>.+?)_tray_(?P<tray>\d+)(?:_(?P<dupe>\d+))?$"
 )
 # External spool entity-id schemes seen across ha-bambulab versions and
 # forks. We also fall back to an attribute-sniffing match below
@@ -162,15 +168,36 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
 
     loaded = _is_loaded(state)
 
+    # HA appends "_2", "_3", ... when two entities want the same entity_id
+    # slug. ha-bambulab does this for the second AMS 2 Pro's trays because
+    # both AMS 2 Pros' trays naturally land at .._ams_1_tray_<n>. The dupe
+    # number is the strongest signal we have for "this tray belongs to AMS
+    # unit #N of this model" -- HA assigns _2 to the second device, _3 to
+    # the third, and so on. Treat dupe=None as instance 1.
+    def _instance_from(match: re.Match[str] | None) -> int:
+        if match is None:
+            return 1
+        try:
+            dupe = match.groupdict().get("dupe")
+        except IndexError:
+            dupe = None
+        return int(dupe) + 1 if dupe else 1
+
+    instance_idx: int = 1
+
     if ams_match:
         printer = ams_match.group("printer")
         variant = ams_match.group("variant")  # "ams" | "ams_pro" | "ams2pro" | ...
         ams_idx: int | None = int(ams_match.group("ams"))
         tray_idx = int(ams_match.group("tray"))
+        instance_idx = _instance_from(ams_match)
         # Pretty-print the variant slug for the UI. "AMS" gets the
         # `AMS <idx>` form (the index is the unit number), the named
         # variants get `AMS 2 Pro #<idx>` to make the index visually
-        # distinct from the model name.
+        # distinct from the model name. We use `instance_idx` (HA's _2 / _3
+        # suffix) when it's > 1, otherwise the entity_id's ams_idx -- but
+        # _renumber_ams_units() later overwrites this with a clean
+        # 1..N sequence anyway, so this is just a fallback label.
         if variant == "ams":
             variant_label = "AMS"
             unit_suffix = f" {ams_idx}"
@@ -182,7 +209,7 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
                 "ams_lite": "AMS Lite",
                 "ams_hub": "AMS HUB",
             }.get(variant, "AMS")
-            unit_suffix = f" #{ams_idx}"
+            unit_suffix = f" #{instance_idx}" if instance_idx > 1 else f" #{ams_idx}"
         location_label = f"{variant_label}{unit_suffix} · Slot {tray_idx}"
         kind = "ams"
     elif fallback_match:
@@ -194,6 +221,7 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
         printer = fallback_match.group("printer")
         ams_idx = None
         tray_idx = int(fallback_match.group("tray"))
+        instance_idx = _instance_from(fallback_match)
         # Try to lift an AMS index out of the entity_id, e.g.
         # "h2s_xxx_ams_pro_2_tray_3" -> 2. Best-effort only.
         m = re.search(r"_(?:ams|ams_pro|ams2pro|ams_ht|ams_lite|ams_hub)_(\d+)_", entity_id)
@@ -223,6 +251,17 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
         location_label = "External spool"
         kind = "external"
 
+    # HA's `friendly_name` attribute is the gold-standard label for these
+    # entities -- ha-bambulab sets it to e.g. "AMS 2 Pro #1 Tray 1", which
+    # already contains the correct hardware-model name AND the per-printer
+    # unit index. When present, derive a clean "AMS 2 Pro #1 · Slot 1" label
+    # straight from it instead of cobbling one together from the entity_id.
+    friendly_name = attrs.get("friendly_name")
+    if isinstance(friendly_name, str) and friendly_name:
+        derived = _label_from_friendly_name(friendly_name, kind)
+        if derived:
+            location_label = derived
+
     # ha-bambulab uses a mix of attribute names across versions, so we try the
     # likely ones in order and fall back to None.
     filament_id = (
@@ -249,6 +288,12 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
         "printer": printer,
         "kind": kind,
         "ams_idx": ams_idx,
+        # HA's _2/_3/... entity-id duplicate suffix. We use this to tell two
+        # AMS units of the same model apart -- ha-bambulab's AMS 2 Pro #2
+        # claims the same _ams_1_tray_<n> slug as AMS 2 Pro #1, and HA
+        # disambiguates by appending _2 to the tray entity_ids.
+        "instance_idx": instance_idx,
+        "friendly_name": (attrs.get("friendly_name") if isinstance(attrs.get("friendly_name"), str) else None),
         "tray_idx": tray_idx,
         "location_label": location_label,
         "loaded": loaded,
@@ -455,6 +500,51 @@ def _pretty_model(raw_model: str | None) -> str | None:
     return raw_model.strip()
 
 
+# ── friendly_name extraction ────────────────────────────────────────────────
+# ha-bambulab sets `friendly_name` on each tray sensor to something like
+# "AMS 2 Pro #1 Tray 1" / "AMS HT #2 Tray 1" / "AMS 1 Tray 3". That string
+# already contains the model name, the per-printer unit index, AND the
+# slot number -- everything we want in the location_label.
+
+_FRIENDLY_TRAY_RE = re.compile(
+    r"^(?P<unit>.+?)\s+Tray\s+(?P<slot>\d+)\s*$",
+    re.IGNORECASE,
+)
+
+_FRIENDLY_MODEL_RE = re.compile(
+    r"^(?P<model>"
+    r"AMS\s*2\s*Pro|AMS\s*Pro|AMS\s*HT|AMS\s*Lite|AMS\s*HUB|AMS"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def _label_from_friendly_name(friendly: str, kind: str) -> str | None:
+    """Convert a HA friendly_name like "AMS 2 Pro #1 Tray 1" into our
+    "AMS 2 Pro #1 · Slot 1" format. Returns None when the friendly_name
+    doesn't look like a tray name (so callers keep their fallback)."""
+    if not friendly or kind != "ams":
+        return None
+    m = _FRIENDLY_TRAY_RE.match(friendly.strip())
+    if not m:
+        return None
+    return f"{m.group('unit').strip()} · Slot {int(m.group('slot'))}"
+
+
+def _model_from_friendly_name(friendly: str | None) -> str | None:
+    """Pull just the hardware model out of a friendly_name like
+    "AMS 2 Pro #1 Tray 1". Returns "AMS 2 Pro" / "AMS HT" / "AMS" / etc.,
+    or None if the string doesn't start with a recognised model."""
+    if not friendly:
+        return None
+    m = _FRIENDLY_MODEL_RE.match(friendly.strip())
+    if not m:
+        return None
+    # Re-normalise spacing/case via _pretty_model so "AMS 2 PRO" and
+    # "AMS  2  Pro" both end up as "AMS 2 Pro".
+    return _pretty_model(m.group("model"))
+
+
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 
@@ -563,18 +653,22 @@ def _enrich_with_device_info(
         device_name = info.get("name") or ""
         via_name = info.get("via_name") or ""
 
-        pretty = _pretty_model(raw_model)
-        # External spool isn't really an AMS hardware row; force its model
-        # label to the friendly "External spool" no matter what HA reports.
+        # Resolve the model label, in priority order:
+        #   1. friendly_name (e.g. "AMS 2 Pro #1 Tray 1" -> "AMS 2 Pro")
+        #   2. device-registry model field
+        #   3. AMS entity-id variant slug we parsed earlier
+        friendly_model = _model_from_friendly_name(t.get("friendly_name"))
+        registry_model = _pretty_model(raw_model)
         if t["kind"] == "external":
             t["model_label"] = "External spool"
         else:
-            t["model_label"] = pretty or "AMS"
+            t["model_label"] = friendly_model or registry_model or "AMS"
 
         t["device_name"] = device_name
-        # Prefer the parent (printer) name. Fall back to the entity's own
-        # device name minus any "AMS" / "external" suffix, then to the raw
-        # printer slug we already extracted from the entity_id.
+        # Prefer the parent (printer) name from the device registry. Fall
+        # back to the entity's own device name minus any "AMS" / "external"
+        # suffix, then to the raw printer slug we already extracted from
+        # the entity_id.
         printer_label = (
             via_name
             or _strip_ams_suffix(device_name)
@@ -582,33 +676,28 @@ def _enrich_with_device_info(
         )
         t["printer_label"] = printer_label or "Printer"
 
-        # Rebuild the location_label using the friendly model name.
+        # External spools get their definitive label here -- AMS trays are
+        # finalised by _renumber_ams_units() below since the # suffix
+        # depends on whether there's more than one of this model on the
+        # printer.
         if t["kind"] == "external":
+            t["unit_label"] = "External spool"
             t["location_label"] = "External spool"
-        else:
-            ams_idx = t.get("ams_idx")
-            if t["model_label"] == "AMS":
-                # Classic AMS keeps "AMS <n>" form.
-                t["location_label"] = (
-                    f"AMS {ams_idx} · Slot {t['tray_idx']}"
-                    if ams_idx is not None
-                    else f"AMS · Slot {t['tray_idx']}"
-                )
-            else:
-                # Named variants use "AMS 2 Pro #<n>" -- the # makes the
-                # unit index visually distinct from the model name. The
-                # actual <n> is filled in later by _renumber_ams_units().
-                t["location_label"] = (
-                    f"{t['model_label']} · Slot {t['tray_idx']}"
-                )
 
 
 def _renumber_ams_units(trays: list[dict[str, Any]]) -> None:
-    """Replace ha-bambulab's internal AMS device IDs (e.g. 128, 129) with
-    1-based sequence numbers per (printer, model). External spools are
-    skipped.
+    """Replace ha-bambulab's internal AMS device identifiers with stable
+    1-based sequence numbers per (printer, model). Two physical AMS units
+    of the same model are distinguished by `(ams_idx, instance_idx)` --
+    ha-bambulab uses HA's entity-id `_2`/`_3` suffix on the second / third
+    duplicate, so a single classic AMS produces `(1, 1)`, two AMS 2 Pros
+    produce `(1, 1)` and `(1, 2)`, and two AMS HTs produce `(128, 1)` and
+    `(129, 1)`.
 
-    Mutates each AMS tray's `ams_idx` and `location_label` in-place.
+    External spools are skipped.
+
+    Mutates each AMS tray's `ams_idx`, `unit_label`, and `location_label`
+    in-place.
     """
     # Group AMS trays by (printer_label, model_label).
     groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
@@ -619,41 +708,34 @@ def _renumber_ams_units(trays: list[dict[str, Any]]) -> None:
         groups.setdefault(key, []).append(t)
 
     for (printer_label, model_label), members in groups.items():
-        # Discover the distinct raw ams_idx values within this bucket and
-        # assign each a 1-based sequence number, sorted ascending.
-        raw_indices = sorted(
-            {t["ams_idx"] for t in members if t.get("ams_idx") is not None}
+        # Discover the distinct (ams_idx, instance_idx) pairs within this
+        # bucket and assign each a 1-based sequence number, sorted by the
+        # composite key. Two AMS 2 Pros with `ams_idx=1` will appear as
+        # (1, 1) and (1, 2) and get sequence numbers 1 and 2.
+        unit_keys = sorted(
+            {
+                (t.get("ams_idx") or 0, t.get("instance_idx") or 1)
+                for t in members
+            }
         )
-        idx_map = {raw: pos + 1 for pos, raw in enumerate(raw_indices)}
-        # Only renumber when there's something to clean up: either the
-        # original indices are not already a clean 1..N sequence, or any
-        # raw index is suspiciously large (>= 10 -- real AMS units never
-        # go that high).
-        suspicious = any(raw >= 10 for raw in raw_indices)
-        already_clean = raw_indices == list(range(1, len(raw_indices) + 1))
-        do_renumber = suspicious or not already_clean
+        seq_map = {pair: pos + 1 for pos, pair in enumerate(unit_keys)}
+        multi_unit = len(unit_keys) > 1
 
         for t in members:
-            raw_idx = t.get("ams_idx")
-            new_idx = idx_map.get(raw_idx, raw_idx) if do_renumber else raw_idx
-            t["ams_idx"] = new_idx
+            pair = (t.get("ams_idx") or 0, t.get("instance_idx") or 1)
+            seq = seq_map[pair]
+            t["ams_idx"] = seq  # overwrite raw idx with display index
             if model_label == "AMS":
-                t["location_label"] = (
-                    f"AMS {new_idx} · Slot {t['tray_idx']}"
-                    if new_idx is not None
-                    else f"AMS · Slot {t['tray_idx']}"
-                )
+                # Classic AMS: "AMS 1 · Slot 3".
+                t["unit_label"] = f"AMS {seq}"
+            elif multi_unit:
+                # Named variant with more than one of the same model on this
+                # printer: "AMS 2 Pro #1".
+                t["unit_label"] = f"{model_label} #{seq}"
             else:
-                # Only show the #<n> suffix when this bucket has more than
-                # one unit; otherwise the suffix is noise.
-                if len(raw_indices) > 1:
-                    t["location_label"] = (
-                        f"{model_label} #{new_idx} · Slot {t['tray_idx']}"
-                    )
-                else:
-                    t["location_label"] = (
-                        f"{model_label} · Slot {t['tray_idx']}"
-                    )
+                # Lone unit of its model: no #N suffix needed.
+                t["unit_label"] = model_label
+            t["location_label"] = f"{t['unit_label']} · Slot {t['tray_idx']}"
 
 
 # ── Printer-name normalisation helpers ───────────────────────────────────────
