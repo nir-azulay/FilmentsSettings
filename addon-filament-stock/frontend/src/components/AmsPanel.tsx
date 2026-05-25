@@ -229,39 +229,37 @@ function TrayCard({
 
   return (
     <div style={trayCard(tray.loaded)}>
-      <div style={trayHeaderRow}>
-        <span style={trayLocationLabel}>{tray.location_label}</span>
-        {tray.remain_pct !== null && tray.loaded && (
-          <span style={remainPill(tray.remain_pct)}>{tray.remain_pct}%</span>
+      <span style={trayLocationLabel}>{tray.location_label}</span>
+
+      <SpoolIcon colorHex={swatch} size={32} muted={!tray.loaded} />
+
+      <div style={{ minWidth: 0, flex: "1 1 120px" }}>
+        {tray.loaded ? (
+          <>
+            <div style={trayName} title={tray.name ?? ""}>
+              {tray.name ?? tray.raw_state ?? "Loaded"}
+            </div>
+            <div style={trayMeta}>
+              {tray.material ?? "—"}
+              {tray.color_hex && (
+                <>
+                  {" · "}
+                  <span style={{ fontFamily: "monospace" }}>{tray.color_hex}</span>
+                </>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ ...trayName, color: "var(--ha-disabled-text)" }}>Empty</div>
+            <div style={trayMeta}>No filament loaded</div>
+          </>
         )}
       </div>
 
-      <div style={trayBodyRow}>
-        <SpoolIcon colorHex={swatch} size={36} muted={!tray.loaded} />
-        <div style={{ minWidth: 0, flex: 1 }}>
-          {tray.loaded ? (
-            <>
-              <div style={trayName} title={tray.name ?? ""}>
-                {tray.name ?? tray.raw_state ?? "Loaded"}
-              </div>
-              <div style={trayMeta}>
-                {tray.material ?? "—"}
-                {tray.color_hex && (
-                  <>
-                    {" · "}
-                    <span style={{ fontFamily: "monospace" }}>{tray.color_hex}</span>
-                  </>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ ...trayName, color: "var(--ha-disabled-text)" }}>Empty</div>
-              <div style={trayMeta}>No filament loaded</div>
-            </>
-          )}
-        </div>
-      </div>
+      {tray.remain_pct !== null && tray.loaded && (
+        <span style={remainPill(tray.remain_pct)}>{tray.remain_pct}%</span>
+      )}
 
       {tray.loaded && <StockBadge tray={tray} onJumpToFilament={onJumpToFilament} />}
 
@@ -279,7 +277,7 @@ function TrayCard({
           style={assignBtn(!!assignment)}
           title={assignment ? "Replace the current assignment" : "Tell the add-on which spool from your stock is in this tray"}
         >
-          {assignment ? "Replace" : "Assign from stock"}
+          {assignment ? "Replace" : "Assign"}
         </button>
         {assignment && (
           <button
@@ -480,18 +478,19 @@ const groupCount: React.CSSProperties = {
   color: "var(--ha-secondary-text)",
 };
 const trayGrid: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+  display: "flex",
+  flexDirection: "column",
   gap: 8,
 };
 const trayCard = (loaded: boolean): React.CSSProperties => ({
-  padding: "10px 12px",
+  padding: "10px 14px",
   borderRadius: 10,
   border: "1px solid var(--ha-divider)",
   background: loaded ? "rgba(76,175,80,0.04)" : "rgba(0,0,0,0.02)",
   display: "flex",
-  flexDirection: "column",
-  gap: 6,
+  alignItems: "center",
+  gap: 12,
+  flexWrap: "wrap",
 });
 const trayHeaderRow: React.CSSProperties = {
   display: "flex",
@@ -611,10 +610,10 @@ const assignedMeta: React.CSSProperties = {
 const actionsRow: React.CSSProperties = {
   display: "flex",
   gap: 6,
-  marginTop: 2,
+  marginLeft: "auto",
+  flexShrink: 0,
 };
 const assignBtn = (hasAssignment: boolean): React.CSSProperties => ({
-  flex: 1,
   padding: "5px 10px",
   fontSize: 11,
   fontWeight: 600,
