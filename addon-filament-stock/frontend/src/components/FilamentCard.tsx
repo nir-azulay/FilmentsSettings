@@ -300,8 +300,11 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
             fontWeight: 700,
             color: "var(--ha-primary-text)",
             textShadow: "0 1px 2px rgba(255,255,255,0.55)",
-            minWidth: 80,
-            flex: "1 1 80px",
+            minWidth: 40,
+            flex: "1 1 40px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
           title={`${color.color_name} • ${color.color_hex}`}
         >
@@ -602,10 +605,11 @@ const noColorsText: React.CSSProperties = {
   padding: "6px 16px 4px",
 };
 const colorEntityRow: React.CSSProperties = {
-  padding: "10px 14px 10px 12px",
+  padding: "10px 10px 10px 12px",
   margin: "4px 10px",
   borderRadius: 10,
   minHeight: 52,
+  overflow: "hidden",
 };
 const stepBtn: React.CSSProperties = {
   width: 20, height: 20,
