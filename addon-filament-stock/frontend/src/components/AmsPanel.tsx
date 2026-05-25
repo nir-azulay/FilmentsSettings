@@ -455,9 +455,10 @@ const refreshBtn: React.CSSProperties = {
   cursor: "pointer",
 };
 const groupsWrap: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
   gap: 14,
+  alignItems: "start",
 };
 const groupBlock: React.CSSProperties = {};
 const groupHeader: React.CSSProperties = {
