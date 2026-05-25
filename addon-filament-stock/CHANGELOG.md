@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1 -- color swatch chip on color rows
+
+Each color row in the filament card now shows a small flat color-swatch chip
+next to the color name, in addition to the existing tinted spool icon and row
+background. The chip is filled with the literal `color_hex` so very light or
+very dark colors stay unambiguous on any row background, and it dims for
+`ordered` / `out_of_stock` rows to match the muted icon styling. Hovering the
+name shows a `"<Color name> • #hex"` tooltip.
+
+Frontend-only change; no backend, database, or API impact.
+
 ## 0.4.0 -- in-app filament configuration & BambuStudio profile downloader
 
 Each filament card now has a **Profile** button that expands an inline panel

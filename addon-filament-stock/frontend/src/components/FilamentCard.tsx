@@ -293,7 +293,19 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
           <SpoolIcon colorHex={color.color_hex} size={32} muted={status !== "in_stock"} />
         )}
 
-        <span className="color-stock-row__name" style={{ fontSize: 14, fontWeight: 600, color: "var(--ha-primary-text)" }}>
+        <span
+          className="color-stock-row__name"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, fontWeight: 600, color: "var(--ha-primary-text)" }}
+          title={`${color.color_name} • ${color.color_hex}`}
+        >
+          <span
+            aria-hidden="true"
+            style={{
+              ...colorSwatchChip,
+              background: color.color_hex,
+              opacity: status === "in_stock" ? 1 : 0.55,
+            }}
+          />
           {color.color_name}
         </span>
 
@@ -595,6 +607,15 @@ const colorEntityRow: React.CSSProperties = {
   margin: "4px 10px",
   borderRadius: 10,
   minHeight: 52,
+};
+const colorSwatchChip: React.CSSProperties = {
+  display: "inline-block",
+  width: 14,
+  height: 14,
+  borderRadius: 4,
+  border: "1px solid rgba(0,0,0,0.25)",
+  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.15)",
+  flexShrink: 0,
 };
 const stepBtn: React.CSSProperties = {
   width: 20, height: 20,
