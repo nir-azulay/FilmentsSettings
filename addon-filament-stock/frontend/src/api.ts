@@ -219,3 +219,78 @@ export function profileFileUrl(filamentId: number, fileName: string): string {
 export function profileZipUrl(filamentId: number): string {
   return `${BASE}/filaments/${filamentId}/profile/zip`;
 }
+
+// ─── AMS tray view ─────────────────────────────────────────────────────────
+// Each AmsTray represents one Bambu AMS slot (or the external spool) as seen
+// by the ha-bambulab integration. `stock` is the local Filament/ColorStock
+// match the backend computed for us so the UI doesn't have to cross-reference.
+
+export interface AmsTrayStockMatched {
+  matched: true;
+  filament_db_id: number;
+  brand: string;
+  material: string;
+  filament_type: string;
+  filament_total_available: number;
+  color_matched: boolean;
+  color_stock_id?: number;
+  color_name?: string;
+  color_hex?: string;
+  available_spool?: number;
+  available_refill?: number;
+  available_total?: number;
+  status?: ColorStatus;
+  color_reason?: string;
+  filament_color_count?: number;
+}
+
+export interface AmsTrayStockUnmatched {
+  matched: false;
+  reason: "tray_empty" | "no_filament_id" | "filament_id_not_in_stock";
+  filament_id?: string;
+}
+
+export type AmsTrayStock = AmsTrayStockMatched | AmsTrayStockUnmatched;
+
+export interface AmsTray {
+  entity_id: string;
+  printer: string;
+  kind: "ams" | "external";
+  ams_idx: number | null;
+  tray_idx: number;
+  location_label: string;
+  loaded: boolean;
+  raw_state: string | null;
+  filament_id: string | null;
+  color_hex: string | null;
+  material: string | null;
+  name: string | null;
+  remain_pct: number | null;
+  last_updated: string | null;
+  stock: AmsTrayStock;
+}
+
+export interface AmsTraysResponse {
+  available: boolean;
+  /** Set when available=false to explain why (e.g. Supervisor unreachable). */
+  error?: string;
+  trays: AmsTray[];
+}
+
+export async function fetchAmsTrays(): Promise<AmsTraysResponse> {
+  const res = await fetch(`${BASE}/ams/trays`);
+  if (res.status === 404) {
+    // Backend returns 404 with a helpful message when no AMS sensors exist
+    // in HA. Turn it into a structured "no trays" response so the UI can
+    // distinguish from a hard error.
+    let detail = "";
+    try {
+      const body = await res.json();
+      detail = body?.detail ?? "";
+    } catch {
+      // ignore body parse errors
+    }
+    return { available: true, trays: [], error: detail };
+  }
+  return res.json();
+}

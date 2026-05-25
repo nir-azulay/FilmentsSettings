@@ -41,7 +41,7 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
   const [showProfile, setShowProfile] = useState(false);
 
   return (
-    <div className="ha-card" style={cardWrap}>
+    <div id={`filament-${filament.id}`} className="ha-card" style={cardWrap}>
       {/* colored top strip */}
       <div style={{ height: 3, background: matColor }} />
 

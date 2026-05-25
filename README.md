@@ -9,7 +9,7 @@
 
 ## Filament Stock for Home Assistant
 
-Inventory dashboard, low-stock alerts, and full Home Assistant integration so your AMS trays auto-decrement spools, your push notifications fire when a print starts on a depleted color, and your weekly digest shows what to restock. Tracks **spools and refills independently per color** -- the same color can hold both packaging types side by side.
+Inventory dashboard, low-stock alerts, and full Home Assistant integration so your AMS trays auto-decrement spools, your push notifications fire when a print starts on a depleted color, and your weekly digest shows what to restock. Tracks **spools and refills independently per color** -- the same color can hold both packaging types side by side. Add-on 0.5.0+ also renders a live **AMS Status panel** showing what's loaded in each Bambu AMS slot right now, cross-referenced with your stock.
 
 **[Setup guide -> home-assistant/README.md](home-assistant/README.md)**
 

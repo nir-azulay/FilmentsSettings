@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.5.0 -- AMS status panel (live view of what's loaded in each tray)
+
+A new **AMS Status** panel at the top of the dashboard shows the current
+contents of every Bambu Lab AMS slot (and the external spool) reported by
+the [`greghesp/ha-bambulab`](https://github.com/greghesp/ha-bambulab) HACS
+integration, and cross-references each tray against the local stock.
+
+For every tray you see:
+
+- Location (`AMS 1 · Slot 3`, `External spool`).
+- Loaded filament: brand/material name, color swatch, hex code, material
+  code (PETG / ASA / …).
+- Remaining percentage as a coloured pill (green ≥50% / amber ≥20% / red).
+- A **stock badge** showing the matching local color row:
+  - `✓ Black in stock: 2 spools · 1 refill` (green) when matched and in stock.
+  - `✗ Black in stock: 0 spools · 0 refills` (red) when matched but exhausted.
+  - `◐ SUNLU PETG HS — color not in stock` (blue) when the filament is tracked
+    but this exact hex isn't.
+  - `⚠ Not tracked in stock` (amber) when no `Filament` row has the tray's
+    `filament_id`.
+- Clicking a matched badge scrolls to the corresponding filament card on the
+  page and briefly highlights it.
+
+The panel polls `/api/ams/trays` every 15s and has a manual **Refresh**
+button. Empty trays show as muted with "No filament loaded".
+
+New backend pieces:
+
+- `app/ha_client.py` -- thin async wrapper around the Supervisor-proxied
+  `http://supervisor/core/api/states` endpoint, using the auto-injected
+  `SUPERVISOR_TOKEN`. Read-only; no service calls, no writes.
+- `app/routers/ams.py` -- `GET /api/ams/trays` parses each
+  `sensor.<printer>_ams_<n>_tray_<n>` and `sensor.<printer>_external_spool`
+  (also `vt_tray` / `external_tray` variants) state, normalises Bambu's
+  `#RRGGBBAA` color attribute to `#RRGGBB`, and joins each tray to the local
+  `Filament.filament_id` + `ColorStock.color_hex` rows (with a single-color
+  fallback for filaments that have only one color tracked).
+- `httpx>=0.27` added to `requirements.txt`.
+- `config.yaml` now sets `homeassistant_api: true` so Supervisor provides
+  the API token. No other permissions are granted; the add-on stays
+  Ingress-only with no exposed ports.
+
+If the integration isn't installed yet the panel renders a friendly empty
+state with a link to the HACS repo. If the Supervisor token is missing
+(usually because the user hasn't restarted the add-on after the 0.5.0
+update) it surfaces the error instead of failing silently.
+
 ## 0.4.2 -- color name is actually visible
 
 Fixes the color-row layout regression introduced in 0.4.1: applying

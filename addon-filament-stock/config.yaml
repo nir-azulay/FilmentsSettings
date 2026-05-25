@@ -1,5 +1,5 @@
 name: Filament Stock
-version: "0.4.2"
+version: "0.5.0"
 slug: filament_stock
 description: 3D printer filament inventory with per-color stock tracking and low-stock alerts. Exposes a panel inside Home Assistant via Ingress.
 url: https://github.com/nir-azulay/FilmentsSettings
@@ -15,8 +15,12 @@ panel_title: Filaments
 ingress: true
 ingress_port: 8099
 ingress_stream: false
+# 0.5.0+: we read AMS tray sensor state from the Home Assistant Core REST API
+# (provided by the Supervisor as http://supervisor/core/api). The SUPERVISOR_TOKEN
+# env var is auto-injected when homeassistant_api is true. We never write back
+# to HA -- pure read-only -- and we never need hassio_api or auth_api.
 hassio_api: false
-homeassistant_api: false
+homeassistant_api: true
 auth_api: false
 host_network: false
 ports: {}

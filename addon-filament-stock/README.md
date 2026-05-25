@@ -9,7 +9,43 @@ Author: **[Nir Azulay](https://github.com/nir-azulay)** -- MIT licensed, see [LI
 - **FastAPI** (Python, uvicorn) on `127.0.0.1:8000` -- REST API at `/api/*`.
 - **nginx** on `:8099` -- serves the React bundle and reverse-proxies `/api/` to FastAPI. HA Ingress connects here.
 - **SQLite** at `/config/data/filaments.db` -- persistent across add-on updates, included in HA snapshots, visible to the Samba share at `\\homeassistant\addon_configs\<hash>_filament_stock\data\filaments.db`.
+- **Supervisor HA Core API** (`http://supervisor/core/api`) -- read-only, used by the AMS Status panel (0.5.0+) to fetch Bambu AMS tray state. Authenticated with the auto-injected `SUPERVISOR_TOKEN`.
 - **s6-overlay** (from the HA base image) supervises both services and restarts the container if either dies.
+
+## AMS Status panel (0.5.0+)
+
+A panel at the top of the dashboard renders the live contents of every Bambu
+Lab AMS slot (and the external spool) reported by the
+[`greghesp/ha-bambulab`](https://github.com/greghesp/ha-bambulab) HACS
+integration, and cross-references each tray against your local stock.
+
+For every tray you see:
+
+- Where it is -- `AMS 1 · Slot 3`, `External spool`, etc.
+- What's loaded -- filament name, color swatch, hex code, material code.
+- How much is left -- a coloured remaining-% pill (green ≥50% / amber ≥20% / red).
+- A stock badge:
+  - **✓ Color in stock: N spools · M refills** (green) when matched and you have some.
+  - **✗ Color in stock: 0 spools · 0 refills** (red) when matched but exhausted.
+  - **◐ Brand Material -- color not in stock** (blue) when the filament is tracked but this hex isn't.
+  - **⚠ Not tracked in stock** (amber) when no `Filament` row matches the tray's `filament_id`.
+- Click a matched badge to jump straight to the corresponding filament card.
+
+The panel polls `GET /api/ams/trays` every 15s; there's also a manual
+**Refresh** button. Empty trays render muted.
+
+Under the hood this needs Supervisor's HA Core API token, which is granted
+by `homeassistant_api: true` in [`config.yaml`](config.yaml). The add-on
+uses it strictly read-only (only `GET /core/api/states` -- no service calls,
+no writes). If the add-on came from a build before 0.5.0 the new permission
+needs a one-time **Restart** to take effect; the panel surfaces a clear
+error if the token is missing.
+
+If the Bambu HACS integration isn't installed, the panel renders a friendly
+empty state with a link to its repo.
+
+Backend code: [`app/ha_client.py`](app/ha_client.py) (Supervisor wrapper),
+[`app/routers/ams.py`](app/routers/ams.py) (tray parsing + stock matching).
 
 ## BambuStudio profile downloader (0.4.0+)
 

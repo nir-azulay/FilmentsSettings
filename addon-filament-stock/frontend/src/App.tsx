@@ -10,10 +10,23 @@ import {
   importProfiles,
 } from "./api";
 import AlertBanner from "./components/AlertBanner";
+import AmsPanel from "./components/AmsPanel";
 import Dashboard from "./components/Dashboard";
 import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
 import { SpoolIcon } from "./components/SpoolIcon";
 import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
+
+function jumpToFilament(filamentDbId: number) {
+  const el = document.getElementById(`filament-${filamentDbId}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  // Brief highlight so the user spots which card the AMS pointed to.
+  el.style.transition = "box-shadow 0.4s ease-out";
+  el.style.boxShadow = "0 0 0 3px var(--ha-primary-color)";
+  setTimeout(() => {
+    el.style.boxShadow = "";
+  }, 1500);
+}
 
 export default function App() {
   const [filaments, setFilaments] = useState<Filament[]>([]);
@@ -125,6 +138,8 @@ export default function App() {
             await reload();
           }}
         />
+
+        <AmsPanel onJumpToFilament={jumpToFilament} />
 
         <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
       </main>
