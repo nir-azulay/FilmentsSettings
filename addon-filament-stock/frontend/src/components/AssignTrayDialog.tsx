@@ -26,6 +26,8 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
   const [data, setData] = useState<AssignSuggestionsResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterBrand, setFilterBrand] = useState<string | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
   const [packaging, setPackaging] = useState<PackagingType>("spool");
   const [pushToPrinter, setPushToPrinter] = useState(true);
@@ -59,17 +61,35 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
     };
   }, [tray.entity_id, tray.material]);
 
+  const uniqueTypes = useMemo(() => {
+    if (!data) return [] as string[];
+    return [...new Set(data.suggestions.map((s) => s.filament_type))].sort();
+  }, [data]);
+
+  const uniqueBrands = useMemo(() => {
+    if (!data) return [] as string[];
+    const pool = filterType
+      ? data.suggestions.filter((s) => s.filament_type === filterType)
+      : data.suggestions;
+    return [...new Set(pool.map((s) => s.brand))].sort();
+  }, [data, filterType]);
+
   const filtered = useMemo(() => {
     if (!data) return [] as AssignSuggestion[];
-    if (!search.trim()) return data.suggestions;
-    const q = search.trim().toLowerCase();
-    return data.suggestions.filter(
-      (s) =>
-        s.brand.toLowerCase().includes(q) ||
-        s.material.toLowerCase().includes(q) ||
-        s.color_name.toLowerCase().includes(q),
-    );
-  }, [data, search]);
+    let list = data.suggestions;
+    if (filterType) list = list.filter((s) => s.filament_type === filterType);
+    if (filterBrand) list = list.filter((s) => s.brand === filterBrand);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (s) =>
+          s.brand.toLowerCase().includes(q) ||
+          s.material.toLowerCase().includes(q) ||
+          s.color_name.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [data, search, filterType, filterBrand]);
 
   const selected = useMemo(
     () =>
@@ -180,6 +200,41 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
               onChange={(e) => setSearch(e.target.value)}
               style={searchInput}
             />
+
+            {uniqueTypes.length > 1 && (
+              <div style={chipRow}>
+                <span style={chipRowLabel}>Type</span>
+                {uniqueTypes.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      setFilterType(filterType === t ? null : t);
+                      setFilterBrand(null);
+                    }}
+                    style={filterType === t ? chipActive : chip}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {uniqueBrands.length > 1 && (
+              <div style={chipRow}>
+                <span style={chipRowLabel}>Brand</span>
+                {uniqueBrands.map((b) => (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => setFilterBrand(filterBrand === b ? null : b)}
+                    style={filterBrand === b ? chipActive : chip}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div style={listWrap}>
               {filtered.length === 0 && (
@@ -545,3 +600,34 @@ const primaryBtn = (enabled: boolean): React.CSSProperties => ({
   borderRadius: 6,
   cursor: enabled ? "pointer" : "not-allowed",
 });
+const chipRow: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  flexWrap: "wrap",
+};
+const chipRowLabel: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 600,
+  color: "var(--ha-secondary-text)",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  minWidth: 36,
+};
+const chip: React.CSSProperties = {
+  padding: "4px 10px",
+  fontSize: 11,
+  fontWeight: 500,
+  background: "rgba(0,0,0,0.05)",
+  color: "var(--ha-primary-text)",
+  border: "1px solid var(--ha-divider)",
+  borderRadius: 14,
+  cursor: "pointer",
+};
+const chipActive: React.CSSProperties = {
+  ...chip,
+  background: "rgba(3,169,244,0.15)",
+  color: "var(--ha-primary-color)",
+  borderColor: "rgba(3,169,244,0.4)",
+  fontWeight: 600,
+};
