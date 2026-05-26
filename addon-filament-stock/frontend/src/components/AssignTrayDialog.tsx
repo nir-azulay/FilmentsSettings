@@ -30,6 +30,14 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
   const [filterBrand, setFilterBrand] = useState<string | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
   const [packaging, setPackaging] = useState<PackagingType>("spool");
+
+  const selectColor = (colorStockId: number) => {
+    setSelectedColorId(colorStockId);
+    const suggestion = data?.suggestions.find((s) => s.color_stock_id === colorStockId);
+    if (suggestion) {
+      setPackaging(suggestion.available_refill > 0 ? "refill" : "spool");
+    }
+  };
   const [pushToPrinter, setPushToPrinter] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -47,9 +55,8 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
         if (d.suggestions.length > 0) {
           setSelectedColorId(d.suggestions[0].color_stock_id);
           const first = d.suggestions[0];
-          // Default packaging to whichever the top suggestion has more of.
           setPackaging(
-            first.available_spool >= first.available_refill ? "spool" : "refill",
+            first.available_refill > 0 ? "refill" : "spool",
           );
         }
       })
@@ -250,7 +257,7 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
                     key={s.color_stock_id}
                     s={s}
                     selected={s.color_stock_id === selectedColorId}
-                    onSelect={() => setSelectedColorId(s.color_stock_id)}
+                    onSelect={() => selectColor(s.color_stock_id)}
                   />
                 ))}
               </div>
