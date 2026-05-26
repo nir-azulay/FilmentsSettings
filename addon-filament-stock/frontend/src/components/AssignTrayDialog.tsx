@@ -30,7 +30,7 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
   const [filterBrand, setFilterBrand] = useState<string | null>(null);
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
   const [packaging, setPackaging] = useState<PackagingType>("spool");
-  const [pushToPrinter, setPushToPrinter] = useState(true);
+  const [pushToPrinter, setPushToPrinter] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
