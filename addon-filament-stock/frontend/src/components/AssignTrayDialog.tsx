@@ -282,14 +282,19 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
                   onSelect={() => setPackaging("refill")}
                 />
               </div>
-              <label style={pushLabel} title="Calls bambu_lab.set_filament so the printer's AMS display updates to match.">
-                <input
-                  type="checkbox"
-                  checked={pushToPrinter}
-                  onChange={(e) => setPushToPrinter(e.target.checked)}
-                />
-                Also tell the printer
-              </label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <label style={pushLabel}>
+                  <input
+                    type="checkbox"
+                    checked={pushToPrinter}
+                    onChange={(e) => setPushToPrinter(e.target.checked)}
+                  />
+                  Also update the printer's AMS display
+                </label>
+                <span style={pushDisclaimer}>
+                  Requires LAN mode. Does not work in Cloud-only mode.
+                </span>
+              </div>
             </div>
 
             <footer style={footer}>
@@ -596,6 +601,11 @@ const pushLabel: React.CSSProperties = {
   fontSize: 12,
   color: "var(--ha-primary-text)",
   cursor: "pointer",
+};
+const pushDisclaimer: React.CSSProperties = {
+  fontSize: 10,
+  color: "var(--ha-secondary-text)",
+  paddingLeft: 22,
 };
 const footer: React.CSSProperties = {
   display: "flex",
