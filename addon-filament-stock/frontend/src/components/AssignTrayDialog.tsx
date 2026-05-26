@@ -161,99 +161,112 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
           </button>
         </header>
 
-        {current && (
-          <div style={currentBox}>
-            <span style={{ fontSize: 11, color: "var(--ha-secondary-text)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Currently assigned
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-              <SpoolIcon colorHex={current.color_hex ?? "#9e9e9e"} size={24} />
-              <span style={{ fontSize: 13, fontWeight: 600 }}>
-                {current.brand} {current.material} · {current.color_name}
+        <div style={scrollBody}>
+          {current && (
+            <div style={currentBox}>
+              <span style={{ fontSize: 11, color: "var(--ha-secondary-text)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Currently assigned
               </span>
-              <span style={{ fontSize: 11, color: "var(--ha-secondary-text)" }}>
-                ({current.packaging})
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <SpoolIcon colorHex={current.color_hex ?? "#9e9e9e"} size={24} />
+                <span style={{ fontSize: 13, fontWeight: 600 }}>
+                  {current.brand} {current.material} · {current.color_name}
+                </span>
+                <span style={{ fontSize: 11, color: "var(--ha-secondary-text)" }}>
+                  ({current.packaging})
+                </span>
+              </div>
+              <p style={{ fontSize: 11, color: "var(--ha-secondary-text)", marginTop: 4 }}>
+                Submitting will close this assignment and create a new one (the
+                old spool's counter is restored).
+              </p>
             </div>
-            <p style={{ fontSize: 11, color: "var(--ha-secondary-text)", marginTop: 4 }}>
-              Submitting will close this assignment and create a new one (the
-              old spool's counter is restored).
-            </p>
-          </div>
-        )}
+          )}
 
-        {loadError && (
-          <div style={errorBox}>
-            <strong>Could not load suggestions.</strong>
-            <p style={{ marginTop: 4, fontSize: 12 }}>{loadError}</p>
-          </div>
-        )}
+          {loadError && (
+            <div style={errorBox}>
+              <strong>Could not load suggestions.</strong>
+              <p style={{ marginTop: 4, fontSize: 12 }}>{loadError}</p>
+            </div>
+          )}
 
-        {!loadError && !data && <p style={emptyText}>Loading filaments…</p>}
+          {!loadError && !data && <p style={emptyText}>Loading filaments…</p>}
+
+          {data && (
+            <>
+              <input
+                type="text"
+                value={search}
+                placeholder="Search by brand, material, or color…"
+                onChange={(e) => setSearch(e.target.value)}
+                style={searchInput}
+              />
+
+              {uniqueTypes.length > 1 && (
+                <div style={chipRow}>
+                  <span style={chipRowLabel}>Type</span>
+                  {uniqueTypes.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        setFilterType(filterType === t ? null : t);
+                        setFilterBrand(null);
+                      }}
+                      style={filterType === t ? chipActive : chip}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {uniqueBrands.length > 1 && (
+                <div style={chipRow}>
+                  <span style={chipRowLabel}>Brand</span>
+                  {uniqueBrands.map((b) => (
+                    <button
+                      key={b}
+                      type="button"
+                      onClick={() => setFilterBrand(filterBrand === b ? null : b)}
+                      style={filterBrand === b ? chipActive : chip}
+                    >
+                      {b}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div style={listWrap}>
+                {filtered.length === 0 && (
+                  <p style={emptyText}>
+                    {search
+                      ? "No filaments match your search."
+                      : "Nothing in stock to assign. Mark a purchase first."}
+                  </p>
+                )}
+                {filtered.map((s) => (
+                  <SuggestionRow
+                    key={s.color_stock_id}
+                    s={s}
+                    selected={s.color_stock_id === selectedColorId}
+                    onSelect={() => setSelectedColorId(s.color_stock_id)}
+                  />
+                ))}
+              </div>
+
+              {submitError && (
+                <div style={errorBox}>
+                  <strong>Heads up.</strong>
+                  <p style={{ marginTop: 4, fontSize: 12 }}>{submitError}</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
 
         {data && (
-          <>
-            <input
-              type="text"
-              value={search}
-              placeholder="Search by brand, material, or color…"
-              onChange={(e) => setSearch(e.target.value)}
-              style={searchInput}
-            />
-
-            {uniqueTypes.length > 1 && (
-              <div style={chipRow}>
-                <span style={chipRowLabel}>Type</span>
-                {uniqueTypes.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => {
-                      setFilterType(filterType === t ? null : t);
-                      setFilterBrand(null);
-                    }}
-                    style={filterType === t ? chipActive : chip}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {uniqueBrands.length > 1 && (
-              <div style={chipRow}>
-                <span style={chipRowLabel}>Brand</span>
-                {uniqueBrands.map((b) => (
-                  <button
-                    key={b}
-                    type="button"
-                    onClick={() => setFilterBrand(filterBrand === b ? null : b)}
-                    style={filterBrand === b ? chipActive : chip}
-                  >
-                    {b}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div style={listWrap}>
-              {filtered.length === 0 && (
-                <p style={emptyText}>
-                  {search
-                    ? "No filaments match your search."
-                    : "Nothing in stock to assign. Mark a purchase first."}
-                </p>
-              )}
-              {filtered.map((s) => (
-                <SuggestionRow
-                  key={s.color_stock_id}
-                  s={s}
-                  selected={s.color_stock_id === selectedColorId}
-                  onSelect={() => setSelectedColorId(s.color_stock_id)}
-                />
-              ))}
-            </div>
-
+          <div style={stickyFooter}>
             <div style={controlsRow}>
               <div style={packagingGroup}>
                 <PackagingRadio
@@ -279,13 +292,6 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
               </label>
             </div>
 
-            {submitError && (
-              <div style={errorBox}>
-                <strong>Heads up.</strong>
-                <p style={{ marginTop: 4, fontSize: 12 }}>{submitError}</p>
-              </div>
-            )}
-
             <footer style={footer}>
               <button type="button" onClick={onClose} style={cancelBtn}>
                 Cancel
@@ -306,7 +312,7 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
                 {submitting ? "Assigning…" : "Assign"}
               </button>
             </footer>
-          </>
+          </div>
         )}
       </div>
     </div>
@@ -409,14 +415,33 @@ const dialog: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
   boxShadow: "0 18px 60px rgba(0,0,0,0.3)",
-  padding: "16px 20px",
-  gap: 12,
+  overflow: "hidden",
 };
 const dialogHeader: React.CSSProperties = {
   display: "flex",
   alignItems: "flex-start",
   justifyContent: "space-between",
   gap: 12,
+  padding: "16px 20px",
+  borderBottom: "1px solid var(--ha-divider)",
+  flexShrink: 0,
+};
+const scrollBody: React.CSSProperties = {
+  flex: 1,
+  overflowY: "auto",
+  padding: "12px 20px",
+  display: "flex",
+  flexDirection: "column",
+  gap: 12,
+};
+const stickyFooter: React.CSSProperties = {
+  padding: "12px 20px",
+  borderTop: "1px solid var(--ha-divider)",
+  flexShrink: 0,
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  background: "var(--ha-card-bg, #fff)",
 };
 const dialogTitle: React.CSSProperties = {
   fontSize: 16,
@@ -467,10 +492,7 @@ const searchInput: React.CSSProperties = {
   color: "var(--ha-primary-text)",
 };
 const listWrap: React.CSSProperties = {
-  flex: 1,
-  minHeight: 120,
-  maxHeight: "40vh",
-  overflowY: "auto",
+  minHeight: 80,
   display: "flex",
   flexDirection: "column",
   gap: 4,
