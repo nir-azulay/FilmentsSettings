@@ -42,6 +42,7 @@ SUPERVISOR_TOKEN_ENV = "SUPERVISOR_TOKEN"
 # enough to ride through that without freezing the add-on UI for a long time
 # if something is actually broken.
 _TIMEOUT = httpx.Timeout(connect=3.0, read=8.0, write=3.0, pool=3.0)
+_SERVICE_TIMEOUT = httpx.Timeout(connect=5.0, read=30.0, write=5.0, pool=5.0)
 
 
 class HAClientError(RuntimeError):
@@ -175,7 +176,7 @@ async def call_service(
         "Content-Type": "application/json",
     }
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=_SERVICE_TIMEOUT) as client:
             resp = await client.post(
                 f"{SUPERVISOR_BASE}/services/{domain}/{service}",
                 headers=headers,
