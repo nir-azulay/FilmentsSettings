@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.12.1 -- No-op release: diagnostic for the Add-ons grid update indicator
+
+Pure version bump with no code changes. Used to confirm the Settings ->
+Add-ons grid view's "update available" indicator (the puzzle-piece
+icon swap to an up-arrow-in-circle, plus a thin orange stripe at the
+top edge of the tile) appears after the user clicks the "Reload"
+refresh icon at the top-right of the Add-ons page.
+
+### Background
+
+Previous releases (0.10.1 and the bogus claim in its first changelog
+entry) chased the wrong root cause for the missing grid indicator.
+Verified now against the home-assistant/frontend source: the indicator
+**does** exist (`addon.update_available` flag drives an icon swap to
+`mdiArrowUpBoldCircle` + top-stripe `accent-color`), but the grid
+view reads from a Supervisor cache that only refreshes when the user
+explicitly clicks the Reload button at the top-right of the page (or
+once Supervisor's periodic refresh fires, which can be 24h+). Just
+clicking "Update" on the add-on's detail page refreshes the metadata
+for *that* add-on but doesn't invalidate the grid cache for the next
+release.
+
+### Recommendation
+
+After installing each new release of an add-on you author yourself,
+click the Reload icon in the top-right of Settings -> Add-ons and
+hard-refresh the browser. The grid should then correctly show the
+icon swap when a new version is available.
+
 ## 0.12.0 -- Opt-out toggle for Bambu Lab integration
 
 New add-on option `disable_bambu_integration` (default `false` -- keeps
