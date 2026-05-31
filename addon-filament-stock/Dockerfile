@@ -8,6 +8,14 @@
 #          (provided by the HA base) supervise both services.
 
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.22
+# Supervisor auto-passes BUILD_VERSION = the `version:` field from
+# config.yaml on every rebuild. Threading it through to the io.hass.version
+# LABEL below is what makes the HA UI's "Update available" badge in the
+# Apps grid actually update -- without this the installed-version OCI
+# label gets pinned to whatever string you hard-code (we previously had
+# "0.1.0" baked in across nine releases, which is why the grid badge
+# never lit up even after refresh).
+ARG BUILD_VERSION="dev"
 
 # ---------- frontend build ----------
 FROM node:22-alpine AS frontend
@@ -21,6 +29,11 @@ RUN npm run build
 
 # ---------- runtime ----------
 FROM ${BUILD_FROM}
+
+# Re-declare so the value crosses the FROM boundary. Supervisor passes the
+# same BUILD_VERSION arg to every stage during `docker build`, but ARG
+# scope resets at each FROM.
+ARG BUILD_VERSION="dev"
 
 ENV LANG=C.UTF-8 \
     PYTHONUNBUFFERED=1 \
@@ -55,4 +68,4 @@ LABEL \
     io.hass.name="Filament Stock" \
     io.hass.description="3D printer filament inventory for Home Assistant" \
     io.hass.type="addon" \
-    io.hass.version="0.1.0"
+    io.hass.version="${BUILD_VERSION}"

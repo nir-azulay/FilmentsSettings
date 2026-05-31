@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.10.1 -- fix "update available" badge in the HA Apps grid
+
+The `io.hass.version` OCI label in the Dockerfile had been pinned to
+`"0.1.0"` since the very first release. Supervisor reads that label
+from the *installed image* to determine which version is currently
+running and compares it against the `version:` field in `config.yaml`
+to decide whether to show the "Update available" badge in the
+**Settings -> Add-ons** grid. Because the label was hardcoded, the grid
+saw `installed=0.1.0` no matter what we shipped, and the comparison
+logic produced inconsistent results (badge only appeared after opening
+the add-on detail page, which forces a metadata re-read).
+
+Fix:
+
+- Added an `ARG BUILD_VERSION` (re-declared in both build stages so it
+  crosses the `FROM` boundary).
+- Changed the label to `io.hass.version="${BUILD_VERSION}"`.
+
+Supervisor automatically passes `BUILD_VERSION` = the `version:` field
+on every rebuild, so from this release forward the badge will light up
+correctly the moment a new commit lands on `main` and the next periodic
+repository refresh runs (or you click the **Refresh** button on the
+Add-on store page).
+
+No behavioural change. The first install of 0.10.1 will still need to
+go through the detail page once because Supervisor doesn't have a
+correct installed-version baseline yet -- after that, future updates
+will surface in the grid.
+
 ## 0.10.0 -- setup doctor + empty-state for new installs
 
 Two new pieces of UI that turn a fresh install on someone else's Home
