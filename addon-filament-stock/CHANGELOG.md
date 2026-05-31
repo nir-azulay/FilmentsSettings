@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.1 -- Sidebar icon: spool-shaped mdi:movie-roll
+
+Replaces the HA sidebar entry's `mdi:printer-3d-nozzle` (a hot-end
+silhouette) with `mdi:movie-roll` -- a round body with a center hub
+that reads as a filament spool at sidebar size. The HA sidebar only
+accepts Material Design Icons, so the existing custom spool PNG used
+on the Apps grid tile can't be reused here; `movie-roll` is MDI's
+closest spool-shaped icon.
+
+Single-line `panel_icon:` change in `config.yaml`.
+
 ## 0.13.0 -- Baked update-badge icon swap (visible update indicator in Apps grid)
 
 The Apps-grid tile for an add-on that ships its own `icon.png` shows
