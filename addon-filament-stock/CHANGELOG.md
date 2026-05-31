@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.13.2 -- No-op release: verify the 0.13.0 icon-swap mechanism end-to-end
+
+Pure version bump. No code or config changes.
+
+Purpose: with 0.13.1 installed, the icon swapper had nothing newer to
+flip to (latest == installed), so the Apps-grid tile correctly showed
+the clean spool. Publishing 0.13.2 makes Supervisor report
+`update_available: true` on the next reload, which the swapper's
+30-minute polling loop will then pick up and use to copy
+`icon_update.png` over `icon.png` + call `POST /store/reload`. On
+the next frontend render (hard-refresh if needed) the spool will
+appear with the orange up-arrow badge in the corner.
+
+### Verifying after this release lands
+
+1. In HA, **Settings -> Add-ons** -> click the **Reload** icon at the
+   top-right of the page so Supervisor refreshes the store index
+   (otherwise it can take up to 24h to notice 0.13.2 exists).
+2. The Filament Stock tile should now show an **Update** button.
+3. Either wait up to 30 minutes for the swapper's polling loop, or
+   **Restart** the add-on once to force an immediate poll cycle.
+4. Watch the add-on log -- you should see
+   `icon swap: copied icon_update.png -> icon.png (update_available=True)`
+   followed by a `/store/reload` call.
+5. Hard-refresh the HA frontend (Ctrl/Cmd+Shift+R). The spool icon
+   should now have the orange `up-arrow` badge in the bottom-right.
+6. Click **Update** to install 0.13.2. After it restarts, the next
+   swap cycle flips the icon back to the clean spool (no update
+   pending).
+
 ## 0.13.1 -- Sidebar icon: spool-shaped mdi:movie-roll
 
 Replaces the HA sidebar entry's `mdi:printer-3d-nozzle` (a hot-end
