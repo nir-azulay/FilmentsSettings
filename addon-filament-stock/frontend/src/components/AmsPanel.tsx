@@ -488,7 +488,15 @@ const groupsWrap: React.CSSProperties = {
   gap: 14,
   alignItems: "start",
 };
-const groupBlock: React.CSSProperties = {};
+const groupBlock: React.CSSProperties = {
+  // CSS Grid items default to min-width:auto, which means they refuse to
+  // shrink below their intrinsic content width. If any descendant has a
+  // long unbreakable token, the column blows past minmax(280px, 1fr) and
+  // overflows the panel. min-width:0 lets the grid respect the minmax;
+  // overflow:hidden contains any remaining intrinsic-width child.
+  minWidth: 0,
+  overflow: "hidden",
+};
 const groupHeader: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -520,6 +528,10 @@ const trayCard = (loaded: boolean): React.CSSProperties => ({
   alignItems: "center",
   gap: 12,
   flexWrap: "wrap",
+  // Same flex/grid gotcha: this card is a grid item AND its parent
+  // group's content; without min-width:0 it grows to fit any oversized
+  // child and pushes the column boundary outward.
+  minWidth: 0,
 });
 const trayHeaderRow: React.CSSProperties = {
   display: "flex",
@@ -627,6 +639,16 @@ const assignedBadge: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 6,
+  // The parent trayCard is `display:flex; flexWrap:wrap`. Without these
+  // three rules the badge expands to fit its full text, which can push
+  // past the card's right edge when the assigned filament name is long
+  // (e.g. "Isanmate PLA Pro - Black (spool, pushed)"). minWidth:0
+  // overrides flex's default min-width:auto so the inner ellipsis span
+  // can actually shrink; maxWidth caps the badge at the row width; and
+  // overflow:hidden clips text that still doesn't fit.
+  minWidth: 0,
+  maxWidth: "100%",
+  overflow: "hidden",
 };
 const assignedBadgeIcon: React.CSSProperties = {
   fontSize: 12,

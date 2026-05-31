@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.10.2 -- AMS panel: stop the "From your stock" badge bleeding outside the card
+
+The purple "From your stock: ..." overlay on each AMS tray card was
+growing wider than the card itself when the assigned filament's full
+label was long (e.g. "Isanmate PLA Pro - Black (spool, pushed)").
+Because the parent grid columns were sized to fit content, this
+cascaded outward and pushed the rightmost tray card past the panel's
+right edge, partially clipping its contents.
+
+Root cause: classic flex/grid `min-width: auto` gotcha. Flex and grid
+items default to `min-width: auto`, which means "shrink to content"
+rather than "shrink to zero". Without an explicit `min-width: 0` on
+intermediate containers, an oversized child propagates its intrinsic
+width all the way up the layout tree.
+
+Fix: added `minWidth: 0` to three containers in `AmsPanel.tsx`:
+
+- `assignedBadge` (the purple overlay) -- now actually allows its inner
+  ellipsis span to shrink. Also added `maxWidth: 100%` and
+  `overflow: hidden`.
+- `trayCard` -- so the card respects its grid cell.
+- `groupBlock` -- so each AMS group respects the
+  `repeat(auto-fit, minmax(280px, 1fr))` grid columns. Also added
+  `overflow: hidden` as a final safety net.
+
+No behavioural change; pure CSS containment fix.
+
 ## 0.10.1 -- fix "update available" badge in the HA Apps grid
 
 The `io.hass.version` OCI label in the Dockerfile had been pinned to
