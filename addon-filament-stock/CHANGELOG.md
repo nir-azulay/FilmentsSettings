@@ -1,5 +1,66 @@
 # Changelog
 
+## 0.13.0 -- Baked update-badge icon swap (visible update indicator in Apps grid)
+
+The Apps-grid tile for an add-on that ships its own `icon.png` shows
+either an invisible or too-subtle "update available" indicator (the
+exact behaviour depends on HA frontend version -- some hide the corner
+`mdiArrowUpBoldCircle` entirely when `iconImage` is set, others render
+only the 2px orange top-stripe). Either way the user kept missing
+update notifications for Filament Stock because the spool icon never
+changed.
+
+This release makes the update state **unmissable** by swapping the
+on-disk `icon.png` between two pre-baked variants:
+
+- `icon.png` (clean spool) when no update is available.
+- `icon_update.png` (same spool with a bold orange `↑` badge composited
+  into the bottom-right corner) when Supervisor reports a newer version.
+
+### How it works
+
+- New module `app/icon_swapper.py` runs as a FastAPI startup background
+  task, polling `GET http://supervisor/addons/self/info` every 30
+  minutes for `update_available`.
+- When the answer flips, the swapper `shutil.copyfile`s either
+  `icon.png.original` (preserved on first run from the shipped clean
+  icon) or `icon_update.png` over the live `icon.png`, then hits
+  `POST http://supervisor/store/reload` so Supervisor re-evaluates its
+  cached `_path_icon_exists` and serves the new bytes.
+- Bytes are not server-side cached by Supervisor itself; the frontend
+  picks the new icon up on the next render of the Apps grid (browser
+  HTTP cache permitting -- a hard refresh always works).
+
+### Required config changes
+
+- `hassio_api: true` and `hassio_role: manager` -- needed to call
+  `/addons/self/info` and `/store/reload`.
+- New mount `addons:rw` so the running container can rewrite its own
+  `icon.png` in the host-mounted `/addons/<slug-folder>/` directory.
+  The container only touches its own folder; no other add-on is read
+  or modified.
+
+### Files
+
+- New `addon-filament-stock/icon_update.png` (badged variant, committed
+  to the repo so it's identical on every install).
+- New `addon-filament-stock/tools/build_icon_update_variant.py` -- the
+  Pillow script that produces `icon_update.png` from `icon.png`. Re-run
+  it any time the base icon is updated.
+- New `addon-filament-stock/app/icon_swapper.py` -- 200-line, error-
+  tolerant background task. Every Supervisor call is wrapped in
+  try/except + None-returns; the swap is never allowed to crash the
+  add-on. If the `/addons` mount is missing (e.g. the user hasn't
+  restarted after upgrading), the swapper logs a one-line hint and
+  exits cleanly instead of spinning forever.
+
+### Migration
+
+After upgrading to 0.13.0, **restart the add-on** so Supervisor
+re-applies the new `map:` entry and injects the writable `/addons`
+mount. Within ~30 minutes (or on the first restart after the swapper
+has run), the Apps grid tile will start reflecting the update state.
+
 ## 0.12.1 -- No-op release: diagnostic for the Add-ons grid update indicator
 
 Pure version bump with no code changes. Used to confirm the Settings ->

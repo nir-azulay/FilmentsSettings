@@ -55,6 +55,27 @@ effect.
 To add more options later, follow the recipe in the 0.8.5 section of
 [CHANGELOG.md](CHANGELOG.md).
 
+## Update indicator on the Apps grid (0.13.0+)
+
+The Settings → Add-ons grid renders each tile from a single `icon.png`,
+and on tiles that ship their own icon the built-in "update available"
+overlay is either suppressed or rendered as a thin 2px stripe that's
+easy to miss. Filament Stock works around this by **swapping its own
+`icon.png` at runtime** between two pre-baked variants:
+
+- the plain spool when no update is available, and
+- the same spool with a bold orange `↑` badge in the corner when
+  Supervisor reports a newer version.
+
+A background task polls `GET /addons/self/info` every 30 minutes,
+copies the right variant over `icon.png` in `/addons/<slug-folder>/`,
+and asks Supervisor to reload its addon path cache so the new bytes
+are served on the next render. This requires `hassio_api: true`,
+`hassio_role: manager`, and `map: [addons:rw]` in `config.yaml` --
+all set automatically when you install/upgrade the add-on; you don't
+need to configure anything. The container only ever touches its own
+icon files; no other add-on is read or modified.
+
 ## Architecture
 
 - **FastAPI** (Python, uvicorn) on `127.0.0.1:8000` -- REST API at `/api/*`.

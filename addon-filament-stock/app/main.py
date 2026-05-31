@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -9,6 +10,7 @@ from .addon_options import get_options, options_as_dict
 from .database import Base, engine, DATA_DIR, DATABASE_URL
 from .db_schema import apply_sqlite_migrations
 from .health import build_health_report
+from .icon_swapper import run_forever as run_icon_swapper
 from .routers import alert_ignores, ams, assignments, filaments, maintenance, profiles, stock
 from .seed import seed_filaments, seed_filaments_force
 
@@ -56,6 +58,17 @@ app.include_router(alert_ignores.router, prefix="/api")
 app.include_router(profiles.router, prefix="/api")
 app.include_router(ams.router, prefix="/api")
 app.include_router(assignments.router, prefix="/api")
+
+
+@app.on_event("startup")
+async def _spawn_icon_swapper() -> None:
+    """Background task that flips icon.png to a badged variant when an
+    update is available. Safe to ignore failures -- it's a UX nicety, not
+    a hard dependency, so we deliberately swallow exceptions inside
+    run_icon_swapper rather than crashing FastAPI startup if e.g. the
+    /addons mount is missing on a non-HA dev run.
+    """
+    asyncio.create_task(run_icon_swapper())
 
 
 @app.get("/api/ping")
