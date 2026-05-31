@@ -4,6 +4,20 @@
 
 Author: **[Nir Azulay](https://github.com/nir-azulay)** -- MIT licensed, see [LICENSE](../LICENSE).
 
+## Configuration (0.8.5+)
+
+The add-on exposes user-editable options through HA's standard add-on
+Configuration tab (**Settings → Add-ons → Filament Stock → Configuration**).
+Saving a change automatically restarts the add-on so the new values take
+effect.
+
+| Option | Default | What it does |
+|---|---|---|
+| `ask_if_replaced_spool_empty` | `false` | When `true`, the Assign-from-stock dialog asks *"Is the replaced spool empty?"* every time you assign a new spool to an already-assigned tray. When `false` (default), replaced spools are silently returned to your stock. |
+
+To add more options later, follow the recipe in the 0.8.5 section of
+[CHANGELOG.md](CHANGELOG.md).
+
 ## Architecture
 
 - **FastAPI** (Python, uvicorn) on `127.0.0.1:8000` -- REST API at `/api/*`.

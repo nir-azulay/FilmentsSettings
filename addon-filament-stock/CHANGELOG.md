@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.8.5 -- user-configurable add-on options (start with empty-spool prompt)
+
+Adds support for native Home Assistant add-on configuration. Open
+**Settings → Add-ons → Filament Stock → Configuration** in HA to see the
+new options panel. The first setting:
+
+- **`ask_if_replaced_spool_empty`** (default: `false`)
+
+  Controls whether the Assign-from-stock dialog prompts you with
+  *"Is the replaced spool empty? Yes / No, return to stock"* when you
+  replace one assignment with another on the same tray.
+
+  - `false` (default) -- the prompt is hidden. Replaced spools are
+    always returned to your stock (the safe, non-destructive default).
+    A small italic note in the dialog explains what's happening and
+    where to flip the toggle.
+  - `true` -- the prompt is shown every time, exactly like the old
+    behaviour. Pick this if you frequently swap colours mid-print and
+    need to mark spools as used up.
+
+Saving the option in HA's Configuration tab restarts the add-on (HA
+handles this), which re-reads `/data/options.json` and applies the new
+value.
+
+### Plumbing for future options
+
+This release lays the groundwork for adding more user-configurable
+toggles cheaply:
+
+- `addon-filament-stock/app/addon_options.py` -- reads
+  `/data/options.json` once at startup, caches the resolved values,
+  and falls back to compiled-in defaults when run outside Supervisor
+  (local dev / smoke tests).
+- New `GET /api/config` endpoint -- surfaces the resolved options to
+  the frontend so the UI can honour the user's preferences.
+- New `fetchAddonConfig()` + `AddonConfig` type on the frontend.
+
+To add a new toggle in future:
+
+  1. Add it to `options:` + `schema:` in `config.yaml`.
+  2. Add the matching default to `AddonOptions` + the coercion in
+     `addon_options.py`.
+  3. Add the field to `options_as_dict()` and the frontend
+     `AddonConfig` interface.
+  4. Read `config.your_field` in the UI component that should honour it.
+
 ## 0.6.0 -- "I just loaded this spool" tray assignment + optional printer push
 
 You can now tell the add-on which physical spool from your stock you put

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  AddonConfig,
   AmsTray,
   AssignSuggestion,
   AssignSuggestionsResponse,
+  DEFAULT_ADDON_CONFIG,
   assignTray,
+  fetchAddonConfig,
   fetchAssignSuggestions,
   PackagingType,
 } from "../api";
@@ -42,6 +45,10 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
   const [returnPriorToStock, setReturnPriorToStock] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // User-configurable add-on options (e.g. whether to ask about the
+  // replaced spool). Defaults to the compiled-in fallback while the
+  // /api/config fetch is in flight so the UI never blocks on it.
+  const [config, setConfig] = useState<AddonConfig>(DEFAULT_ADDON_CONFIG);
 
   // Initial load + whenever the tray entity changes.
   useEffect(() => {
@@ -49,6 +56,11 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
     setData(null);
     setLoadError(null);
     setSelectedColorId(null);
+    // Suggestions and add-on config are independent -- fire them in parallel.
+    void fetchAddonConfig().then((c) => {
+      if (cancelled) return;
+      setConfig(c);
+    });
     fetchAssignSuggestions(tray.entity_id, tray.material)
       .then((d) => {
         if (cancelled) return;
@@ -185,27 +197,35 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
                   ({current.packaging})
                 </span>
               </div>
-              <div style={priorChoiceRow}>
-                <span style={{ fontSize: 12, color: "var(--ha-primary-text)" }}>
-                  Is the replaced {current.packaging} empty?
-                </span>
-                <div style={priorToggle}>
-                  <button
-                    type="button"
-                    onClick={() => setReturnPriorToStock(false)}
-                    style={!returnPriorToStock ? priorBtnActive : priorBtn}
-                  >
-                    Yes, it's empty
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setReturnPriorToStock(true)}
-                    style={returnPriorToStock ? priorBtnActive : priorBtn}
-                  >
-                    No, return to stock
-                  </button>
+              {config.ask_if_replaced_spool_empty ? (
+                <div style={priorChoiceRow}>
+                  <span style={{ fontSize: 12, color: "var(--ha-primary-text)" }}>
+                    Is the replaced {current.packaging} empty?
+                  </span>
+                  <div style={priorToggle}>
+                    <button
+                      type="button"
+                      onClick={() => setReturnPriorToStock(false)}
+                      style={!returnPriorToStock ? priorBtnActive : priorBtn}
+                    >
+                      Yes, it's empty
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReturnPriorToStock(true)}
+                      style={returnPriorToStock ? priorBtnActive : priorBtn}
+                    >
+                      No, return to stock
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <p style={priorAutoNote}>
+                  The replaced {current.packaging} will be returned to your stock.
+                  Toggle this in the add-on's Configuration tab if you'd rather
+                  be asked each time.
+                </p>
+              )}
             </div>
           )}
 
@@ -649,6 +669,13 @@ const priorBtnActive: React.CSSProperties = {
   background: "var(--ha-primary-color)",
   color: "#fff",
   fontWeight: 600,
+};
+const priorAutoNote: React.CSSProperties = {
+  marginTop: 8,
+  fontSize: 11,
+  color: "var(--ha-secondary-text)",
+  fontStyle: "italic",
+  lineHeight: 1.4,
 };
 const pushLabel: React.CSSProperties = {
   display: "flex",

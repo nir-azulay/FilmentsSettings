@@ -1,5 +1,5 @@
 name: Filament Stock
-version: "0.8.4"
+version: "0.8.5"
 slug: filament_stock
 description: 3D printer filament inventory with per-color stock tracking and low-stock alerts. Exposes a panel inside Home Assistant via Ingress.
 url: https://github.com/nir-azulay/FilmentsSettings
@@ -30,5 +30,16 @@ ports: {}
 # without needing SSH. HA snapshots include this directory.
 map:
   - addon_config:rw
-options: {}
-schema: {}
+# 0.8.5+: user-configurable add-on options. Supervisor writes the resolved
+# values to /data/options.json inside the container after the user clicks
+# "Save" in the add-on's Configuration tab. The backend reads that file on
+# startup via app/addon_options.py and exposes the values to the frontend
+# at GET /api/config so the UI can honour the user's preferences.
+options:
+  # When false, the "Is the replaced spool empty?" prompt is hidden in the
+  # Assign-from-stock dialog and replaced spools are always returned to
+  # stock. Set to true if you want to be asked each time (useful if you
+  # frequently swap mid-print and need the option to mark spools as used up).
+  ask_if_replaced_spool_empty: false
+schema:
+  ask_if_replaced_spool_empty: bool

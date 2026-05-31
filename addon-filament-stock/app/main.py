@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from .addon_options import get_options, options_as_dict
 from .database import Base, engine, DATA_DIR, DATABASE_URL
 from .db_schema import apply_sqlite_migrations
 from .routers import alert_ignores, ams, assignments, filaments, maintenance, profiles, stock
@@ -17,6 +18,10 @@ os.makedirs(DATA_DIR, exist_ok=True)
 Base.metadata.create_all(bind=engine)
 apply_sqlite_migrations()
 seed_filaments()
+
+# Pre-load add-on options so the log line lands at startup (and so any
+# malformed /data/options.json is reported alongside the other init noise).
+get_options()
 
 # Startup diagnostic so we always see which DB file the API is actually using
 # and how many rows it has -- saves a lot of "why is it empty?" debugging.
@@ -55,3 +60,14 @@ app.include_router(assignments.router, prefix="/api")
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/api/config")
+def get_addon_config():
+    """Return the user's resolved add-on options.
+
+    The frontend reads this once on load to honour the preferences set in
+    the HA Configuration tab (e.g. whether to ask about the replaced
+    spool when assigning).
+    """
+    return options_as_dict()

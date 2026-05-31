@@ -448,6 +448,40 @@ export async function unassignTray(
   return res.json();
 }
 
+// ─── Add-on configuration (0.8.5+) ────────────────────────────────────────
+// Mirrors /api/config, which surfaces the user-editable options set in the
+// HA add-on's Configuration tab. The backend writes the resolved values to
+// /data/options.json on save + restart; this endpoint exposes the cached
+// in-memory copy.
+
+export interface AddonConfig {
+  /** When false, the Assign-from-stock dialog hides the
+   *  "Is the replaced spool empty?" toggle and replaced spools always
+   *  return to stock. Default is false (don't ask). */
+  ask_if_replaced_spool_empty: boolean;
+}
+
+/** The shape we hand the rest of the UI when the /api/config fetch fails
+ *  (older add-on builds, network blip). MUST match the backend defaults
+ *  declared in app/addon_options.py / config.yaml. */
+export const DEFAULT_ADDON_CONFIG: AddonConfig = {
+  ask_if_replaced_spool_empty: false,
+};
+
+export async function fetchAddonConfig(): Promise<AddonConfig> {
+  try {
+    const res = await fetch(`${BASE}/config`);
+    if (!res.ok) return DEFAULT_ADDON_CONFIG;
+    const body = await res.json();
+    return {
+      ...DEFAULT_ADDON_CONFIG,
+      ...body,
+    };
+  } catch {
+    return DEFAULT_ADDON_CONFIG;
+  }
+}
+
 export async function fetchAmsTrays(): Promise<AmsTraysResponse> {
   const res = await fetch(`${BASE}/ams/trays`);
   if (res.status === 404) {
