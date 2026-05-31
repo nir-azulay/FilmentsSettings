@@ -1,5 +1,100 @@
 # Changelog
 
+## 0.10.0 -- setup doctor + empty-state for new installs
+
+Two new pieces of UI that turn a fresh install on someone else's Home
+Assistant from "wait, why doesn't it work?" into a guided walk-through.
+
+### Setup checklist (`/api/health` doctor)
+
+A new `GET /api/health` endpoint runs seven best-effort checks and
+returns a structured report:
+
+| Check | What it verifies | Severity on failure |
+|---|---|---|
+| `supervisor_token` | `SUPERVISOR_TOKEN` env var is present | error |
+| `database_writable` | SQLite DB is reachable and writable | error |
+| `ha_core_reachable` | `GET http://supervisor/core/api/` succeeds | error |
+| `ha_bambulab_installed` | Any entity in HA looks like ha-bambulab | error |
+| `bambu_printers_found` | At least one printer slug detected | warn |
+| `ams_entities_found` | At least one AMS/external spool entity | warn |
+| `bambu_set_filament_service_available` | `bambu_lab.set_filament` is registered (LAN mode) | warn |
+
+Each check returns `{id, name, ok, severity, message, hint, detail}` so
+the frontend can render a single sticky card at the top of the page
+with a clear "what to do" for every failing item. The card auto-hides
+when everything passes and auto-expands when any check has `error`
+severity. Live "Re-check now" button so users don't have to refresh
+the page after fixing something.
+
+Implementation: `app/health.py` (new) -- each check is wrapped so it
+never raises; the orchestrator runs them with at most one shared
+`/api/states` fetch and one `/api/services` fetch. `app/ha_client.py`
+gained two helpers: `ping_core()` (boolean liveness probe) and
+`list_services()` (enumerates HA services).
+
+### Empty-state card
+
+When the filament list is empty -- whether on first launch or after
+the user deletes every row -- the dashboard shows a friendly card
+instead of a blank grid:
+
+* **Add your first filament** -- opens the existing Add dialog.
+* **Load sample list** -- POSTs to a new `POST /api/seed-now` endpoint
+  that runs the seed routine on demand. Idempotent: existing rows are
+  never overwritten, and the user gets a toast saying "Added N sample
+  filaments" or "All N samples were already in your stock."
+* Footer tip explaining the AMS auto-detection so users know the
+  panel above wakes up once `ha-bambulab` is wired in.
+
+The seed routine itself was refactored: `_run_seed()` is shared
+between the startup seed (still gated on the
+`seed_demo_filaments_on_first_run` option) and the new
+`seed_filaments_force()` (used by the on-demand endpoint, bypasses
+the gate).
+
+### Liveness probe renamed
+
+The old trivial `/api/health` (which just returned `{"status": "ok"}`)
+moved to `/api/ping`. Anyone using it as a Docker / nginx liveness
+probe should update their config to point at `/api/ping` instead.
+
+## 0.9.0 -- four new configuration toggles
+
+Adds four new user-configurable options in the add-on's Configuration tab,
+all with friendly labels and descriptions:
+
+- **Pre-tick "Also update the printer's AMS display"**
+  (`default_push_to_printer`, default `false`) -- controls whether the
+  push-to-printer checkbox in the Assign-from-stock dialog opens already
+  ticked. Useful if you're on LAN mode and always want assignments mirrored
+  to the printer's tray display.
+
+- **Default low-stock alert threshold**
+  (`default_low_stock_threshold`, default `1`, range `1..100`) -- the
+  threshold applied to **newly created** filaments. The add-on raises an
+  alert when a color's total drops to this number or below. Existing
+  filaments keep their per-row threshold; this only affects new rows.
+
+- **Seed sample filaments on first run**
+  (`seed_demo_filaments_on_first_run`, default `true`) -- when off, the
+  add-on doesn't auto-populate the DB with the curated SUNLU / Inslogic /
+  Jayo filament list on first launch. Set to off if you want to start from
+  an empty stock. Existing rows are never overwritten either way.
+
+- **AMS panel refresh interval (seconds)**
+  (`ams_poll_interval_seconds`, default `15`, range `5..300`) -- how often
+  the AMS Status panel polls Home Assistant for tray state. Lower for
+  active monitoring during a print, raise to reduce load on slower setups.
+
+Internals: `app/addon_options.py` grew matching dataclass fields with a
+new `_coerce_int(value, default, *, lo, hi)` helper that clamps + parses
+defensively. `GET /api/config` now returns all five fields. The frontend
+`AddonConfig` interface, `DEFAULT_ADDON_CONFIG`, `AmsPanel`, and
+`AssignTrayDialog` were updated to consume the new fields. The seed
+gate and threshold fallback live in the backend so even direct curl
+calls to `POST /filaments` pick up the configured default.
+
 ## 0.8.7 -- friendly labels for add-on configuration options
 
 The add-on's Configuration tab in Home Assistant now shows a

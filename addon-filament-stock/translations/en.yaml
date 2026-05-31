@@ -8,5 +8,37 @@ configuration:
       returned to your stock -- safe for the common "swap colours mid-job"
       case. Turn this ON if you frequently run spools to empty and want to
       mark them as used up at the moment of swap.
+  default_push_to_printer:
+    name: Pre-tick "Also update the printer's AMS display"
+    description: >-
+      Controls whether the "Also update the printer's AMS display"
+      checkbox in the Assign-from-stock dialog is ticked by default when
+      the dialog opens. Turn ON if your Bambu printer is in LAN mode and
+      you always want assignments to push tray metadata to the printer.
+      Leave OFF in Cloud-only mode -- the push call would always fail.
+  default_low_stock_threshold:
+    name: Default low-stock alert threshold
+    description: >-
+      When you create a new filament, this is the number used for its
+      low-stock alert threshold. The add-on raises an alert whenever a
+      color's available stock (spools + refills) drops to this number or
+      below. Existing filaments keep their own per-filament threshold;
+      changing this only affects newly added rows.
+  seed_demo_filaments_on_first_run:
+    name: Seed sample filaments on first run
+    description: >-
+      When ON (the default), the add-on auto-inserts a curated set of
+      common filaments (SUNLU PETG HS, Inslogic ASA, Jayo PLA Pro, and
+      friends) on first launch if they don't already exist. Turn OFF if
+      you'd rather start with an empty stock and add your own filaments
+      manually. Existing data is never overwritten either way.
+  ams_poll_interval_seconds:
+    name: AMS panel refresh interval (seconds)
+    description: >-
+      How often the AMS Status panel refreshes the tray data from Home
+      Assistant. 15s (default) matches typical ha-bambulab sensor refresh
+      cadence. Drop to 5-10s for active monitoring during a print, raise
+      to 60-120s to reduce load on slower setups. Must be between 5 and
+      300 seconds.
 
 network: {}

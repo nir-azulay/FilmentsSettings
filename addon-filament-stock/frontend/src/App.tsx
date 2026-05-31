@@ -13,6 +13,8 @@ import AlertBanner from "./components/AlertBanner";
 import AmsPanel from "./components/AmsPanel";
 import CreateFilamentDialog from "./components/CreateFilamentDialog";
 import Dashboard from "./components/Dashboard";
+import EmptyState from "./components/EmptyState";
+import SetupChecklist from "./components/SetupChecklist";
 import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
 import { SpoolIcon } from "./components/SpoolIcon";
 import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
@@ -139,6 +141,8 @@ export default function App() {
           <BrandsSummaryCard brands={uniqueBrands} />
         </div>
 
+        <SetupChecklist />
+
         <AlertBanner
           alerts={alerts}
           onIgnore={async (filamentType, colorName) => {
@@ -149,7 +153,14 @@ export default function App() {
 
         <AmsPanel onJumpToFilament={jumpToFilament} onStockChanged={() => void reload()} />
 
-        <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
+        {filaments.length === 0 ? (
+          <EmptyState
+            onAddFilament={() => setShowCreateDialog(true)}
+            onSeeded={() => void reload()}
+          />
+        ) : (
+          <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
+        )}
       </main>
 
       {showCreateDialog && (

@@ -1,5 +1,5 @@
 name: Filament Stock
-version: "0.8.7"
+version: "0.10.0"
 slug: filament_stock
 description: 3D printer filament inventory with per-color stock tracking and low-stock alerts. Exposes a panel inside Home Assistant via Ingress.
 url: https://github.com/nir-azulay/FilmentsSettings
@@ -41,5 +41,29 @@ options:
   # stock. Set to true if you want to be asked each time (useful if you
   # frequently swap mid-print and need the option to mark spools as used up).
   ask_if_replaced_spool_empty: false
+  # When true, the "Also update the printer's AMS display" checkbox is
+  # pre-ticked when you open the Assign-from-stock dialog. Convenient if
+  # your printer is on LAN mode and you always want the push. Leave at
+  # false when on Cloud-only mode (the push call would always fail).
+  default_push_to_printer: false
+  # Default low-stock warning threshold for newly created filaments. The
+  # add-on raises an alert when an in-stock filament's total (spools + refills)
+  # for any color drops to this number or below. Existing filaments keep their
+  # individual per-filament thresholds.
+  default_low_stock_threshold: 1
+  # When true (default), the add-on seeds the database with a curated set of
+  # filaments (SUNLU PETG HS, Inslogic ASA, Jayo PLA Pro, etc.) on first run
+  # if they don't already exist. Set to false if you want to start from an
+  # empty stock and build it up yourself.
+  seed_demo_filaments_on_first_run: true
+  # How often (seconds) the AMS Status panel polls /api/ams/trays. 15s is
+  # a sensible default that matches typical ha-bambulab sensor refresh
+  # cadence. Lower it to 5-10s for active printing, raise to 60-120s to
+  # reduce load on slow setups. Clamped to 5..300.
+  ams_poll_interval_seconds: 15
 schema:
   ask_if_replaced_spool_empty: bool
+  default_push_to_printer: bool
+  default_low_stock_threshold: int(1,100)
+  seed_demo_filaments_on_first_run: bool
+  ams_poll_interval_seconds: int(5,300)

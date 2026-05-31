@@ -8,8 +8,9 @@ from sqlalchemy import text
 from .addon_options import get_options, options_as_dict
 from .database import Base, engine, DATA_DIR, DATABASE_URL
 from .db_schema import apply_sqlite_migrations
+from .health import build_health_report
 from .routers import alert_ignores, ams, assignments, filaments, maintenance, profiles, stock
-from .seed import seed_filaments
+from .seed import seed_filaments, seed_filaments_force
 
 _log = logging.getLogger("filament_stock")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -57,9 +58,41 @@ app.include_router(ams.router, prefix="/api")
 app.include_router(assignments.router, prefix="/api")
 
 
-@app.get("/api/health")
-def health_check():
+@app.get("/api/ping")
+def ping():
+    """Cheap liveness probe used by Docker / nginx / load balancers.
+
+    Returns immediately without touching the DB or HA. For a full setup
+    audit (HA reachable, ha-bambulab installed, AMS detected, etc.) use
+    /api/health instead.
+    """
     return {"status": "ok"}
+
+
+@app.get("/api/health")
+async def health_check():
+    """Doctor / setup-checklist report.
+
+    The frontend renders the failing checks as a sticky setup-card so a
+    fresh install on someone else's HA system gets a guided walk-through
+    instead of a silent blank screen. Heavier than /api/ping (talks to
+    HA Core, enumerates services, opens the DB) but still cheap enough
+    to call on every page load.
+    """
+    return await build_health_report()
+
+
+@app.post("/api/seed-now")
+def seed_now_endpoint():
+    """Seed the sample filament list on demand.
+
+    Used by the empty-state UI's "Or try our sample list" button so the
+    user can populate the DB without having to flip the
+    `seed_demo_filaments_on_first_run` option and restart the add-on.
+    Idempotent -- existing rows are never overwritten.
+    """
+    summary = seed_filaments_force()
+    return {"ok": True, **summary}
 
 
 @app.get("/api/config")

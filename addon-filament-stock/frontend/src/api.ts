@@ -459,6 +459,18 @@ export interface AddonConfig {
    *  "Is the replaced spool empty?" toggle and replaced spools always
    *  return to stock. Default is false (don't ask). */
   ask_if_replaced_spool_empty: boolean;
+  /** When true, the "Also update the printer's AMS display" checkbox in
+   *  the Assign-from-stock dialog opens pre-ticked. Default false. */
+  default_push_to_printer: boolean;
+  /** Low-stock alert threshold applied to newly created filaments. The
+   *  add-on warns when a color's total drops to this number or below. */
+  default_low_stock_threshold: number;
+  /** When true (default), the backend seeds the DB with a curated
+   *  filament list on first run if rows don't already exist. */
+  seed_demo_filaments_on_first_run: boolean;
+  /** How often the AMS Status panel polls /api/ams/trays, in seconds.
+   *  Clamped 5..300 server-side. */
+  ams_poll_interval_seconds: number;
 }
 
 /** The shape we hand the rest of the UI when the /api/config fetch fails
@@ -466,6 +478,10 @@ export interface AddonConfig {
  *  declared in app/addon_options.py / config.yaml. */
 export const DEFAULT_ADDON_CONFIG: AddonConfig = {
   ask_if_replaced_spool_empty: false,
+  default_push_to_printer: false,
+  default_low_stock_threshold: 1,
+  seed_demo_filaments_on_first_run: true,
+  ams_poll_interval_seconds: 15,
 };
 
 export async function fetchAddonConfig(): Promise<AddonConfig> {
@@ -496,6 +512,75 @@ export async function fetchAmsTrays(): Promise<AmsTraysResponse> {
       // ignore body parse errors
     }
     return { available: true, trays: [], error: detail };
+  }
+  return res.json();
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Setup doctor / health report (0.10.0+)
+// ──────────────────────────────────────────────────────────────────────────
+
+export type HealthSeverity = "ok" | "warn" | "error";
+
+export interface HealthCheck {
+  id: string;
+  name: string;
+  ok: boolean;
+  severity: HealthSeverity;
+  message: string;
+  /** What the user should do; only set when ok === false. */
+  hint?: string | null;
+  detail?: Record<string, unknown> | null;
+}
+
+export interface HealthReport {
+  /** True iff every check passed. */
+  ok: boolean;
+  /** Worst-case severity across all checks. */
+  severity: HealthSeverity;
+  /** One-line summary suitable for the setup-card header. */
+  summary: string;
+  checks: HealthCheck[];
+}
+
+/** Fallback used when /api/health is unreachable. We don't want a
+ *  network glitch to scare the user with a red banner -- treat it as
+ *  unknown but green. The real failures show up as soon as the next
+ *  fetch succeeds. */
+const FALLBACK_HEALTH: HealthReport = {
+  ok: true,
+  severity: "ok",
+  summary: "Health check unavailable -- assuming OK.",
+  checks: [],
+};
+
+export async function fetchHealth(): Promise<HealthReport> {
+  try {
+    const res = await fetch(`${BASE}/health`);
+    if (!res.ok) return FALLBACK_HEALTH;
+    const body = (await res.json()) as Partial<HealthReport>;
+    return {
+      ok: Boolean(body.ok),
+      severity: (body.severity as HealthSeverity) ?? "ok",
+      summary: body.summary ?? "",
+      checks: Array.isArray(body.checks) ? body.checks : [],
+    };
+  } catch {
+    return FALLBACK_HEALTH;
+  }
+}
+
+export interface SeedNowResponse {
+  ok: boolean;
+  added: number;
+  skipped_existing: number;
+  updated_logos: number;
+}
+
+export async function seedSampleFilamentsNow(): Promise<SeedNowResponse> {
+  const res = await fetch(`${BASE}/seed-now`, { method: "POST" });
+  if (!res.ok) {
+    throw new Error(`Seed failed: HTTP ${res.status}`);
   }
   return res.json();
 }

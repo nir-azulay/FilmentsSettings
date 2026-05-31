@@ -4,6 +4,38 @@
 
 Author: **[Nir Azulay](https://github.com/nir-azulay)** -- MIT licensed, see [LICENSE](../LICENSE).
 
+## Installing on a fresh Home Assistant system (0.10.0+)
+
+The add-on is designed to **just work** on any HA OS / Supervised
+install: it never asks for tokens, passwords, or API keys. Supervisor
+auto-injects a short-lived `SUPERVISOR_TOKEN` into the container when
+the add-on starts, and the add-on uses that to talk to HA Core's
+internal API at `http://supervisor/core/api/`.
+
+### Prerequisites
+
+- **Home Assistant OS** or **Supervised** (Container-only installs can't
+  run add-ons; use the source under `addon-filament-stock/` directly).
+- **[ha-bambulab](https://github.com/greghesp/ha-bambulab)** integration
+  installed via HACS, with at least one Bambu printer added. The add-on
+  doesn't talk to your printer or Bambu Cloud directly -- it reads tray
+  state from ha-bambulab's sensors and (optionally, opt-in per
+  assignment) calls `bambu_lab.set_filament` to push tray metadata back
+  to the printer.
+
+### First-launch experience
+
+On first open, the dashboard shows a **Setup checklist** card at the
+top with seven live checks (Supervisor token, HA Core API, ha-bambulab
+detected, AMS entities found, etc.). Anything that's not configured
+correctly is flagged with a short hint -- no need to grep logs.
+
+When the filament grid is empty, a friendly **Get started** card
+offers two choices: add your first filament manually, or load a small
+curated sample list so you can see how the dashboard looks before
+deciding what to track. Both options live inside the add-on -- no
+external dependencies, no GitHub clone needed.
+
 ## Configuration (0.8.5+)
 
 The add-on exposes user-editable options through HA's standard add-on
@@ -14,6 +46,10 @@ effect.
 | Option | Default | What it does |
 |---|---|---|
 | `ask_if_replaced_spool_empty` | `false` | When `true`, the Assign-from-stock dialog asks *"Is the replaced spool empty?"* every time you assign a new spool to an already-assigned tray. When `false` (default), replaced spools are silently returned to your stock. |
+| `default_push_to_printer` | `false` | When `true`, the "Also update the printer's AMS display" checkbox in the Assign-from-stock dialog opens pre-ticked. Convenient on LAN-mode setups; leave off for Cloud-only. |
+| `default_low_stock_threshold` | `1` | Low-stock alert threshold applied to **newly created** filaments. Range `1..100`. Existing filaments keep their per-row threshold. |
+| `seed_demo_filaments_on_first_run` | `true` | When `false`, the add-on doesn't auto-populate the DB with curated SUNLU / Inslogic / Jayo demo filaments on first launch. Existing rows are never overwritten. |
+| `ams_poll_interval_seconds` | `15` | How often the AMS Status panel polls Home Assistant for tray state. Range `5..300`. Lower for active print monitoring, raise for slow setups. |
 
 To add more options later, follow the recipe in the 0.8.5 section of
 [CHANGELOG.md](CHANGELOG.md).

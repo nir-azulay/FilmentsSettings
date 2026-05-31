@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..addon_options import get_options
 from ..color_merge import find_color_by_name
 from ..low_stock import build_staple_pools, iter_low_stock_colors, load_ignored_staple_keys
 from ..models import StapleAlertIgnore
@@ -27,7 +28,14 @@ def list_filaments(db: Session = Depends(get_db)):
 
 @router.post("/filaments", response_model=FilamentResponse, status_code=201)
 def create_filament(payload: FilamentCreate, db: Session = Depends(get_db)):
-    filament = Filament(**payload.model_dump())
+    data = payload.model_dump()
+    # If the client didn't supply a low-stock threshold, use the user's
+    # configured default from the add-on Configuration tab. Tested via
+    # model_fields_set so an explicit `1` from the client is honoured
+    # (not silently replaced with the configured default).
+    if "low_stock_threshold" not in payload.model_fields_set or data.get("low_stock_threshold") is None:
+        data["low_stock_threshold"] = get_options().default_low_stock_threshold
+    filament = Filament(**data)
     db.add(filament)
     db.commit()
     db.refresh(filament)

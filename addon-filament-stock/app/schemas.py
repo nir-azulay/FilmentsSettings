@@ -76,7 +76,11 @@ class FilamentBase(BaseModel):
 
 
 class FilamentCreate(FilamentBase):
-    pass
+    # Override to Optional so the router can tell "the client didn't specify
+    # a threshold, fill in the user's configured default" apart from "the
+    # client explicitly chose 1". model_dump(exclude_unset=True) gives us
+    # the right signal.
+    low_stock_threshold: Optional[int] = None
 
 
 class FilamentUpdate(BaseModel):

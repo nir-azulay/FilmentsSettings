@@ -2,6 +2,7 @@
 
 import logging
 
+from .addon_options import get_options
 from .database import SessionLocal
 from .models import ColorStock, Filament
 
@@ -53,7 +54,16 @@ SEED_FILAMENTS = [
 ]
 
 
-def seed_filaments() -> None:
+def _run_seed(*, log_prefix: str = "Seed") -> dict[str, int]:
+    """Insert any missing rows from SEED_FILAMENTS. Returns counters.
+
+    Caller is responsible for deciding whether to run at all (the auto
+    startup call respects the user's add-on option; the on-demand
+    endpoint always runs).
+    """
+    added = 0
+    skipped = 0
+    updated_logos = 0
     db = SessionLocal()
     try:
         for entry in SEED_FILAMENTS:
@@ -67,9 +77,11 @@ def seed_filaments() -> None:
                 if info.get("brand_logo_url") and existing.brand_logo_url != info["brand_logo_url"]:
                     existing.brand_logo_url = info["brand_logo_url"]
                     db.commit()
-                    _log.info("Seed updated logo: %s %s", info["brand"], info["material"])
+                    updated_logos += 1
+                    _log.info("%s updated logo: %s %s", log_prefix, info["brand"], info["material"])
                 else:
-                    _log.info("Seed skip (exists): %s %s", info["brand"], info["material"])
+                    skipped += 1
+                    _log.info("%s skip (exists): %s %s", log_prefix, info["brand"], info["material"])
                 continue
 
             filament = Filament(**info)
@@ -81,9 +93,36 @@ def seed_filaments() -> None:
                 db.add(color)
 
             db.commit()
-            _log.info("Seed added: %s %s with %d color(s)", info["brand"], info["material"], len(entry["colors"]))
+            added += 1
+            _log.info(
+                "%s added: %s %s with %d color(s)",
+                log_prefix, info["brand"], info["material"], len(entry["colors"]),
+            )
     except Exception:
         db.rollback()
-        _log.exception("Seed failed")
+        _log.exception("%s failed", log_prefix)
     finally:
         db.close()
+    return {"added": added, "skipped_existing": skipped, "updated_logos": updated_logos}
+
+
+def seed_filaments() -> None:
+    """Startup seed -- respects the user's add-on preference."""
+    if not get_options().seed_demo_filaments_on_first_run:
+        _log.info(
+            "Skipping demo-filament seeding because"
+            " 'seed_demo_filaments_on_first_run' is disabled in add-on options."
+        )
+        return
+    _run_seed(log_prefix="Seed")
+
+
+def seed_filaments_force() -> dict[str, int]:
+    """On-demand seed -- bypasses the user's preference.
+
+    Reachable via POST /api/seed-now and meant for the empty-state UI's
+    "Try our sample list" button. Returns the {added, skipped_existing,
+    updated_logos} counters so the UI can show a toast like
+    "Added 4 sample filaments." even when some rows already existed.
+    """
+    return _run_seed(log_prefix="Seed (on-demand)")

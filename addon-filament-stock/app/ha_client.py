@@ -152,6 +152,65 @@ async def render_template(template: str) -> str:
     return resp.text
 
 
+async def ping_core() -> bool:
+    """Cheap liveness probe against HA Core's ``GET /api/`` endpoint.
+
+    Returns True on a 200 response, False on any non-2xx, transport
+    failure, or auth rejection. Never raises -- callers (the /api/health
+    doctor) want a boolean.
+    """
+    token = os.environ.get(SUPERVISOR_TOKEN_ENV)
+    if not token:
+        return False
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.get(SUPERVISOR_BASE + "/", headers=headers)
+    except httpx.HTTPError:
+        return False
+    return 200 <= resp.status_code < 300
+
+
+async def list_services() -> list[dict[str, Any]]:
+    """Return the ``GET /api/services`` payload.
+
+    Each list element looks like ``{"domain": "light", "services": {...}}``.
+    Used by the doctor endpoint to check whether ha-bambulab has
+    registered ``bambu_lab.set_filament`` yet -- absence is the standard
+    signal that the printer is in Cloud-only mode or the integration is
+    not installed.
+
+    Raises HAClientError on transport / auth / 4xx / 5xx so callers can
+    surface a clean error. Callers that want a "best-effort, never
+    raise" wrapper should catch HAClientError themselves.
+    """
+    headers = {"Authorization": f"Bearer {_token()}"}
+    try:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            resp = await client.get(f"{SUPERVISOR_BASE}/services", headers=headers)
+    except httpx.HTTPError as exc:
+        raise HAClientError(f"cannot reach Supervisor: {exc!r}") from exc
+
+    if resp.status_code == 401:
+        raise HAClientError(
+            "Supervisor rejected SUPERVISOR_TOKEN on /services (HTTP 401)."
+        )
+    if resp.status_code >= 400:
+        body = (resp.text or "")[:200]
+        raise HAClientError(
+            f"HA /services returned HTTP {resp.status_code}: {body}"
+        )
+    try:
+        data = resp.json()
+    except ValueError as exc:
+        raise HAClientError(f"HA /services returned non-JSON: {exc!r}") from exc
+    if not isinstance(data, list):
+        raise HAClientError(
+            f"HA /services returned unexpected type {type(data).__name__}"
+        )
+    return data
+
+
 async def call_service(
     domain: str,
     service: str,

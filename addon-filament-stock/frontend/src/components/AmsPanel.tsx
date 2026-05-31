@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import { AmsTray, AmsTraysResponse, fetchAmsTrays, unassignTray } from "../api";
+import {
+  AmsTray,
+  AmsTraysResponse,
+  DEFAULT_ADDON_CONFIG,
+  fetchAddonConfig,
+  fetchAmsTrays,
+  unassignTray,
+} from "../api";
 import AssignTrayDialog from "./AssignTrayDialog";
 import { SpoolIcon } from "./SpoolIcon";
 
-const POLL_MS = 15000; // 15s -- same cadence as a typical HA sensor refresh
+// Fallback poll interval used until /api/config resolves. Matches the
+// backend default in app/addon_options.py.
+const FALLBACK_POLL_MS = DEFAULT_ADDON_CONFIG.ams_poll_interval_seconds * 1000;
 
 interface Props {
   /** Called when the user clicks the "in stock" pill so the parent can scroll
@@ -23,6 +32,25 @@ export default function AmsPanel({ onJumpToFilament, onStockChanged }: Props) {
   // Per-tray transient state so the Unassign button can show a spinner
   // without re-rendering the whole panel.
   const [unassigning, setUnassigning] = useState<string | null>(null);
+  // Poll interval (ms). Starts at the fallback and is overridden once we
+  // fetch /api/config so the user's configured cadence takes effect.
+  const [pollMs, setPollMs] = useState<number>(FALLBACK_POLL_MS);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAddonConfig()
+      .then((cfg) => {
+        if (cancelled) return;
+        const seconds = Math.max(5, Math.min(300, cfg.ams_poll_interval_seconds || 15));
+        setPollMs(seconds * 1000);
+      })
+      .catch(() => {
+        // Stick with the fallback; nothing else to do.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const load = useCallback(async (initial: boolean) => {
     if (initial) setLoading(true);
@@ -71,9 +99,9 @@ export default function AmsPanel({ onJumpToFilament, onStockChanged }: Props) {
 
   useEffect(() => {
     void load(true);
-    const id = setInterval(() => void load(false), POLL_MS);
+    const id = setInterval(() => void load(false), pollMs);
     return () => clearInterval(id);
-  }, [load]);
+  }, [load, pollMs]);
 
   if (loading) {
     return (

@@ -41,7 +41,14 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
       setPackaging(suggestion.available_refill > 0 ? "refill" : "spool");
     }
   };
-  const [pushToPrinter, setPushToPrinter] = useState(false);
+  // Initial value mirrors the compiled-in fallback; the real default
+  // arrives with /api/config and is applied below (only if the user
+  // hasn't manually toggled the checkbox yet, so we never override an
+  // explicit user choice mid-dialog).
+  const [pushToPrinter, setPushToPrinter] = useState(
+    DEFAULT_ADDON_CONFIG.default_push_to_printer,
+  );
+  const [pushToPrinterTouched, setPushToPrinterTouched] = useState(false);
   const [returnPriorToStock, setReturnPriorToStock] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -56,10 +63,16 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
     setData(null);
     setLoadError(null);
     setSelectedColorId(null);
+    // New tray -> fresh checkbox state; config will re-seed it below.
+    setPushToPrinterTouched(false);
     // Suggestions and add-on config are independent -- fire them in parallel.
     void fetchAddonConfig().then((c) => {
       if (cancelled) return;
       setConfig(c);
+      // Apply the configured default for the push-to-printer checkbox.
+      // Safe to set unconditionally here because we just reset the
+      // touched flag above for this fresh dialog session.
+      setPushToPrinter(c.default_push_to_printer);
     });
     fetchAssignSuggestions(tray.entity_id, tray.material)
       .then((d) => {
@@ -333,7 +346,10 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
                   <input
                     type="checkbox"
                     checked={pushToPrinter}
-                    onChange={(e) => setPushToPrinter(e.target.checked)}
+                    onChange={(e) => {
+                      setPushToPrinter(e.target.checked);
+                      setPushToPrinterTouched(true);
+                    }}
                   />
                   Also update the printer's AMS display
                 </label>

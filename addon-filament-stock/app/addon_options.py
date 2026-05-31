@@ -46,6 +46,19 @@ class AddonOptions:
     # When False, the Assign-from-stock dialog hides the "Is the replaced
     # spool empty?" prompt and always returns replaced spools to stock.
     ask_if_replaced_spool_empty: bool = False
+    # When True, the "Also update the printer's AMS display" checkbox in
+    # the Assign-from-stock dialog is pre-ticked when the dialog opens.
+    default_push_to_printer: bool = False
+    # Default low-stock warning threshold for newly created filaments
+    # (existing rows keep their own per-filament threshold). Clamped to
+    # 1..100 by the schema; we clamp again here defensively.
+    default_low_stock_threshold: int = 1
+    # When True (default), seed_filaments() populates the DB on first run
+    # with a curated list of common filaments. When False, the user starts
+    # from an empty stock.
+    seed_demo_filaments_on_first_run: bool = True
+    # AMS Status panel polling interval in seconds. Clamped 5..300.
+    ams_poll_interval_seconds: int = 15
 
 
 DEFAULTS = AddonOptions()
@@ -65,6 +78,25 @@ def _coerce_bool(value: Any, default: bool) -> bool:
     if isinstance(value, (int, float)):
         return bool(value)
     return default
+
+
+def _coerce_int(value: Any, default: int, *, lo: int, hi: int) -> int:
+    """Parse + clamp an int. HA's schema validates the range, but we
+    clamp again defensively in case options.json was edited by hand."""
+    try:
+        if isinstance(value, bool):
+            # bool is a subclass of int; reject explicitly so True doesn't
+            # become 1 silently.
+            return default
+        if isinstance(value, (int, float)):
+            n = int(value)
+        elif isinstance(value, str) and value.strip():
+            n = int(float(value.strip()))
+        else:
+            return default
+    except (TypeError, ValueError):
+        return default
+    return max(lo, min(hi, n))
 
 
 def _load_from_disk() -> dict[str, Any]:
@@ -116,6 +148,26 @@ def get_options() -> AddonOptions:
             raw.get("ask_if_replaced_spool_empty"),
             DEFAULTS.ask_if_replaced_spool_empty,
         ),
+        default_push_to_printer=_coerce_bool(
+            raw.get("default_push_to_printer"),
+            DEFAULTS.default_push_to_printer,
+        ),
+        default_low_stock_threshold=_coerce_int(
+            raw.get("default_low_stock_threshold"),
+            DEFAULTS.default_low_stock_threshold,
+            lo=1,
+            hi=100,
+        ),
+        seed_demo_filaments_on_first_run=_coerce_bool(
+            raw.get("seed_demo_filaments_on_first_run"),
+            DEFAULTS.seed_demo_filaments_on_first_run,
+        ),
+        ams_poll_interval_seconds=_coerce_int(
+            raw.get("ams_poll_interval_seconds"),
+            DEFAULTS.ams_poll_interval_seconds,
+            lo=5,
+            hi=300,
+        ),
     )
     _log.info("Add-on options resolved: %s", resolved)
     _cached = resolved
@@ -133,4 +185,8 @@ def options_as_dict() -> dict[str, Any]:
     opts = get_options()
     return {
         "ask_if_replaced_spool_empty": opts.ask_if_replaced_spool_empty,
+        "default_push_to_printer": opts.default_push_to_printer,
+        "default_low_stock_threshold": opts.default_low_stock_threshold,
+        "seed_demo_filaments_on_first_run": opts.seed_demo_filaments_on_first_run,
+        "ams_poll_interval_seconds": opts.ams_poll_interval_seconds,
     }
