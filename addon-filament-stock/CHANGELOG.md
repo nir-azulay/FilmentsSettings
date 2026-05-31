@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.6 -- cleaner add-on icon
+
+Replaces `icon.png` with a properly-square (256x256) stylised 3D spool on
+a true transparent background. Previously the icon was a landscape image
+that HA was stretching/squishing into the square tile in the Apps grid,
+and the "background" was a fake checkerboard rendered as opaque grey
+pixels.
+
+The `logo.png` (shown only on the add-on detail page) is unchanged.
+
 ## 0.8.5 -- user-configurable add-on options (start with empty-spool prompt)
 
 Adds support for native Home Assistant add-on configuration. Open
