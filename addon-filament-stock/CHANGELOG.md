@@ -27,34 +27,40 @@ Fix: added `minWidth: 0` to three containers in `AmsPanel.tsx`:
 
 No behavioural change; pure CSS containment fix.
 
-## 0.10.1 -- fix "update available" badge in the HA Apps grid
+## 0.10.1 -- Dockerfile: track installed-version via BUILD_VERSION ARG
+
+**Note on the original 0.10.1 description**: this release was originally
+shipped with a commit message claiming it would surface an "Update
+available" badge in the **Settings -> Add-ons** grid. That was a
+misdiagnosis on my part -- HA's Apps grid is a launcher view that
+shows running/stopped state only; it deliberately does **not** render
+per-tile update badges for any add-on. Pending add-on updates appear
+in **Settings -> System -> Updates**, in the bell-icon notifications,
+on the Settings sidebar item's numeric badge, and on the add-on's own
+detail page (the yellow "Update available" card with the Update
+button). The fix in this release is still real and worth doing for
+the reason below, but it doesn't change anything about the Apps grid.
+
+### What this release actually fixes
 
 The `io.hass.version` OCI label in the Dockerfile had been pinned to
 `"0.1.0"` since the very first release. Supervisor reads that label
 from the *installed image* to determine which version is currently
-running and compares it against the `version:` field in `config.yaml`
-to decide whether to show the "Update available" badge in the
-**Settings -> Add-ons** grid. Because the label was hardcoded, the grid
-saw `installed=0.1.0` no matter what we shipped, and the comparison
-logic produced inconsistent results (badge only appeared after opening
-the add-on detail page, which forces a metadata re-read).
+running. With the label hardcoded, the add-on detail page would have
+displayed a wrong "Current version" string once Supervisor's metadata
+cache reconciled (e.g. "Current: 0.1.0, Latest: 0.10.0"), and update
+entities exposed to Lovelace dashboards would have shown the same
+mismatched pair.
 
-Fix:
+### Fix
 
-- Added an `ARG BUILD_VERSION` (re-declared in both build stages so it
-  crosses the `FROM` boundary).
+- Added an `ARG BUILD_VERSION` at the top of the Dockerfile, re-declared
+  after the runtime `FROM` (ARG scope resets at each `FROM` boundary).
 - Changed the label to `io.hass.version="${BUILD_VERSION}"`.
 
-Supervisor automatically passes `BUILD_VERSION` = the `version:` field
-on every rebuild, so from this release forward the badge will light up
-correctly the moment a new commit lands on `main` and the next periodic
-repository refresh runs (or you click the **Refresh** button on the
-Add-on store page).
-
-No behavioural change. The first install of 0.10.1 will still need to
-go through the detail page once because Supervisor doesn't have a
-correct installed-version baseline yet -- after that, future updates
-will surface in the grid.
+Supervisor auto-passes `--build-arg BUILD_VERSION=<config.yaml version>`
+on every rebuild, so from this release forward the installed-version
+metadata always matches the declared version.
 
 ## 0.10.0 -- setup doctor + empty-state for new installs
 
