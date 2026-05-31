@@ -40,5 +40,16 @@ configuration:
       cadence. Drop to 5-10s for active monitoring during a print, raise
       to 60-120s to reduce load on slower setups. Must be between 5 and
       300 seconds.
+  disable_bambu_integration:
+    name: Disable Bambu Lab integration
+    description: >-
+      Master opt-out for all Bambu Lab features. When ON, the AMS Status
+      panel is hidden from the dashboard and the setup checklist skips
+      the Bambu-related health checks (ha-bambulab installed, printers
+      detected, AMS entities found, set_filament service available).
+      Use this if you don't own a Bambu printer or don't want the
+      integration -- the rest of the add-on still works as a manual
+      filament stock tracker. Leave OFF (default) to keep Bambu
+      features enabled.
 
 network: {}

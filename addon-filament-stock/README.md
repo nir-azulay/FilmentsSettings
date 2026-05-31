@@ -50,6 +50,7 @@ effect.
 | `default_low_stock_threshold` | `1` | Low-stock alert threshold applied to **newly created** filaments. Range `1..100`. Existing filaments keep their per-row threshold. |
 | `seed_demo_filaments_on_first_run` | `true` | When `false`, the add-on doesn't auto-populate the DB with curated SUNLU / Inslogic / Jayo demo filaments on first launch. Existing rows are never overwritten. |
 | `ams_poll_interval_seconds` | `15` | How often the AMS Status panel polls Home Assistant for tray state. Range `5..300`. Lower for active print monitoring, raise for slow setups. |
+| `disable_bambu_integration` | `false` | Master opt-out for Bambu Lab features. When `true`, the AMS Status panel is hidden and the setup checklist skips the Bambu-related health checks. Useful if you don't own a Bambu printer -- the rest of the add-on still works as a manual filament stock tracker. |
 
 To add more options later, follow the recipe in the 0.8.5 section of
 [CHANGELOG.md](CHANGELOG.md).

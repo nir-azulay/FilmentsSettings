@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.12.0 -- Opt-out toggle for Bambu Lab integration
+
+New add-on option `disable_bambu_integration` (default `false` -- keeps
+current behaviour for everyone who has it) that's a master kill-switch
+for everything Bambu-related. When turned ON:
+
+- The **AMS Status panel** is no longer mounted on the dashboard, so
+  it never fires its `/api/ams/trays` poll and never tries to render
+  tray cards.
+- The **Setup Checklist's** four Bambu-specific checks
+  (`ha_bambulab_installed`, `bambu_printers_found`, `ams_entities_found`,
+  `bambu_set_filament_service_available`) are skipped. They're replaced
+  by a single informational entry that reads "Disabled in add-on
+  options. AMS panel hidden and Bambu-specific checks skipped." so it's
+  obvious the integration is intentionally off, not silently broken.
+- The shared `/api/states` fetch backing those three checks is also
+  skipped, so the health endpoint does less work overall when the
+  integration is off.
+
+Use this if you don't own a Bambu printer or just don't want the
+integration -- the rest of the add-on (stock tracking, filament
+profiles, alerts, manual restock) still works as a standalone
+inventory tool.
+
+Implementation: new boolean field on `AddonOptions`, plumbed through
+`/api/config`, mirrored in the frontend `AddonConfig` type, and read
+once in `App.tsx` via a small `useEffect`. The backend gate is in
+`build_health_report()` so even direct `curl` calls to `/api/health`
+get the same trimmed report. Friendly label and description added to
+`translations/en.yaml`.
+
 ## 0.11.0 -- Colour filter on Stock + Assign pages
 
 Adds a "Colour" multi-select chip row to both the main Stock dashboard

@@ -59,6 +59,11 @@ class AddonOptions:
     seed_demo_filaments_on_first_run: bool = True
     # AMS Status panel polling interval in seconds. Clamped 5..300.
     ams_poll_interval_seconds: int = 15
+    # Master opt-out for Bambu Lab integration. When True the AMS panel
+    # is hidden in the frontend and the doctor's Bambu-related checks
+    # are skipped (replaced with a single info-level "disabled" line).
+    # Default False -> integration ON, same behaviour as pre-0.12.0.
+    disable_bambu_integration: bool = False
 
 
 DEFAULTS = AddonOptions()
@@ -168,6 +173,10 @@ def get_options() -> AddonOptions:
             lo=5,
             hi=300,
         ),
+        disable_bambu_integration=_coerce_bool(
+            raw.get("disable_bambu_integration"),
+            DEFAULTS.disable_bambu_integration,
+        ),
     )
     _log.info("Add-on options resolved: %s", resolved)
     _cached = resolved
@@ -189,4 +198,5 @@ def options_as_dict() -> dict[str, Any]:
         "default_low_stock_threshold": opts.default_low_stock_threshold,
         "seed_demo_filaments_on_first_run": opts.seed_demo_filaments_on_first_run,
         "ams_poll_interval_seconds": opts.ams_poll_interval_seconds,
+        "disable_bambu_integration": opts.disable_bambu_integration,
     }

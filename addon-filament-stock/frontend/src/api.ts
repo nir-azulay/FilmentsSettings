@@ -471,6 +471,10 @@ export interface AddonConfig {
   /** How often the AMS Status panel polls /api/ams/trays, in seconds.
    *  Clamped 5..300 server-side. */
   ams_poll_interval_seconds: number;
+  /** Master opt-out for Bambu Lab integration. When true the AMS Status
+   *  panel is hidden and the setup checklist skips the Bambu-related
+   *  health checks. Default false (integration ON). */
+  disable_bambu_integration: boolean;
 }
 
 /** The shape we hand the rest of the UI when the /api/config fetch fails
@@ -482,6 +486,7 @@ export const DEFAULT_ADDON_CONFIG: AddonConfig = {
   default_low_stock_threshold: 1,
   seed_demo_filaments_on_first_run: true,
   ams_poll_interval_seconds: 15,
+  disable_bambu_integration: false,
 };
 
 export async function fetchAddonConfig(): Promise<AddonConfig> {

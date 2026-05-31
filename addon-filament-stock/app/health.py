@@ -46,6 +46,7 @@ from typing import Any
 from sqlalchemy import text
 
 from . import ha_client
+from .addon_options import get_options
 from .database import DATABASE_URL, SessionLocal
 from .routers.ams import (
     _AMS_TRAY_RE,
@@ -374,35 +375,59 @@ async def build_health_report() -> dict[str, Any]:
     # we still run them so the user sees each line item.
     checks.append(await _check_ha_core_reachable())
 
-    # Step 3 -- one shared /api/states fetch feeds the next 3 checks.
-    try:
-        states = await ha_client.get_all_states()
-        states_error: str | None = None
-    except ha_client.HAClientError as exc:
-        _log.warning("health: /api/states fetch failed: %s", exc)
-        states = []
-        states_error = str(exc)
-
-    if states_error:
-        unavailable = lambda check_id, name: {  # noqa: E731
-            "id": check_id,
-            "name": name,
-            "ok": False,
-            "severity": "warn",
-            "message": f"Couldn't query HA states: {states_error}",
-            "hint": "Fix the earlier 'Home Assistant Core API' check first.",
-            "detail": None,
-        }
-        checks.append(unavailable("ha_bambulab_installed", "ha-bambulab integration"))
-        checks.append(unavailable("bambu_printers_found", "Bambu printers detected"))
-        checks.append(unavailable("ams_entities_found", "AMS / external spool trays"))
+    # Step 3 -- Bambu-specific checks. The whole block is gated on the
+    # `disable_bambu_integration` add-on option so users who don't own
+    # a Bambu printer don't see a red setup checklist forever. When
+    # gated off we still emit one informational entry so the user can
+    # tell from the checklist that the integration is intentionally
+    # disabled (not silently broken).
+    if get_options().disable_bambu_integration:
+        checks.append(
+            {
+                "id": "bambu_integration",
+                "name": "Bambu Lab integration",
+                # ok=True so the overall report stays green; the user
+                # opted out, this isn't a failure state.
+                "ok": True,
+                "severity": "ok",
+                "message": (
+                    "Disabled in add-on options. AMS panel hidden and"
+                    " Bambu-specific checks skipped."
+                ),
+                "hint": None,
+                "detail": None,
+            }
+        )
     else:
-        checks.append(_check_ha_bambulab_installed(states))
-        checks.append(_check_bambu_printers_found(states))
-        checks.append(_check_ams_entities_found(states))
+        # Step 3a -- shared /api/states fetch feeds the next 3 checks.
+        try:
+            states = await ha_client.get_all_states()
+            states_error: str | None = None
+        except ha_client.HAClientError as exc:
+            _log.warning("health: /api/states fetch failed: %s", exc)
+            states = []
+            states_error = str(exc)
 
-    # Step 4 -- service enumeration (independent of /api/states).
-    checks.append(await _check_bambu_set_filament_service())
+        if states_error:
+            unavailable = lambda check_id, name: {  # noqa: E731
+                "id": check_id,
+                "name": name,
+                "ok": False,
+                "severity": "warn",
+                "message": f"Couldn't query HA states: {states_error}",
+                "hint": "Fix the earlier 'Home Assistant Core API' check first.",
+                "detail": None,
+            }
+            checks.append(unavailable("ha_bambulab_installed", "ha-bambulab integration"))
+            checks.append(unavailable("bambu_printers_found", "Bambu printers detected"))
+            checks.append(unavailable("ams_entities_found", "AMS / external spool trays"))
+        else:
+            checks.append(_check_ha_bambulab_installed(states))
+            checks.append(_check_bambu_printers_found(states))
+            checks.append(_check_ams_entities_found(states))
+
+        # Step 3b -- service enumeration (independent of /api/states).
+        checks.append(await _check_bambu_set_filament_service())
 
     all_ok = all(c["ok"] for c in checks)
     has_error = any(c["severity"] == "error" for c in checks)

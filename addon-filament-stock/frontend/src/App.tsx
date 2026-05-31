@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import {
+  AddonConfig,
   Alert,
+  DEFAULT_ADDON_CONFIG,
   Filament,
   StapleAlertIgnore,
+  fetchAddonConfig,
   fetchAlertIgnores,
   fetchAlerts,
   fetchFilaments,
@@ -39,6 +42,12 @@ export default function App() {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  // Add-on config -- only used here to decide whether to mount the AMS
+  // panel. Starts at the compiled-in fallback so the first paint isn't
+  // delayed by /api/config; the real value lands as soon as the fetch
+  // resolves. Individual child components (e.g. AmsPanel, AssignTrayDialog)
+  // fetch the config separately for fields they care about.
+  const [addonConfig, setAddonConfig] = useState<AddonConfig>(DEFAULT_ADDON_CONFIG);
 
   const reload = useCallback(async () => {
     const [f, a, ign] = await Promise.all([fetchFilaments(), fetchAlerts(), fetchAlertIgnores()]);
@@ -50,6 +59,16 @@ export default function App() {
   useEffect(() => {
     reload().finally(() => setLoading(false));
   }, [reload]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAddonConfig().then((c) => {
+      if (!cancelled) setAddonConfig(c);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleImport = async () => {
     setImporting(true);
@@ -151,7 +170,13 @@ export default function App() {
           }}
         />
 
-        <AmsPanel onJumpToFilament={jumpToFilament} onStockChanged={() => void reload()} />
+        {/* AMS panel is hidden when the user has opted out of the
+            Bambu integration in the add-on Configuration tab. We avoid
+            mounting the component at all so it never fires its
+            /api/ams/trays poll. */}
+        {!addonConfig.disable_bambu_integration && (
+          <AmsPanel onJumpToFilament={jumpToFilament} onStockChanged={() => void reload()} />
+        )}
 
         {filaments.length === 0 ? (
           <EmptyState
