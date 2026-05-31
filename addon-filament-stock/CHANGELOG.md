@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.7 -- friendly labels for add-on configuration options
+
+The add-on's Configuration tab in Home Assistant now shows a
+human-readable label and description for each option instead of the raw
+schema key. For `ask_if_replaced_spool_empty` you'll see:
+
+> **Ask if the replaced spool is empty**
+> When you assign a new spool to an AMS tray that's already assigned,
+> show a "Yes / No" prompt asking whether the spool you're replacing is
+> empty. When OFF (the default), the replaced spool is silently returned
+> to your stock -- safe for the common "swap colours mid-job" case.
+> Turn this ON if you frequently run spools to empty and want to mark
+> them as used up at the moment of swap.
+
+Implementation: a new `translations/en.yaml` file in the add-on root
+that HA Supervisor reads to render the Configuration UI. Adding more
+options later just means appending another entry under `configuration:`
+in the same file.
+
 ## 0.8.6 -- cleaner add-on icon
 
 Replaces `icon.png` with a properly-square (256x256) stylised 3D spool on
