@@ -1,5 +1,5 @@
 name: Filament Stock
-version: "0.13.2"
+version: "0.13.3"
 slug: filament_stock
 description: 3D printer filament inventory with per-color stock tracking and low-stock alerts. Exposes a panel inside Home Assistant via Ingress.
 url: https://github.com/nir-azulay/FilmentsSettings
@@ -18,33 +18,26 @@ ingress_stream: false
 # 0.5.0+: we read AMS tray sensor state from the Home Assistant Core REST API
 # (provided by the Supervisor as http://supervisor/core/api). The SUPERVISOR_TOKEN
 # env var is auto-injected when homeassistant_api is true. We never write back
-# to HA -- pure read-only.
+# to HA -- pure read-only -- and we never need hassio_api or auth_api.
 #
-# 0.13.0+: hassio_api + hassio_role=manager enable the runtime icon swapper,
-# which asks Supervisor "is there a newer version of me available?" via
-# GET /addons/self/info and triggers POST /store/reload after replacing
-# icon.png so the Apps grid tile flips to a badged variant when an update
-# is waiting. The user kept hitting the well-known issue where the built-in
-# corner overlay is invisible on tiles that have a custom icon; baking the
-# badge into the icon itself is the only way to make the indicator obvious.
-hassio_api: true
-hassio_role: manager
+# 0.13.3 note: 0.13.0-0.13.2 briefly turned on hassio_api + hassio_role=manager
+# + map: addons:rw to support a runtime "icon swap" that flipped icon.png to a
+# badged variant when an update was available. That approach is architecturally
+# impossible for add-ons installed from a custom git repository: Supervisor's
+# `addons:rw` mount only exposes apps/local/, never apps/git/<hash>/ where this
+# add-on actually lives. The container could never see its own icon.png. The
+# code, mount, and elevated permissions were removed in 0.13.3.
+hassio_api: false
 homeassistant_api: true
 auth_api: false
 host_network: false
 ports: {}
-# Mounts:
-# * `addon_config:rw` -- maps /config to the Samba share at
-#   \\homeassistant\addon_configs\filament_stock\. The SQLite DB lives in
-#   /config/data/filaments.db so users can drop in a seed file or grab a
-#   copy without needing SSH. HA snapshots include this directory.
-# * `addons:rw` (0.13.0+) -- mounts the host's /addons directory so the
-#   icon swapper can overwrite icon.png in this add-on's own folder. The
-#   running container only touches its own icon.png[.original|_update]
-#   files; no other add-on is read or modified.
+# `addon_config` maps the add-on's /config to the user-visible Samba share at
+# \\homeassistant\addon_configs\filament_stock\. The SQLite DB lives in
+# /config/data/filaments.db so users can drop in a seed file or grab a copy
+# without needing SSH. HA snapshots include this directory.
 map:
   - addon_config:rw
-  - addons:rw
 # 0.8.5+: user-configurable add-on options. Supervisor writes the resolved
 # values to /data/options.json inside the container after the user clicks
 # "Save" in the add-on's Configuration tab. The backend reads that file on

@@ -1,5 +1,59 @@
 # Changelog
 
+## 0.13.3 -- Revert 0.13.0 icon-swap mechanism (architecturally impossible)
+
+Removes the runtime icon swapper introduced in 0.13.0, along with the
+elevated permissions it required (`hassio_api: true`, `hassio_role: manager`,
+`map: addons:rw`). The mechanism could never work for an add-on installed
+from a custom git repository.
+
+### Why it was impossible
+
+Supervisor's `addons:rw` map type bind-mounts the host folder
+`<supervisor>/apps/local/` into the container at `/addons`. That's the
+sideload-only directory. Add-ons installed from a custom git repo (this
+one included) live in `<supervisor>/apps/git/<repo-hash>/`, which is a
+separate sibling of `apps/local/` and is never bind-mounted into ANY
+add-on container. No environment variable, no Supervisor API call, and
+no other map type exposes a repo-installed add-on's own source folder.
+
+By design, a Home Assistant add-on cannot rewrite its own `icon.png` at
+runtime. The Supervisor team treats source files as immutable build
+material and per-instance writable state lives only in `/data` and
+`/config`.
+
+The swapper detected this on startup and logged
+`icon swap: addon folder under /addons not writable -- swapping disabled`
+exactly as designed -- but that meant the icon never flipped, so the
+whole feature was dead weight.
+
+### What this reverts
+
+- Deleted `app/icon_swapper.py` (200-line background task).
+- Deleted `icon_update.png` (the badged variant).
+- Deleted `tools/build_icon_update_variant.py` (the generator).
+- Removed `asyncio.create_task(run_icon_swapper())` startup hook from
+  `app/main.py`.
+- Removed `hassio_api: true`, `hassio_role: manager`, and the
+  `addons:rw` map entry from `config.yaml`. The add-on is back to the
+  minimum permission set it had through 0.12.x.
+
+### What you'll see instead
+
+The Apps grid tile shows whatever HA's native behaviour produces for an
+add-on with a custom `icon.png`:
+
+- a thin 2px orange stripe along the top edge of the tile when an
+  update is available, and
+- the same custom spool icon at all times (HA's `mdiArrowUpBoldCircle`
+  corner overlay is suppressed by the presence of any custom icon --
+  this is upstream HA frontend behaviour, not something this add-on
+  can change).
+
+The "Update" button on the add-on's detail page works correctly and
+clearly indicates updates. Notifications about updates also appear in
+the standard HA Notifications dropdown.
+
 ## 0.13.2 -- No-op release: verify the 0.13.0 icon-swap mechanism end-to-end
 
 Pure version bump. No code or config changes.
