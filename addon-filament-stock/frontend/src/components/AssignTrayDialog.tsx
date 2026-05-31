@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import {
   AddonConfig,
   AmsTray,
@@ -10,7 +10,21 @@ import {
   fetchAssignSuggestions,
   PackagingType,
 } from "../api";
+import { ColorFamilyId, familyFor } from "../colorFamilies";
+import ColorFilter from "./ColorFilter";
 import { SpoolIcon } from "./SpoolIcon";
+
+// Local helper so multi-select chip toggles read cleanly. Identical
+// pattern to the one in Dashboard.tsx -- if we add a third consumer,
+// promote it into a hook.
+function toggleInSet<T>(setter: Dispatch<SetStateAction<Set<T>>>, value: T) {
+  setter((prev) => {
+    const next = new Set(prev);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    return next;
+  });
+}
 
 /** Modal dialog: pick a filament+color from local stock to "assign" to an
  *  AMS tray. Smart-defaults the picker by the tray's current material and
@@ -29,8 +43,11 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
   const [data, setData] = useState<AssignSuggestionsResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState<string | null>(null);
-  const [filterBrand, setFilterBrand] = useState<string | null>(null);
+  // Multi-select to match the main Stock page. Empty Set = no filter,
+  // i.e. show all types / brands / colours.
+  const [filterTypes, setFilterTypes] = useState<Set<string>>(() => new Set());
+  const [filterBrands, setFilterBrands] = useState<Set<string>>(() => new Set());
+  const [filterColors, setFilterColors] = useState<Set<ColorFamilyId>>(() => new Set());
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
   const [packaging, setPackaging] = useState<PackagingType>("spool");
 
@@ -101,17 +118,43 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
 
   const uniqueBrands = useMemo(() => {
     if (!data) return [] as string[];
-    const pool = filterType
-      ? data.suggestions.filter((s) => s.filament_type === filterType)
-      : data.suggestions;
+    // Narrow the brand list to whatever's relevant under the currently
+    // selected types (if any). Mirrors the previous single-select
+    // behaviour where picking a type also reset the brand pool.
+    const pool =
+      filterTypes.size > 0
+        ? data.suggestions.filter((s) => filterTypes.has(s.filament_type))
+        : data.suggestions;
     return [...new Set(pool.map((s) => s.brand))].sort();
-  }, [data, filterType]);
+  }, [data, filterTypes]);
+
+  // Set of colour-family ids actually present in the assign suggestions
+  // (after type/brand narrowing). Feeds the ColorFilter's `available`
+  // prop so we don't render empty colour chips.
+  const colorFamiliesInData = useMemo(() => {
+    const set = new Set<ColorFamilyId>();
+    if (!data) return set;
+    const pool = data.suggestions.filter((s) => {
+      if (filterTypes.size > 0 && !filterTypes.has(s.filament_type)) return false;
+      if (filterBrands.size > 0 && !filterBrands.has(s.brand)) return false;
+      return true;
+    });
+    for (const s of pool) set.add(familyFor(s.color_hex));
+    return set;
+  }, [data, filterTypes, filterBrands]);
 
   const filtered = useMemo(() => {
     if (!data) return [] as AssignSuggestion[];
     let list = data.suggestions;
-    if (filterType) list = list.filter((s) => s.filament_type === filterType);
-    if (filterBrand) list = list.filter((s) => s.brand === filterBrand);
+    if (filterTypes.size > 0) {
+      list = list.filter((s) => filterTypes.has(s.filament_type));
+    }
+    if (filterBrands.size > 0) {
+      list = list.filter((s) => filterBrands.has(s.brand));
+    }
+    if (filterColors.size > 0) {
+      list = list.filter((s) => filterColors.has(familyFor(s.color_hex)));
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -122,7 +165,7 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
       );
     }
     return list;
-  }, [data, search, filterType, filterBrand]);
+  }, [data, search, filterTypes, filterBrands, filterColors]);
 
   const selected = useMemo(
     () =>
@@ -264,15 +307,31 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
               {uniqueTypes.length > 1 && (
                 <div style={chipRow}>
                   <span style={chipRowLabel}>Type</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Clearing types also clears brands: brand pool
+                      // is type-scoped so a brand chip selected under
+                      // "PETG" wouldn't make sense without that type.
+                      setFilterTypes(new Set());
+                      setFilterBrands(new Set());
+                    }}
+                    style={filterTypes.size === 0 ? chipActive : chip}
+                  >
+                    All
+                  </button>
                   {uniqueTypes.map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => {
-                        setFilterType(filterType === t ? null : t);
-                        setFilterBrand(null);
+                        toggleInSet(setFilterTypes, t);
+                        // Same rationale as above: a previously
+                        // selected brand might be excluded under the
+                        // new type set, so reset it for clarity.
+                        setFilterBrands(new Set());
                       }}
-                      style={filterType === t ? chipActive : chip}
+                      style={filterTypes.has(t) ? chipActive : chip}
                     >
                       {t}
                     </button>
@@ -283,17 +342,34 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
               {uniqueBrands.length > 1 && (
                 <div style={chipRow}>
                   <span style={chipRowLabel}>Brand</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilterBrands(new Set())}
+                    style={filterBrands.size === 0 ? chipActive : chip}
+                  >
+                    All
+                  </button>
                   {uniqueBrands.map((b) => (
                     <button
                       key={b}
                       type="button"
-                      onClick={() => setFilterBrand(filterBrand === b ? null : b)}
-                      style={filterBrand === b ? chipActive : chip}
+                      onClick={() => toggleInSet(setFilterBrands, b)}
+                      style={filterBrands.has(b) ? chipActive : chip}
                     >
                       {b}
                     </button>
                   ))}
                 </div>
+              )}
+
+              {colorFamiliesInData.size > 1 && (
+                <ColorFilter
+                  available={colorFamiliesInData}
+                  selected={filterColors}
+                  onToggle={(id) => toggleInSet(setFilterColors, id)}
+                  onClear={() => setFilterColors(new Set())}
+                  label="Colour"
+                />
               )}
 
               <div style={listWrap}>

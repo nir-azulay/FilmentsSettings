@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { Filament, StapleAlertIgnore, deleteFilament } from "../api";
+import { ColorFamilyId, familyFor } from "../colorFamilies";
 import { MOBILE_QUERY, useMediaQuery } from "../useMediaQuery";
 import { buildIgnoredStapleKeys, buildStaplePools } from "../stockUtils";
 import BrandLogo from "./BrandLogo";
+import ColorFilter from "./ColorFilter";
 import DeleteFilamentModal from "./DeleteFilamentModal";
 import FilamentCard from "./FilamentCard";
 import MobileFilamentPager from "./MobileFilamentPager";
@@ -18,18 +20,19 @@ export default function Dashboard({ filaments, alertIgnores, onUpdate }: Props) 
   const [selectedFilament, setSelectedFilament] = useState<Filament | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(() => new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(() => new Set());
+  const [selectedColorFamilies, setSelectedColorFamilies] = useState<Set<ColorFamilyId>>(() => new Set());
   const [filamentToDelete, setFilamentToDelete] = useState<Filament | null>(null);
   const [deletingFilament, setDeletingFilament] = useState(false);
   const isMobile = useMediaQuery(MOBILE_QUERY);
 
-  const toggleInSet = (setter: Dispatch<SetStateAction<Set<string>>>, value: string) => {
+  function toggleInSet<T>(setter: Dispatch<SetStateAction<Set<T>>>, value: T) {
     setter((prev) => {
       const next = new Set(prev);
       if (next.has(value)) next.delete(value);
       else next.add(value);
       return next;
     });
-  };
+  }
 
   const types = useMemo(
     () => Array.from(new Set(filaments.map((f) => f.filament_type))).sort(),
@@ -48,15 +51,45 @@ export default function Dashboard({ filaments, alertIgnores, onUpdate }: Props) 
   const staplePools = useMemo(() => buildStaplePools(filaments), [filaments]);
   const ignoredStaples = useMemo(() => buildIgnoredStapleKeys(alertIgnores), [alertIgnores]);
 
+  // Bucket every colour swatch in stock into its family so the
+  // ColorFilter can hide empty buckets and the row filter can do its
+  // ANY-match check cheaply. Built once per filament-list change rather
+  // than per render.
+  const colorFamiliesInStock = useMemo(() => {
+    const set = new Set<ColorFamilyId>();
+    for (const f of filaments) {
+      for (const c of f.colors ?? []) {
+        set.add(familyFor(c.color_hex));
+      }
+    }
+    return set;
+  }, [filaments]);
+
   const filtered = useMemo(() => {
     return filaments.filter((f) => {
       if (selectedTypes.size > 0 && !selectedTypes.has(f.filament_type)) return false;
       if (selectedBrands.size > 0 && !selectedBrands.has(f.brand)) return false;
+      // Colour filter: a filament passes if ANY of its colour swatches
+      // bucket into one of the selected families. This matches the
+      // user mental model of "show me all PETG that comes in blue" --
+      // we don't want to hide a multi-color spool just because one of
+      // its swatches happens not to be blue.
+      if (selectedColorFamilies.size > 0) {
+        const colors = f.colors ?? [];
+        if (colors.length === 0) return false;
+        const anyMatch = colors.some((c) =>
+          selectedColorFamilies.has(familyFor(c.color_hex)),
+        );
+        if (!anyMatch) return false;
+      }
       return true;
     });
-  }, [filaments, selectedTypes, selectedBrands]);
+  }, [filaments, selectedTypes, selectedBrands, selectedColorFamilies]);
 
-  const filterKey = `${[...selectedTypes].sort().join(",")}|${[...selectedBrands].sort().join(",")}`;
+  const filterKey =
+    `${[...selectedTypes].sort().join(",")}` +
+    `|${[...selectedBrands].sort().join(",")}` +
+    `|${[...selectedColorFamilies].sort().join(",")}`;
 
   useEffect(() => {
     if (!isMobile) return;
@@ -84,10 +117,14 @@ export default function Dashboard({ filaments, alertIgnores, onUpdate }: Props) 
 
   const showTypeFilters = types.length > 0;
   const showBrandFilters = brands.length > 1;
+  // Only show the colour row if there's at least 2 distinct families in
+  // stock. With only one family every chip would either be empty or
+  // match everything, so the filter would be pure visual noise.
+  const showColorFilters = colorFamiliesInStock.size > 1;
 
   return (
     <>
-      {(showTypeFilters || showBrandFilters) && (
+      {(showTypeFilters || showBrandFilters || showColorFilters) && (
         <div style={filtersWrap}>
           {showTypeFilters && (
             <div style={filterGroup}>
@@ -129,6 +166,14 @@ export default function Dashboard({ filaments, alertIgnores, onUpdate }: Props) 
                 ))}
               </div>
             </div>
+          )}
+          {showColorFilters && (
+            <ColorFilter
+              available={colorFamiliesInStock}
+              selected={selectedColorFamilies}
+              onToggle={(id) => toggleInSet(setSelectedColorFamilies, id)}
+              onClear={() => setSelectedColorFamilies(new Set())}
+            />
           )}
         </div>
       )}

@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.11.0 -- Colour filter on Stock + Assign pages
+
+Adds a "Colour" multi-select chip row to both the main Stock dashboard
+and the Assign-from-stock dialog. Filaments are bucketed into 12
+perceptual colour families (white, black, grey, red, orange, yellow,
+green, cyan, blue, purple, pink, brown, plus "multi" for
+unparseable/multicolour hex values) so a user can tick "Blue" and see
+every blue spool regardless of whether the brand named it "Royal
+Blue", "Sky Blue", "Cobalt", etc.
+
+Implementation notes:
+
+- New `frontend/src/colorFamilies.ts` -- classifier converts hex to HSL
+  and buckets by hue/saturation/lightness. Tuned against the curated
+  SUNLU / Inslogic / Jayo seed colours plus a development-only
+  sanity-check IIFE that warns in the dev console if obvious cases
+  (#FFFFFF -> white, #FF0000 -> red, ...) regress.
+- New `frontend/src/components/ColorFilter.tsx` -- reusable multi-select
+  chip row with circular colour swatches. Hides empty buckets so the
+  row stays short. Shared by Dashboard.tsx and AssignTrayDialog.tsx
+  for a consistent look.
+- Dashboard filter logic: a filament passes the colour filter if ANY
+  of its colour swatches bucket into one of the selected families
+  (matches "show me PETG that comes in blue"). Empty-colour filaments
+  are excluded when any colour filter is active.
+- The Assign dialog's existing Type and Brand filters were also
+  converted from single-select to multi-select for consistency with
+  the main Stock page. Both now use the same `toggleInSet<T>` helper
+  pattern, and both show an "All" chip that clears the corresponding
+  selection.
+- Clearing the type selection in the Assign dialog also clears brand
+  (and vice-versa won't happen because brand pool is type-scoped).
+
+No backend changes.
+
 ## 0.10.2 -- AMS panel: stop the "From your stock" badge bleeding outside the card
 
 The purple "From your stock: ..." overlay on each AMS tray card was
