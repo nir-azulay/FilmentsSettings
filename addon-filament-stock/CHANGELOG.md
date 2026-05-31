@@ -1,5 +1,60 @@
 # Changelog
 
+## 0.14.0 -- Remove custom icon.png to restore HA native update indicator
+
+Deletes `addon-filament-stock/icon.png`. The Apps grid tile will now
+render using HA's default add-on icon path -- a generic puzzle-piece
+when the add-on is up-to-date, swapping to a bright orange
+"up-arrow-in-circle" symbol when an update is pending.
+
+### Why
+
+The user kept missing update notifications because they couldn't see
+any visual change on the Filament Stock tile in the Apps grid. After
+exhausting every alternative (the failed 0.13.0-0.13.2 runtime
+icon-swap, multiple diagnostic releases, three rounds of careful HA
+frontend source-code research):
+
+- HA's frontend has exactly one grid-level update indicator that
+  actually works: the `mdiPuzzle` -> `mdiArrowUpBoldCircle` icon
+  swap, gated on `addon.icon` being false.
+- Custom-icon add-ons (anything that ships an `icon.png`) bypass
+  this code path and get NO grid-level indicator at all on current
+  HA versions -- not even the 2px orange top-stripe that older HA
+  releases rendered. Verified with two screenshots of the user's
+  Apps grid showing zero visual difference between Filament Stock
+  (with a pending 0.13.4 update) and the surrounding tiles.
+- Repo-installed add-ons cannot rewrite their own icon at runtime
+  (Supervisor's `addons:rw` mount only exposes `apps/local/`,
+  never `apps/git/<hash>/` where this add-on lives).
+
+So the only mechanism that produces a real, visible, grid-level
+update indicator on a custom-repo add-on is: don't ship a custom
+icon. Trade-off: the spool branding disappears from the Apps grid
+tile.
+
+### What stays the same
+
+- **Sidebar entry** still uses `panel_icon: mdi:movie-roll` (the
+  spool-shaped MDI icon picked in 0.13.1). The sidebar is not
+  affected by this change -- only the Apps grid tile changes.
+- **Add-on detail page** is unchanged. Still shows the title, the
+  current/latest version, the Update button, the Configuration tab,
+  etc.
+- **Ingress panel** (the actual Filament Stock UI) is unchanged.
+- `logo.png` (used on the add-on detail header in some HA themes)
+  is left in place. It does not influence the Apps grid tile's
+  update indicator behaviour.
+
+### What changes visually
+
+- Apps grid: Filament Stock tile now shows the generic
+  puzzle-piece icon (up-to-date) or a bright orange
+  up-arrow-in-circle (update pending). Hard to miss.
+- After installing 0.14.0, on the next release (0.14.1 or later)
+  the tile will visibly switch from puzzle-piece to orange
+  up-arrow without any further user action.
+
 ## 0.13.4 -- No-op release: verify HA's native update indicators
 
 Pure version bump. No code or config change.
