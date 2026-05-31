@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.13.4 -- No-op release: verify HA's native update indicators
+
+Pure version bump. No code or config change.
+
+With 0.13.3 installed (the swapper revert), this release lets us
+verify what HA's native update affordances actually look like for a
+custom-icon add-on installed from a git repository, now that the
+dead swap code is no longer in the picture.
+
+### What to look for after Supervisor refreshes
+
+1. **Settings -> Add-ons** Apps grid: the Filament Stock tile should
+   gain a thin 2px orange stripe along its top edge. The spool icon
+   itself does NOT change (HA suppresses the corner up-arrow overlay
+   on tiles that ship a custom icon -- upstream behaviour, not
+   something this add-on can change).
+2. **Filament Stock detail page**: an **Update** button appears, with
+   "Latest version: 0.13.4" above "Current version: 0.13.3".
+3. **HA Notifications dropdown** (bell icon top-right): a "Filament
+   Stock update available" entry.
+4. **Sidebar**: the spool entry doesn't change (sidebar icons aren't
+   tied to update state).
+
+### How to trigger the refresh
+
+Supervisor only re-scans the store on a 24h timer or when you click
+the **Reload** icon (top-right of the Apps page). Clicking Reload
+forces an immediate re-scan, after which the indicators above should
+appear within ~5 seconds.
+
 ## 0.13.3 -- Revert 0.13.0 icon-swap mechanism (architecturally impossible)
 
 Removes the runtime icon swapper introduced in 0.13.0, along with the
