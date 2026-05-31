@@ -364,11 +364,8 @@ export interface AssignSuggestionsResponse {
 export interface AssignTrayRequest {
   color_stock_id: number;
   packaging: PackagingType;
-  /** When true, also call bambu_lab.set_filament so the printer's AMS
-   *  display updates. The push may fail (printer offline, ha-bambulab
-   *  not installed) -- the local stock decrement happens either way and
-   *  the failure is surfaced in the response. */
   push_to_printer?: boolean;
+  return_prior_to_stock?: boolean;
   location_label?: string;
   notes?: string;
 }

@@ -39,6 +39,7 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
     }
   };
   const [pushToPrinter, setPushToPrinter] = useState(false);
+  const [returnPriorToStock, setReturnPriorToStock] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -119,6 +120,7 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
         color_stock_id: selected.color_stock_id,
         packaging,
         push_to_printer: pushToPrinter,
+        return_prior_to_stock: returnPriorToStock,
         location_label: tray.location_label,
       });
       if (
@@ -183,10 +185,27 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
                   ({current.packaging})
                 </span>
               </div>
-              <p style={{ fontSize: 11, color: "var(--ha-secondary-text)", marginTop: 4 }}>
-                Submitting will close this assignment and create a new one (the
-                old spool's counter is restored).
-              </p>
+              <div style={priorChoiceRow}>
+                <span style={{ fontSize: 12, color: "var(--ha-primary-text)" }}>
+                  Is the replaced {current.packaging} empty?
+                </span>
+                <div style={priorToggle}>
+                  <button
+                    type="button"
+                    onClick={() => setReturnPriorToStock(false)}
+                    style={!returnPriorToStock ? priorBtnActive : priorBtn}
+                  >
+                    Yes, it's empty
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReturnPriorToStock(true)}
+                    style={returnPriorToStock ? priorBtnActive : priorBtn}
+                  >
+                    No, return to stock
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -600,6 +619,36 @@ const packagingBtnCount: React.CSSProperties = {
   borderRadius: 8,
   background: "rgba(3,169,244,0.15)",
   color: "#0277bd",
+};
+const priorChoiceRow: React.CSSProperties = {
+  marginTop: 8,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 8,
+  flexWrap: "wrap",
+};
+const priorToggle: React.CSSProperties = {
+  display: "flex",
+  gap: 0,
+  borderRadius: 6,
+  overflow: "hidden",
+  border: "1px solid var(--ha-divider)",
+};
+const priorBtn: React.CSSProperties = {
+  padding: "5px 12px",
+  fontSize: 11,
+  fontWeight: 500,
+  background: "transparent",
+  color: "var(--ha-secondary-text)",
+  border: "none",
+  cursor: "pointer",
+};
+const priorBtnActive: React.CSSProperties = {
+  ...priorBtn,
+  background: "var(--ha-primary-color)",
+  color: "#fff",
+  fontWeight: 600,
 };
 const pushLabel: React.CSSProperties = {
   display: "flex",

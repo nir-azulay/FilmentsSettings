@@ -294,6 +294,7 @@ async def assign_tray(
     color_stock_id = payload.get("color_stock_id")
     packaging = (payload.get("packaging") or "spool").strip().lower()
     push_to_printer = bool(payload.get("push_to_printer"))
+    return_prior_to_stock = payload.get("return_prior_to_stock", True)
     location_label = (payload.get("location_label") or "").strip()
     notes = (payload.get("notes") or "").strip()
 
@@ -322,12 +323,13 @@ async def assign_tray(
             ),
         )
 
-    # Close any prior live assignment on this tray and reverse its counter.
+    # Close any prior live assignment on this tray.
     prior = _current_assignment(db, entity_id)
     if prior is not None:
-        prior_color = prior.color_stock
-        if prior_color is not None:
-            _increment_counter(prior_color, prior.packaging)
+        if return_prior_to_stock:
+            prior_color = prior.color_stock
+            if prior_color is not None:
+                _increment_counter(prior_color, prior.packaging)
         prior.unassigned_at = datetime.now(timezone.utc)
 
     _decrement_counter(color, packaging)
