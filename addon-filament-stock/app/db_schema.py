@@ -146,6 +146,9 @@ def _migrate_counters_to_spool_instances(conn) -> None:
     if existing:
         return  # already migrated
 
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+
     colors = conn.execute(
         text(
             "SELECT id, quantity, quantity_used, quantity_refill, used_refill "
@@ -164,10 +167,10 @@ def _migrate_counters_to_spool_instances(conn) -> None:
             conn.execute(
                 text(
                     "INSERT INTO spool_instances "
-                    "(uid, color_stock_id, packaging, status, notes) "
-                    "VALUES (:uid, :cs, 'spool', 'in_stock', '')"
+                    "(uid, color_stock_id, packaging, status, created_at, notes) "
+                    "VALUES (:uid, :cs, 'spool', 'in_stock', :now, '')"
                 ),
-                {"uid": uid, "cs": cs_id},
+                {"uid": uid, "cs": cs_id, "now": now},
             )
             created += 1
 
@@ -176,10 +179,10 @@ def _migrate_counters_to_spool_instances(conn) -> None:
             conn.execute(
                 text(
                     "INSERT INTO spool_instances "
-                    "(uid, color_stock_id, packaging, status, notes) "
-                    "VALUES (:uid, :cs, 'refill', 'in_stock', '')"
+                    "(uid, color_stock_id, packaging, status, created_at, notes) "
+                    "VALUES (:uid, :cs, 'refill', 'in_stock', :now, '')"
                 ),
-                {"uid": uid, "cs": cs_id},
+                {"uid": uid, "cs": cs_id, "now": now},
             )
             created += 1
 
@@ -198,10 +201,10 @@ def _migrate_counters_to_spool_instances(conn) -> None:
             text(
                 "INSERT INTO spool_instances "
                 "(uid, color_stock_id, packaging, status, tray_entity_id, "
-                " tray_assignment_id, notes) "
-                "VALUES (:uid, :cs, :pkg, 'in_tray', :eid, :aid, '')"
+                " tray_assignment_id, created_at, notes) "
+                "VALUES (:uid, :cs, :pkg, 'in_tray', :eid, :aid, :now, '')"
             ),
-            {"uid": uid, "cs": cs_id, "pkg": packaging, "eid": entity_id, "aid": a_id},
+            {"uid": uid, "cs": cs_id, "pkg": packaging, "eid": entity_id, "aid": a_id, "now": now},
         )
         created += 1
 
