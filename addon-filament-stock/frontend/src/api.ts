@@ -475,6 +475,10 @@ export interface AddonConfig {
    *  panel is hidden and the setup checklist skips the Bambu-related
    *  health checks. Default false (integration ON). */
   disable_bambu_integration: boolean;
+  /** External HA URL for QR code links on spool labels. */
+  ha_external_url: string;
+  /** Bluetooth MAC of the Niimbot B21 Pro. Empty = print disabled. */
+  niimbot_address: string;
 }
 
 /** The shape we hand the rest of the UI when the /api/config fetch fails
@@ -487,6 +491,8 @@ export const DEFAULT_ADDON_CONFIG: AddonConfig = {
   seed_demo_filaments_on_first_run: true,
   ams_poll_interval_seconds: 15,
   disable_bambu_integration: false,
+  ha_external_url: "",
+  niimbot_address: "",
 };
 
 export async function fetchAddonConfig(): Promise<AddonConfig> {
@@ -586,6 +592,136 @@ export async function seedSampleFilamentsNow(): Promise<SeedNowResponse> {
   const res = await fetch(`${BASE}/seed-now`, { method: "POST" });
   if (!res.ok) {
     throw new Error(`Seed failed: HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Spool instance tracking (0.15.0)
+// ──────────────────────────────────────────────────────────────────────────
+
+export type SpoolStatus = "in_stock" | "in_tray" | "empty";
+
+export interface SpoolInstance {
+  id: number;
+  uid: string;
+  color_stock_id: number;
+  packaging: PackagingType;
+  status: SpoolStatus;
+  tray_entity_id: string | null;
+  tray_assignment_id: number | null;
+  remain_pct: number | null;
+  created_at: string;
+  assigned_at: string | null;
+  emptied_at: string | null;
+  notes: string;
+  brand: string | null;
+  material: string | null;
+  filament_type: string | null;
+  color_name: string | null;
+  color_hex: string | null;
+  nozzle_temp_min: number | null;
+  nozzle_temp_max: number | null;
+  bed_temp: number | null;
+}
+
+export async function fetchSpools(colorStockId?: number): Promise<SpoolInstance[]> {
+  const params = new URLSearchParams();
+  if (colorStockId != null) params.set("color_stock_id", String(colorStockId));
+  const qs = params.toString();
+  const res = await fetch(`${BASE}/spools${qs ? `?${qs}` : ""}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function fetchSpoolByUid(uid: string): Promise<SpoolInstance> {
+  const res = await fetch(`${BASE}/spools/${encodeURIComponent(uid)}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function createSpool(data: {
+  color_stock_id: number;
+  packaging: PackagingType;
+  notes?: string;
+}): Promise<SpoolInstance> {
+  const res = await fetch(`${BASE}/spools`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function deleteSpool(uid: string): Promise<void> {
+  const res = await fetch(`${BASE}/spools/${encodeURIComponent(uid)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+}
+
+export async function assignSpoolToTray(
+  uid: string,
+  data: {
+    entity_id: string;
+    push_to_printer?: boolean;
+    location_label?: string;
+    return_prior_to_stock?: boolean;
+    notes?: string;
+  },
+): Promise<{ ok: boolean; spool: SpoolInstance; push_to_printer: { requested: boolean; ok: boolean | null; error: string } }> {
+  const res = await fetch(`${BASE}/spools/${encodeURIComponent(uid)}/assign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function unassignSpool(uid: string): Promise<{ ok: boolean; spool: SpoolInstance }> {
+  const res = await fetch(`${BASE}/spools/${encodeURIComponent(uid)}/unassign`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function markSpoolEmpty(uid: string): Promise<{ ok: boolean; spool: SpoolInstance }> {
+  const res = await fetch(`${BASE}/spools/${encodeURIComponent(uid)}/empty`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export function spoolLabelUrl(uid: string): string {
+  return `${BASE}/spools/${encodeURIComponent(uid)}/label`;
+}
+
+export async function printSpoolLabel(uid: string): Promise<{ ok: boolean; error?: string; duration?: number }> {
+  const res = await fetch(`${BASE}/spools/${encodeURIComponent(uid)}/print`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
   }
   return res.json();
 }

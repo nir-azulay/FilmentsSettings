@@ -1,5 +1,5 @@
 name: Filament Stock
-version: "0.14.0"
+version: "0.15.0"
 slug: filament_stock
 description: 3D printer filament inventory with per-color stock tracking and low-stock alerts. Exposes a panel inside Home Assistant via Ingress.
 url: https://github.com/nir-azulay/FilmentsSettings
@@ -31,6 +31,7 @@ hassio_api: false
 homeassistant_api: true
 auth_api: false
 host_network: false
+host_dbus: true
 ports: {}
 # `addon_config` maps the add-on's /config to the user-visible Samba share at
 # \\homeassistant\addon_configs\filament_stock\. The SQLite DB lives in
@@ -78,6 +79,14 @@ options:
   # stock tracker. Default false (Bambu features ON) so existing
   # installs are unaffected by this release.
   disable_bambu_integration: false
+  # External URL of this Home Assistant instance, used to build QR code
+  # links on spool labels. Example: "http://homeassistant.local:8123"
+  # Leave empty to encode plain-text filament info in the QR code instead.
+  ha_external_url: ""
+  # Bluetooth MAC address of the Niimbot B21 Pro label printer.
+  # Example: "AA:BB:CC:DD:EE:FF". Leave empty to disable direct printing
+  # (download-only mode still works).
+  niimbot_address: ""
 schema:
   ask_if_replaced_spool_empty: bool
   default_push_to_printer: bool
@@ -85,3 +94,5 @@ schema:
   seed_demo_filaments_on_first_run: bool
   ams_poll_interval_seconds: int(5,300)
   disable_bambu_integration: bool
+  ha_external_url: str
+  niimbot_address: str

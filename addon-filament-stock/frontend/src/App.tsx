@@ -17,6 +17,7 @@ import AmsPanel from "./components/AmsPanel";
 import CreateFilamentDialog from "./components/CreateFilamentDialog";
 import Dashboard from "./components/Dashboard";
 import EmptyState from "./components/EmptyState";
+import ScanAssignDialog from "./components/ScanAssignDialog";
 import SetupChecklist from "./components/SetupChecklist";
 import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
 import { SpoolIcon } from "./components/SpoolIcon";
@@ -48,6 +49,22 @@ export default function App() {
   // resolves. Individual child components (e.g. AmsPanel, AssignTrayDialog)
   // fetch the config separately for fields they care about.
   const [addonConfig, setAddonConfig] = useState<AddonConfig>(DEFAULT_ADDON_CONFIG);
+  const [scanTarget, setScanTarget] = useState<string | null>(null);
+
+  // Hash-based deep linking: #spool/SP-XXXXXXXX opens the scan-assign dialog
+  useEffect(() => {
+    const checkHash = () => {
+      const hash = window.location.hash;
+      const match = hash.match(/^#spool\/(SP-[A-F0-9]{8})$/i);
+      if (match) {
+        setScanTarget(match[1]);
+        window.location.hash = "";
+      }
+    };
+    checkHash();
+    window.addEventListener("hashchange", checkHash);
+    return () => window.removeEventListener("hashchange", checkHash);
+  }, []);
 
   const reload = useCallback(async () => {
     const [f, a, ign] = await Promise.all([fetchFilaments(), fetchAlerts(), fetchAlertIgnores()]);
@@ -192,6 +209,14 @@ export default function App() {
         <CreateFilamentDialog
           onClose={() => setShowCreateDialog(false)}
           onCreated={reload}
+        />
+      )}
+
+      {scanTarget && (
+        <ScanAssignDialog
+          uid={scanTarget}
+          onClose={() => setScanTarget(null)}
+          onAssigned={() => void reload()}
         />
       )}
     </div>

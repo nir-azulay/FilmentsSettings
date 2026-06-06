@@ -43,6 +43,9 @@ RUN apk add --no-cache \
         python3 \
         py3-pip \
         nginx \
+        dbus \
+        bluez \
+        ttf-dejavu \
     && rm -rf /var/cache/apk/*
 
 WORKDIR /app

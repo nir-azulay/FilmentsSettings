@@ -4,15 +4,22 @@
 existing ones. Anything that touches an existing table goes here.
 """
 
+import logging
+import secrets
+
 from sqlalchemy import text
 
 from .database import engine
+
+_log = logging.getLogger("filament_stock.migrations")
 
 
 def apply_sqlite_migrations() -> None:
     with engine.begin() as conn:
         _filaments_packaging_type_migration(conn)
         _color_stocks_refill_columns(conn)
+        _tray_assignments_spool_instance_column(conn)
+        _migrate_counters_to_spool_instances(conn)
 
 
 def _table_columns(conn, table: str) -> set[str]:
@@ -87,3 +94,115 @@ def _ensure_color_refill_columns(conn) -> None:
                 "ALTER TABLE color_stocks ADD COLUMN used_refill INTEGER NOT NULL DEFAULT 0"
             )
         )
+
+
+def _table_exists(conn, table: str) -> bool:
+    row = conn.execute(
+        text("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=:t"),
+        {"t": table},
+    ).scalar()
+    return bool(row)
+
+
+def _tray_assignments_spool_instance_column(conn) -> None:
+    """0.15.0: add nullable FK from tray_assignments to spool_instances."""
+    if not _table_exists(conn, "tray_assignments"):
+        return
+    cols = _table_columns(conn, "tray_assignments")
+    if "spool_instance_id" not in cols:
+        try:
+            conn.execute(
+                text(
+                    "ALTER TABLE tray_assignments ADD COLUMN spool_instance_id INTEGER"
+                )
+            )
+        except Exception:
+            pass
+
+
+def _generate_uid(conn) -> str:
+    """Generate a unique SP-XXXXXXXX identifier with collision retry."""
+    for _ in range(20):
+        uid = "SP-" + secrets.token_hex(4).upper()
+        exists = conn.execute(
+            text("SELECT 1 FROM spool_instances WHERE uid = :u"), {"u": uid}
+        ).first()
+        if not exists:
+            return uid
+    raise RuntimeError("Failed to generate unique spool UID after 20 attempts")
+
+
+def _migrate_counters_to_spool_instances(conn) -> None:
+    """0.15.0: create SpoolInstance rows from existing ColorStock counters.
+
+    Runs once -- if spool_instances already has rows, we skip entirely.
+    This is idempotent: the table is created by create_all() in main.py
+    before migrations run; we just populate it from the counter data.
+    """
+    if not _table_exists(conn, "spool_instances"):
+        return
+
+    existing = conn.execute(text("SELECT COUNT(*) FROM spool_instances")).scalar()
+    if existing:
+        return  # already migrated
+
+    colors = conn.execute(
+        text(
+            "SELECT id, quantity, quantity_used, quantity_refill, used_refill "
+            "FROM color_stocks"
+        )
+    ).fetchall()
+
+    created = 0
+    for row in colors:
+        cs_id, qty, qty_used, qty_refill, used_refill = row
+        avail_spool = max(0, (qty or 0) - (qty_used or 0))
+        avail_refill = max(0, (qty_refill or 0) - (used_refill or 0))
+
+        for _ in range(avail_spool):
+            uid = _generate_uid(conn)
+            conn.execute(
+                text(
+                    "INSERT INTO spool_instances "
+                    "(uid, color_stock_id, packaging, status, notes) "
+                    "VALUES (:uid, :cs, 'spool', 'in_stock', '')"
+                ),
+                {"uid": uid, "cs": cs_id},
+            )
+            created += 1
+
+        for _ in range(avail_refill):
+            uid = _generate_uid(conn)
+            conn.execute(
+                text(
+                    "INSERT INTO spool_instances "
+                    "(uid, color_stock_id, packaging, status, notes) "
+                    "VALUES (:uid, :cs, 'refill', 'in_stock', '')"
+                ),
+                {"uid": uid, "cs": cs_id},
+            )
+            created += 1
+
+    # Migrate active tray assignments -> in_tray spool instances.
+    active_assigns = conn.execute(
+        text(
+            "SELECT id, entity_id, color_stock_id, packaging "
+            "FROM tray_assignments WHERE unassigned_at IS NULL"
+        )
+    ).fetchall()
+
+    for arow in active_assigns:
+        a_id, entity_id, cs_id, packaging = arow
+        uid = _generate_uid(conn)
+        conn.execute(
+            text(
+                "INSERT INTO spool_instances "
+                "(uid, color_stock_id, packaging, status, tray_entity_id, "
+                " tray_assignment_id, notes) "
+                "VALUES (:uid, :cs, :pkg, 'in_tray', :eid, :aid, '')"
+            ),
+            {"uid": uid, "cs": cs_id, "pkg": packaging, "eid": entity_id, "aid": a_id},
+        )
+        created += 1
+
+    _log.info("Spool migration: created %d SpoolInstance rows from counters", created)

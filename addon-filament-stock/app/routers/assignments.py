@@ -40,7 +40,7 @@ from sqlalchemy.orm import Session
 from ..bambu_mapping import clamp_nozzle_temps, color_to_bambu_rgba, family_for
 from ..database import get_db
 from ..ha_client import HAClientError, call_service
-from ..models import ColorStock, Filament, TrayAssignment
+from ..models import ColorStock, Filament, SpoolInstance, TrayAssignment
 
 router = APIRouter(tags=["ams-assignments"])
 _log = logging.getLogger("filament_stock.assignments")
@@ -297,6 +297,18 @@ async def assign_tray(
     return_prior_to_stock = payload.get("return_prior_to_stock", True)
     location_label = (payload.get("location_label") or "").strip()
     notes = (payload.get("notes") or "").strip()
+    spool_uid = (payload.get("spool_uid") or "").strip() or None
+
+    # If a spool UID is provided, resolve color_stock_id and packaging from it.
+    spool_instance: SpoolInstance | None = None
+    if spool_uid:
+        spool_instance = db.query(SpoolInstance).filter(SpoolInstance.uid == spool_uid).first()
+        if not spool_instance:
+            raise HTTPException(status_code=404, detail=f"Spool {spool_uid} not found")
+        if spool_instance.status != "in_stock":
+            raise HTTPException(status_code=409, detail=f"Spool {spool_uid} is not in stock (status: {spool_instance.status})")
+        color_stock_id = spool_instance.color_stock_id
+        packaging = spool_instance.packaging
 
     if not isinstance(color_stock_id, int):
         raise HTTPException(status_code=400, detail="color_stock_id (int) is required")
@@ -345,6 +357,13 @@ async def assign_tray(
     )
     db.add(assignment)
     db.flush()  # populate assignment.id before potential printer push
+
+    # Link the SpoolInstance to this assignment if one was provided.
+    if spool_instance:
+        spool_instance.status = "in_tray"
+        spool_instance.tray_entity_id = entity_id
+        spool_instance.tray_assignment_id = assignment.id
+        spool_instance.assigned_at = datetime.now(timezone.utc)
 
     pushed_ok = False
     push_error = ""

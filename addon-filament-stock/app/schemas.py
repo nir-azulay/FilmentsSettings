@@ -150,3 +150,45 @@ class StapleAlertIgnoreResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── SpoolInstance (0.15.0) ──────────────────────────────────────────────────
+
+SpoolStatus = Literal["in_stock", "in_tray", "empty"]
+
+
+class SpoolInstanceCreate(BaseModel):
+    color_stock_id: int
+    packaging: PackagingType
+    notes: str = ""
+
+
+class SpoolInstanceUpdate(BaseModel):
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    remain_pct: Optional[int] = None
+
+
+class SpoolInstanceResponse(BaseModel):
+    id: int
+    uid: str
+    color_stock_id: int
+    packaging: str
+    status: str
+    tray_entity_id: Optional[str] = None
+    tray_assignment_id: Optional[int] = None
+    remain_pct: Optional[int] = None
+    created_at: datetime
+    assigned_at: Optional[datetime] = None
+    emptied_at: Optional[datetime] = None
+    notes: str = ""
+    brand: Optional[str] = None
+    material: Optional[str] = None
+    filament_type: Optional[str] = None
+    color_name: Optional[str] = None
+    color_hex: Optional[str] = None
+    nozzle_temp_min: Optional[int] = None
+    nozzle_temp_max: Optional[int] = None
+    bed_temp: Optional[int] = None
+
+    model_config = {"from_attributes": True}

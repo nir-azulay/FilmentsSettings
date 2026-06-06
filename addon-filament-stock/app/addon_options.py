@@ -64,6 +64,10 @@ class AddonOptions:
     # are skipped (replaced with a single info-level "disabled" line).
     # Default False -> integration ON, same behaviour as pre-0.12.0.
     disable_bambu_integration: bool = False
+    # External HA URL for QR code links on spool labels (0.15.0).
+    ha_external_url: str = ""
+    # Bluetooth MAC address of the Niimbot B21 Pro (0.15.0).
+    niimbot_address: str = ""
 
 
 DEFAULTS = AddonOptions()
@@ -177,6 +181,8 @@ def get_options() -> AddonOptions:
             raw.get("disable_bambu_integration"),
             DEFAULTS.disable_bambu_integration,
         ),
+        ha_external_url=str(raw.get("ha_external_url", "") or "").strip(),
+        niimbot_address=str(raw.get("niimbot_address", "") or "").strip(),
     )
     _log.info("Add-on options resolved: %s", resolved)
     _cached = resolved
@@ -199,4 +205,6 @@ def options_as_dict() -> dict[str, Any]:
         "seed_demo_filaments_on_first_run": opts.seed_demo_filaments_on_first_run,
         "ams_poll_interval_seconds": opts.ams_poll_interval_seconds,
         "disable_bambu_integration": opts.disable_bambu_integration,
+        "ha_external_url": opts.ha_external_url,
+        "niimbot_address": opts.niimbot_address,
     }

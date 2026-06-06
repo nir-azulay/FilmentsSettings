@@ -137,3 +137,31 @@ class TrayAssignment(Base):
     notes = Column(String, default="", nullable=False)
 
     color_stock = relationship("ColorStock")
+    spool_instance = relationship("SpoolInstance", back_populates="tray_assignment", uselist=False)
+
+
+class SpoolInstance(Base):
+    """Individual physical spool or refill tracked with a unique scannable ID.
+
+    Added in add-on 0.15.0. Each record represents one physical unit of
+    filament (a spool or a refill cartridge) with a lifecycle:
+    in_stock -> in_tray -> empty.
+    """
+
+    __tablename__ = "spool_instances"
+
+    id = Column(Integer, primary_key=True, index=True)
+    uid = Column(String, unique=True, nullable=False, index=True)
+    color_stock_id = Column(Integer, ForeignKey("color_stocks.id"), nullable=False)
+    packaging = Column(String, nullable=False)  # spool | refill
+    status = Column(String, default="in_stock", nullable=False)  # in_stock | in_tray | empty
+    tray_entity_id = Column(String, nullable=True)
+    tray_assignment_id = Column(Integer, ForeignKey("tray_assignments.id"), nullable=True)
+    remain_pct = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    assigned_at = Column(DateTime, nullable=True)
+    emptied_at = Column(DateTime, nullable=True)
+    notes = Column(String, default="", nullable=False)
+
+    color_stock = relationship("ColorStock")
+    tray_assignment = relationship("TrayAssignment", back_populates="spool_instance")

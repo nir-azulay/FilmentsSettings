@@ -13,6 +13,7 @@ import {
 import BrandLogo from "./BrandLogo";
 import DeleteColorModal from "./DeleteColorModal";
 import FilamentProfilePanel from "./FilamentProfilePanel";
+import SpoolListPanel from "./SpoolListPanel";
 import { SpoolIcon, SpoolStack } from "./SpoolIcon";
 import TrashIconButton from "./TrashIconButton";
 
@@ -168,6 +169,7 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingColor, setDeletingColor] = useState(false);
+  const [showSpools, setShowSpools] = useState(false);
 
   useEffect(() => {
     setQty(color.quantity);
@@ -379,6 +381,31 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
           </div>
         )}
       </div>
+
+      {/* Spool toggle bar */}
+      <div style={spoolToggleBar}>
+        <button
+          onClick={() => setShowSpools(!showSpools)}
+          style={spoolToggleBtn}
+        >
+          <svg
+            width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: showSpools ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          Individual Spools
+        </button>
+      </div>
+
+      {showSpools && (
+        <SpoolListPanel
+          colorStockId={color.id}
+          colorHex={color.color_hex}
+          onStockChanged={onUpdate}
+        />
+      )}
 
       {showDeleteModal && (
         <DeleteColorModal
@@ -747,4 +774,14 @@ const sugBox: React.CSSProperties = {
 const sugItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 7,
   padding: "5px 10px", cursor: "pointer", fontSize: 12,
+};
+const spoolToggleBar: React.CSSProperties = {
+  padding: "2px 10px",
+};
+const spoolToggleBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 5,
+  background: "none", border: "none",
+  color: "var(--ha-secondary-text)", fontSize: 10,
+  fontWeight: 500, cursor: "pointer", padding: "2px 4px",
+  textTransform: "uppercase", letterSpacing: "0.04em",
 };
