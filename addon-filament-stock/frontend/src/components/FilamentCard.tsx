@@ -152,7 +152,7 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
         </button>
       </div>
 
-      {showProfile && <FilamentProfilePanel filament={filament} />}
+      {showProfile && <FilamentProfilePanel filament={filament} onUpdate={onUpdate} />}
     </div>
   );
 }

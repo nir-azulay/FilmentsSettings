@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.5 -- Editable filament configuration
+
+Added an Edit button to the Filament Configuration panel. You can now
+update brand, material, nozzle/bed/chamber temps, density, and all other
+filament details inline without recreating the filament.
+
 ## 0.16.4 -- Label printing parameters (bed temp range, chamber temp)
 
 Added bed temperature range and chamber temperature fields to filaments.
