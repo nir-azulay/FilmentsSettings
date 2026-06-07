@@ -15,6 +15,8 @@ export default function CreateFilamentDialog({ onClose, onCreated }: Props) {
   const [nozzleTempMin, setNozzleTempMin] = useState("");
   const [nozzleTempMax, setNozzleTempMax] = useState("");
   const [bedTemp, setBedTemp] = useState("");
+  const [bedTempMax, setBedTempMax] = useState("");
+  const [chamberTemp, setChamberTemp] = useState("");
   const [amazonUrl, setAmazonUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +39,8 @@ export default function CreateFilamentDialog({ onClose, onCreated }: Props) {
         nozzle_temp_min: nozzleTempMin ? parseInt(nozzleTempMin) : undefined,
         nozzle_temp_max: nozzleTempMax ? parseInt(nozzleTempMax) : undefined,
         bed_temp: bedTemp ? parseInt(bedTemp) : undefined,
+        bed_temp_max: bedTempMax ? parseInt(bedTempMax) : undefined,
+        chamber_temp: chamberTemp ? parseInt(chamberTemp) : undefined,
         amazon_url: amazonUrl.trim(),
         notes: notes.trim(),
       } as any);
@@ -101,16 +105,24 @@ export default function CreateFilamentDialog({ onClose, onCreated }: Props) {
                 <input style={inputStyle} type="number" step="0.01" value={density} onChange={(e) => setDensity(e.target.value)} placeholder="e.g. 1.24" />
               </label>
               <label style={fieldLabel}>
-                Bed Temp (°C)
-                <input style={inputStyle} type="number" value={bedTemp} onChange={(e) => setBedTemp(e.target.value)} placeholder="e.g. 60" />
-              </label>
-              <label style={fieldLabel}>
                 Nozzle Min (°C)
                 <input style={inputStyle} type="number" value={nozzleTempMin} onChange={(e) => setNozzleTempMin(e.target.value)} placeholder="e.g. 190" />
               </label>
               <label style={fieldLabel}>
                 Nozzle Max (°C)
                 <input style={inputStyle} type="number" value={nozzleTempMax} onChange={(e) => setNozzleTempMax(e.target.value)} placeholder="e.g. 230" />
+              </label>
+              <label style={fieldLabel}>
+                Bed Temp Min (°C)
+                <input style={inputStyle} type="number" value={bedTemp} onChange={(e) => setBedTemp(e.target.value)} placeholder="e.g. 60" />
+              </label>
+              <label style={fieldLabel}>
+                Bed Temp Max (°C)
+                <input style={inputStyle} type="number" value={bedTempMax} onChange={(e) => setBedTempMax(e.target.value)} placeholder="e.g. 90" />
+              </label>
+              <label style={fieldLabel}>
+                Chamber Temp (°C)
+                <input style={inputStyle} type="number" value={chamberTemp} onChange={(e) => setChamberTemp(e.target.value)} placeholder="e.g. 50" />
               </label>
               <label style={fieldLabel}>
                 Amazon URL

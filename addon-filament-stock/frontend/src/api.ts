@@ -42,6 +42,8 @@ export interface Filament {
   nozzle_temp_min: number | null;
   nozzle_temp_max: number | null;
   bed_temp: number | null;
+  bed_temp_max: number | null;
+  chamber_temp: number | null;
   amazon_url: string;
   brand_logo_url: string;
   notes: string;
@@ -625,6 +627,8 @@ export interface SpoolInstance {
   nozzle_temp_min: number | null;
   nozzle_temp_max: number | null;
   bed_temp: number | null;
+  bed_temp_max: number | null;
+  chamber_temp: number | null;
 }
 
 export async function fetchSpools(colorStockId?: number): Promise<SpoolInstance[]> {

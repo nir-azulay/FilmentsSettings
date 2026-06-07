@@ -85,7 +85,12 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
         <SpecBadge label={filament.filament_type} color={matColor} />
         {filament.nozzle_temp_min && filament.nozzle_temp_max &&
           <SpecBadge label={`${filament.nozzle_temp_min}–${filament.nozzle_temp_max}°C`} />}
-        {filament.bed_temp && <SpecBadge label={`Bed ${filament.bed_temp}°C`} />}
+        {filament.bed_temp && filament.bed_temp_max && filament.bed_temp !== filament.bed_temp_max
+          ? <SpecBadge label={`Bed ${filament.bed_temp}–${filament.bed_temp_max}°C`} />
+          : filament.bed_temp
+            ? <SpecBadge label={`Bed ${filament.bed_temp}°C`} />
+            : null}
+        {filament.chamber_temp != null && <SpecBadge label={`Chamber ${filament.chamber_temp}°C`} />}
         {filament.density && <SpecBadge label={`${filament.density} g/cm³`} />}
       </div>
 

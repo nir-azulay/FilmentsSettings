@@ -18,6 +18,8 @@ class Filament(Base):
     nozzle_temp_min = Column(Integer, nullable=True)
     nozzle_temp_max = Column(Integer, nullable=True)
     bed_temp = Column(Integer, nullable=True)
+    bed_temp_max = Column(Integer, nullable=True)
+    chamber_temp = Column(Integer, nullable=True)
     amazon_url = Column(String, default="")
     brand_logo_url = Column(String, default="")
     notes = Column(String, default="")

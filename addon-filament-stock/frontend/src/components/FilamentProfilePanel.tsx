@@ -69,7 +69,15 @@ function StockMetadataView({ filament }: { filament: Filament }) {
         ? `${filament.nozzle_temp_min}–${filament.nozzle_temp_max}°C`
         : <em style={muted}>not set</em>,
     ],
-    ["Bed temp", filament.bed_temp ? `${filament.bed_temp}°C` : <em style={muted}>not set</em>],
+    [
+      "Bed temp",
+      filament.bed_temp && filament.bed_temp_max && filament.bed_temp !== filament.bed_temp_max
+        ? `${filament.bed_temp}–${filament.bed_temp_max}°C`
+        : filament.bed_temp
+          ? `${filament.bed_temp}°C`
+          : <em style={muted}>not set</em>,
+    ],
+    ["Chamber temp", filament.chamber_temp != null ? `${filament.chamber_temp}°C` : <em style={muted}>not set</em>],
     ["Density", filament.density ? `${filament.density} g/cm³` : <em style={muted}>not set</em>],
     ["Low-stock threshold", filament.low_stock_threshold],
     [

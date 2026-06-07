@@ -105,7 +105,8 @@ export default function ScanAssignDialog({ uid, onClose, onAssigned }: Props) {
                 {spool.nozzle_temp_min && spool.nozzle_temp_max && (
                   <div style={{ fontSize: 12, color: "var(--ha-secondary-text)" }}>
                     Nozzle: {spool.nozzle_temp_min}-{spool.nozzle_temp_max}&deg;C
-                    {spool.bed_temp ? ` | Bed: ${spool.bed_temp}°C` : ""}
+                    {spool.bed_temp ? ` | Bed: ${spool.bed_temp}${spool.bed_temp_max && spool.bed_temp_max !== spool.bed_temp ? `-${spool.bed_temp_max}` : ""}°C` : ""}
+                    {spool.chamber_temp != null ? ` | Chamber: ${spool.chamber_temp}°C` : ""}
                   </div>
                 )}
               </div>

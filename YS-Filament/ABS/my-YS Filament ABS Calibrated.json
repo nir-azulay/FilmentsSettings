@@ -1,0 +1,17 @@
+{
+    "filament_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow"
+    ],
+    "filament_flow_ratio": [
+        "nil",
+        "nil"
+    ],
+    "filament_settings_id": [
+        "my-YS Filament ABS Calibrated"
+    ],
+    "from": "User",
+    "inherits": "my-YS Filament ABS @Bambu Lab H2S 0.4 nozzle",
+    "name": "my-YS Filament ABS Calibrated",
+    "version": "2.6.0.2"
+}

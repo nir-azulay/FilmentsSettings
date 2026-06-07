@@ -1,0 +1,19 @@
+{
+    "brim_type": "outer_and_inner",
+    "brim_width": "5",
+    "compatible_filaments": [],
+    "compatible_filaments_condition": "",
+    "compatible_printers": [],
+    "compatible_printers_condition": "",
+    "enable_support": "1",
+    "from": "User",
+    "inherits": "0.10mm Standard @BBL H2S 0.2 nozzle",
+    "initial_layer_speed": "30",
+    "name": "my-YS Filament ABS 0.10mm @H2S 0.2 nozzle",
+    "print_settings_id": "my-YS Filament ABS 0.10mm @H2S 0.2 nozzle",
+    "sparse_infill_density": "20%",
+    "sparse_infill_pattern": "gyroid",
+    "support_top_z_distance": "0.1",
+    "version": "2.6.0.2",
+    "wall_loops": "4"
+}

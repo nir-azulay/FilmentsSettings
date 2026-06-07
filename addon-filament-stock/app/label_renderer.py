@@ -9,8 +9,8 @@ Layout (QR on right):
   |  PETG                                         [QR]   |
   |  SUNLU PETG HS                                [QR]   |
   |  Cold White                                   [QR]   |
-  |  Nozzle: 230-250°C   Bed: 70°C                      |
-  |  Density: 1.24 g/cm³                                |
+  |  Nozzle: 230-250°C   Bed: 70-90°C                   |
+  |  Chamber: 50°C   Density: 1.24 g/cm³               |
   |  ────────────────────────────────────────────        |
   |  SP-A1B2C3D4                           SPOOL         |
   +------------------------------------------------------+
@@ -89,6 +89,8 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     nozzle_min = filament.nozzle_temp_min if filament else None
     nozzle_max = filament.nozzle_temp_max if filament else None
     bed_temp = filament.bed_temp if filament else None
+    bed_temp_max = filament.bed_temp_max if filament else None
+    chamber_temp = filament.chamber_temp if filament else None
     density = filament.density if filament else None
 
     if ha_url:
@@ -129,25 +131,24 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     draw.text((text_left, y), color_name, fill="black", font=font_color)
     y += 34
 
-    # Row 4: Nozzle temperature
+    # Row 4: Nozzle + Bed temperature on same line
+    row4_parts: list[str] = []
     if nozzle_min and nozzle_max:
-        draw.text(
-            (text_left, y),
-            f"Nozzle: {nozzle_min}-{nozzle_max}\u00b0C",
-            fill="black", font=font_specs,
-        )
+        row4_parts.append(f"Nozzle: {nozzle_min}-{nozzle_max}\u00b0C")
     elif nozzle_min or nozzle_max:
-        draw.text(
-            (text_left, y),
-            f"Nozzle: {nozzle_min or nozzle_max}\u00b0C",
-            fill="black", font=font_specs,
-        )
+        row4_parts.append(f"Nozzle: {nozzle_min or nozzle_max}\u00b0C")
+    if bed_temp and bed_temp_max and bed_temp != bed_temp_max:
+        row4_parts.append(f"Bed: {bed_temp}-{bed_temp_max}\u00b0C")
+    elif bed_temp:
+        row4_parts.append(f"Bed: {bed_temp}\u00b0C")
+    if row4_parts:
+        draw.text((text_left, y), "   ".join(row4_parts), fill="black", font=font_specs)
     y += 24
 
-    # Row 5: Bed temperature + density on same line
+    # Row 5: Chamber temperature + density on same line
     row5_parts: list[str] = []
-    if bed_temp:
-        row5_parts.append(f"Bed: {bed_temp}\u00b0C")
+    if chamber_temp:
+        row5_parts.append(f"Chamber: {chamber_temp}\u00b0C")
     if density:
         row5_parts.append(f"Density: {density} g/cm\u00b3")
     if row5_parts:

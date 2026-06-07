@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.4 -- Label printing parameters (bed temp range, chamber temp)
+
+Added bed temperature range and chamber temperature fields to filaments.
+Labels now show all major printing parameters: nozzle range, bed range,
+chamber temp, and density. The Create Filament dialog also has the new fields.
+
 ## 0.15.6 -- Spools & Labels per color row
 
 The "Spools & Labels" button is now below the delete icon on each color
