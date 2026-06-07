@@ -455,6 +455,7 @@ export async function unassignTray(
 // in-memory copy.
 
 export interface AddonConfig {
+  addon_version: string;
   /** When false, the Assign-from-stock dialog hides the
    *  "Is the replaced spool empty?" toggle and replaced spools always
    *  return to stock. Default is false (don't ask). */
@@ -485,6 +486,7 @@ export interface AddonConfig {
  *  (older add-on builds, network blip). MUST match the backend defaults
  *  declared in app/addon_options.py / config.yaml. */
 export const DEFAULT_ADDON_CONFIG: AddonConfig = {
+  addon_version: "?",
   ask_if_replaced_spool_empty: false,
   default_push_to_printer: false,
   default_low_stock_threshold: 1,

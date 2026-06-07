@@ -195,10 +195,14 @@ def reset_cache_for_tests() -> None:
     _cached = None
 
 
+ADDON_VERSION = "0.15.8"
+
+
 def options_as_dict() -> dict[str, Any]:
     """Public dict shape for the /api/config endpoint."""
     opts = get_options()
     return {
+        "addon_version": ADDON_VERSION,
         "ask_if_replaced_spool_empty": opts.ask_if_replaced_spool_empty,
         "default_push_to_printer": opts.default_push_to_printer,
         "default_low_stock_threshold": opts.default_low_stock_threshold,

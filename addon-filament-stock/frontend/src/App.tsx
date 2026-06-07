@@ -128,6 +128,7 @@ export default function App() {
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
           <span style={toolbarTitle}>Filament Stock</span>
+          <span style={{ fontSize: 10, color: "var(--ha-secondary-text)", opacity: 0.6 }}>v{addonConfig.addon_version}</span>
         </div>
 
         {/* Right side */}
