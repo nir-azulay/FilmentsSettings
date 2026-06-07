@@ -59,6 +59,29 @@ def _read_base_profile(path: Path) -> dict | None:
         return None
 
 
+# Chamber temperatures by material family.  BambuStudio filament profiles
+# store chamber_temperatures as ["0"] for every material -- it is a process-
+# level setting on H2S, not a filament property.  We hard-code sensible
+# defaults here based on the material family.
+_CHAMBER_TEMP_BY_TYPE: dict[str, int] = {
+    "ASA": 60,
+    "ABS": 60,
+    "PA":  60,   # Nylon
+    "PC":  70,
+    # PLA, PETG, TPU, TPE: no chamber heating needed (omitted = None)
+}
+
+
+def _chamber_temp_for_type(filament_type: str | None) -> int | None:
+    if not filament_type:
+        return None
+    upper = filament_type.strip().upper()
+    for key, temp in _CHAMBER_TEMP_BY_TYPE.items():
+        if key in upper:
+            return temp
+    return None
+
+
 def sync_filaments_from_profiles() -> int:
     """Fill missing filament fields from bundled profiles. Returns count updated."""
     if not PROFILES_ROOT.is_dir():
@@ -92,11 +115,16 @@ def sync_filaments_from_profiles() -> int:
                 if filament.nozzle_temp_max is not None:
                     changed = True
 
-            # Bed temp: take the max across all plate types for the range
-            hot = _int_from_profile(data.get("hot_plate_temp"))
-            textured = _int_from_profile(data.get("textured_plate_temp"))
-            eng = _int_from_profile(data.get("eng_plate_temp"))
-            plate_temps = [t for t in (hot, textured, eng) if t is not None]
+            # Bed temp: collect all plate types, exclude 0 (= "not recommended
+            # for this plate" in BambuStudio), then take min/max of the range.
+            plate_raw = (
+                _int_from_profile(data.get("cool_plate_temp")),
+                _int_from_profile(data.get("hot_plate_temp")),
+                _int_from_profile(data.get("textured_plate_temp")),
+                _int_from_profile(data.get("eng_plate_temp")),
+                _int_from_profile(data.get("supertack_plate_temp")),
+            )
+            plate_temps = [t for t in plate_raw if t is not None and t > 0]
 
             if plate_temps:
                 bed_min = min(plate_temps)
@@ -104,10 +132,7 @@ def sync_filaments_from_profiles() -> int:
                 if filament.bed_temp is None:
                     filament.bed_temp = bed_min
                     changed = True
-                if filament.bed_temp_max is None and bed_max > bed_min:
-                    filament.bed_temp_max = bed_max
-                    changed = True
-                elif filament.bed_temp_max is None:
+                if filament.bed_temp_max is None:
                     filament.bed_temp_max = bed_max
                     changed = True
 
@@ -115,6 +140,14 @@ def sync_filaments_from_profiles() -> int:
             if filament.density is None and density is not None:
                 filament.density = density
                 changed = True
+
+            # Chamber temp: not stored in filament profiles (always 0); derive
+            # from the material family instead.
+            if filament.chamber_temp is None:
+                chamber = _chamber_temp_for_type(filament.filament_type)
+                if chamber is not None:
+                    filament.chamber_temp = chamber
+                    changed = True
 
             dry_temp = _int_from_profile(data.get("filament_dev_ams_drying_temperature"))
             if filament.dry_temp is None and dry_temp is not None:

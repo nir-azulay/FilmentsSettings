@@ -23,6 +23,8 @@ def apply_sqlite_migrations() -> None:
         _filaments_temp_range_columns(conn)
         _upgrade_generic_abs_to_ys_filament(conn)
         _filaments_drying_columns(conn)
+        _reset_zero_bed_temps(conn)
+        _backfill_non_profile_filaments(conn)
 
 
 def _table_columns(conn, table: str) -> set[str]:
@@ -221,6 +223,87 @@ def _filaments_temp_range_columns(conn) -> None:
         if col not in cols:
             conn.execute(text(f"ALTER TABLE filaments ADD COLUMN {col} INTEGER"))
             _log.info("Added filaments.%s column", col)
+
+
+def _reset_zero_bed_temps(conn) -> None:
+    """NULL out bed_temp / bed_temp_max rows incorrectly set to 0.
+
+    The old profile_sync included eng_plate_temp=0 in its min() calculation,
+    setting bed_temp=0 for PLA/TPU filaments. profile_sync only fills NULL
+    fields, so those zeroes would never be corrected without this migration.
+    """
+    result = conn.execute(
+        text("UPDATE filaments SET bed_temp = NULL WHERE bed_temp = 0")
+    )
+    if result.rowcount:
+        _log.info("Reset %d filament(s) with bed_temp=0 → NULL", result.rowcount)
+    result2 = conn.execute(
+        text("UPDATE filaments SET bed_temp_max = NULL WHERE bed_temp_max = 0")
+    )
+    if result2.rowcount:
+        _log.info("Reset %d filament(s) with bed_temp_max=0 → NULL", result2.rowcount)
+
+
+# Seed data for filaments that have no bundled BambuStudio profile so
+# profile_sync cannot fill them automatically.
+_NON_PROFILE_SEED: list[dict] = [
+    {
+        "brand": "Jayo", "material": "PLA Pro Cold White",
+        "nozzle_temp_min": 200, "nozzle_temp_max": 230,
+        "bed_temp": 35, "bed_temp_max": 65,
+        "density": 1.24, "dry_temp": 65, "dry_time": 6,
+    },
+    {
+        "brand": "Isanmate", "material": "PLA Pro",
+        "nozzle_temp_min": 200, "nozzle_temp_max": 230,
+        "bed_temp": 35, "bed_temp_max": 65,
+        "density": 1.24, "dry_temp": 65, "dry_time": 6,
+    },
+    {
+        "brand": "YS Filament", "material": "ABS",
+        "nozzle_temp_min": 220, "nozzle_temp_max": 260,
+        "bed_temp": 80, "bed_temp_max": 110,
+        "chamber_temp": 60, "density": 1.05,
+        "dry_temp": 80, "dry_time": 6,
+    },
+]
+
+
+def _backfill_non_profile_filaments(conn) -> None:
+    """Fill NULL fields on filaments that have no bundled BambuStudio profile.
+
+    profile_sync skips these because bundle_for() returns None.  We patch
+    them here so the label and UI always have useful data.  Only NULL fields
+    are touched -- any value the user set manually is preserved.
+    """
+    for entry in _NON_PROFILE_SEED:
+        brand = entry["brand"]
+        material = entry["material"]
+        row = conn.execute(
+            text("SELECT id FROM filaments WHERE brand = :b AND material = :m LIMIT 1"),
+            {"b": brand, "m": material},
+        ).fetchone()
+        if not row:
+            continue
+        fid = row[0]
+        cols = _table_columns(conn, "filaments")
+        updates = []
+        params: dict = {"fid": fid}
+        for col, val in entry.items():
+            if col in ("brand", "material") or col not in cols:
+                continue
+            cur = conn.execute(
+                text(f"SELECT {col} FROM filaments WHERE id = :fid"), {"fid": fid}
+            ).scalar()
+            if cur is None:
+                updates.append(f"{col} = :{col}")
+                params[col] = val
+        if updates:
+            conn.execute(
+                text(f"UPDATE filaments SET {', '.join(updates)} WHERE id = :fid"),
+                params,
+            )
+            _log.info("Backfilled %s %s: %s", brand, material, list(params.keys() - {"fid"}))
 
 
 def _filaments_drying_columns(conn) -> None:
