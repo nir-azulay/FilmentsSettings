@@ -59,27 +59,50 @@ def _read_base_profile(path: Path) -> dict | None:
         return None
 
 
-# Chamber temperatures by material family.  BambuStudio filament profiles
-# store chamber_temperatures as ["0"] for every material -- it is a process-
-# level setting on H2S, not a filament property.  We hard-code sensible
-# defaults here based on the material family.
-_CHAMBER_TEMP_BY_TYPE: dict[str, int] = {
-    "ASA": 60,
-    "ABS": 60,
-    "PA":  60,   # Nylon
-    "PC":  70,
-    # PLA, PETG, TPU, TPE: no chamber heating needed (omitted = None)
-}
+from dataclasses import dataclass, field
 
 
-def _chamber_temp_for_type(filament_type: str | None) -> int | None:
+@dataclass
+class _GenericDefaults:
+    nozzle_temp_min: int | None = None
+    nozzle_temp_max: int | None = None
+    bed_temp: int | None = None
+    bed_temp_max: int | None = None
+    chamber_temp: int | None = None
+    density: float | None = None
+    dry_temp: int | None = None
+    dry_time: int | None = None
+
+
+# Generic defaults by material-type keyword (matched case-insensitively,
+# first match wins).  Values mirror the Bambu Studio Generic profiles for
+# each material family on the H2S.
+_GENERIC_DEFAULTS: list[tuple[str, _GenericDefaults]] = [
+    # More-specific variants first so "PETG HS" doesn't match just "PLA".
+    ("ASA",   _GenericDefaults(240, 270,  90, 100, 60, 1.07, 65,  8)),
+    ("ABS",   _GenericDefaults(230, 270,  80, 110, 60, 1.05, 80,  6)),
+    ("PC",    _GenericDefaults(260, 300, 100, 120, 70, 1.20, 80,  8)),
+    ("PA",    _GenericDefaults(250, 280,  50,  80, 60, 1.15, 80, 12)),  # Nylon
+    ("PETG",  _GenericDefaults(230, 260,  70,  85,  None, 1.27, 65,  8)),
+    ("TPU",   _GenericDefaults(210, 240,  35,  45,  None, 1.22, 65,  8)),
+    ("TPE",   _GenericDefaults(210, 240,  35,  45,  None, 1.22, 65,  8)),
+    ("PLA",   _GenericDefaults(190, 230,  35,  65,  None, 1.24, 65,  6)),
+]
+
+
+def _generic_defaults_for(filament_type: str | None) -> _GenericDefaults | None:
     if not filament_type:
         return None
     upper = filament_type.strip().upper()
-    for key, temp in _CHAMBER_TEMP_BY_TYPE.items():
-        if key in upper:
-            return temp
+    for keyword, defaults in _GENERIC_DEFAULTS:
+        if keyword in upper:
+            return defaults
     return None
+
+
+def _chamber_temp_for_type(filament_type: str | None) -> int | None:
+    d = _generic_defaults_for(filament_type)
+    return d.chamber_temp if d else None
 
 
 def sync_filaments_from_profiles() -> int:
@@ -167,6 +190,42 @@ def sync_filaments_from_profiles() -> int:
                     filament.nozzle_temp_min, filament.nozzle_temp_max,
                     filament.bed_temp, filament.bed_temp_max,
                     filament.density, filament.dry_temp, filament.dry_time,
+                )
+
+        # Second pass: filaments with no bundled profile — fill from generic
+        # material-type defaults so they still get useful values on the label.
+        for filament in db.query(Filament).all():
+            bundle = bundle_for(filament.brand, filament.material)
+            if bundle:
+                continue  # already handled above
+
+            defaults = _generic_defaults_for(filament.filament_type)
+            if not defaults:
+                continue
+
+            changed = False
+            for attr in (
+                "nozzle_temp_min", "nozzle_temp_max",
+                "bed_temp", "bed_temp_max",
+                "chamber_temp", "density",
+                "dry_temp", "dry_time",
+            ):
+                if getattr(filament, attr) is None:
+                    val = getattr(defaults, attr)
+                    if val is not None:
+                        setattr(filament, attr, val)
+                        changed = True
+
+            if changed:
+                updated += 1
+                _log.info(
+                    "Generic-filled %s %s (%s): nozzle=%s/%s bed=%s/%s "
+                    "chamber=%s density=%s dry=%s°C/%sh",
+                    filament.brand, filament.material, filament.filament_type,
+                    filament.nozzle_temp_min, filament.nozzle_temp_max,
+                    filament.bed_temp, filament.bed_temp_max,
+                    filament.chamber_temp, filament.density,
+                    filament.dry_temp, filament.dry_time,
                 )
 
         if updated:
