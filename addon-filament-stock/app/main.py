@@ -9,6 +9,7 @@ from .addon_options import get_options, options_as_dict
 from .database import Base, engine, DATA_DIR, DATABASE_URL
 from .db_schema import apply_sqlite_migrations
 from .health import build_health_report
+from .profile_sync import sync_filaments_from_profiles
 from .routers import alert_ignores, ams, assignments, filaments, maintenance, profiles, spools, stock
 from .seed import seed_filaments, seed_filaments_force
 
@@ -19,6 +20,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 Base.metadata.create_all(bind=engine)
 apply_sqlite_migrations()
 seed_filaments()
+sync_filaments_from_profiles()
 
 # Pre-load add-on options so the log line lands at startup (and so any
 # malformed /data/options.json is reported alongside the other init noise).

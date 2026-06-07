@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.6 -- Auto-fill filament data from bundled profiles
+
+On startup, the add-on now reads the bundled BambuStudio profiles and
+automatically fills in missing filament fields (nozzle temp range, bed
+temp range, density). This means labels will show printing parameters
+for all filaments that have bundled profiles, without any manual editing.
+
 ## 0.16.5 -- Editable filament configuration
 
 Added an Edit button to the Filament Configuration panel. You can now
