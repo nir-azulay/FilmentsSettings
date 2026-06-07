@@ -71,6 +71,8 @@ class FilamentBase(BaseModel):
     bed_temp: Optional[int] = None
     bed_temp_max: Optional[int] = None
     chamber_temp: Optional[int] = None
+    dry_temp: Optional[int] = None
+    dry_time: Optional[int] = None
     amazon_url: str = ""
     brand_logo_url: str = ""
     notes: str = ""
@@ -96,6 +98,8 @@ class FilamentUpdate(BaseModel):
     bed_temp: Optional[int] = None
     bed_temp_max: Optional[int] = None
     chamber_temp: Optional[int] = None
+    dry_temp: Optional[int] = None
+    dry_time: Optional[int] = None
     amazon_url: Optional[str] = None
     brand_logo_url: Optional[str] = None
     notes: Optional[str] = None
@@ -196,5 +200,7 @@ class SpoolInstanceResponse(BaseModel):
     bed_temp: Optional[int] = None
     bed_temp_max: Optional[int] = None
     chamber_temp: Optional[int] = None
+    dry_temp: Optional[int] = None
+    dry_time: Optional[int] = None
 
     model_config = {"from_attributes": True}

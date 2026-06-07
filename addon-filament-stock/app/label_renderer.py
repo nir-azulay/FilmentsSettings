@@ -13,6 +13,7 @@ Layout (QR on right, params at bottom):
   |  Nozzle: 220-260°C                                  |
   |  Bed: 80-110°C                                      |
   |  Chamber: 60°C                                      |
+  |  Dry: 65°C / 12h                                    |
   |  ────────────────────────────────────────────        |
   |  SP-A1B2C3D4                           SPOOL         |
   +------------------------------------------------------+
@@ -94,6 +95,8 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     bed_temp_max = filament.bed_temp_max if filament else None
     chamber_temp = filament.chamber_temp if filament else None
     density = filament.density if filament else None
+    dry_temp = filament.dry_temp if filament else None
+    dry_time = filament.dry_time if filament else None
 
     if ha_url:
         qr_data = f"{ha_url.rstrip('/')}/filaments/#spool/{spool.uid}"
@@ -155,6 +158,10 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
         spec_lines.append(f"Bed: {bed_temp}\u00b0C")
     if chamber_temp:
         spec_lines.append(f"Chamber: {chamber_temp}\u00b0C")
+    if dry_temp and dry_time:
+        spec_lines.append(f"Dry: {dry_temp}\u00b0C / {dry_time}h")
+    elif dry_temp:
+        spec_lines.append(f"Dry: {dry_temp}\u00b0C")
     if density:
         spec_lines.append(f"Density: {density} g/cm\u00b3")
 

@@ -58,6 +58,8 @@ def _serialize_spool(s: SpoolInstance) -> dict[str, Any]:
         "bed_temp": filament.bed_temp if filament else None,
         "bed_temp_max": filament.bed_temp_max if filament else None,
         "chamber_temp": filament.chamber_temp if filament else None,
+        "dry_temp": filament.dry_temp if filament else None,
+        "dry_time": filament.dry_time if filament else None,
     }
 
 

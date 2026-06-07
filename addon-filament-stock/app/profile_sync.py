@@ -116,14 +116,24 @@ def sync_filaments_from_profiles() -> int:
                 filament.density = density
                 changed = True
 
+            dry_temp = _int_from_profile(data.get("filament_dev_ams_drying_temperature"))
+            if filament.dry_temp is None and dry_temp is not None:
+                filament.dry_temp = dry_temp
+                changed = True
+
+            dry_time = _int_from_profile(data.get("filament_dev_ams_drying_time"))
+            if filament.dry_time is None and dry_time is not None:
+                filament.dry_time = dry_time
+                changed = True
+
             if changed:
                 updated += 1
                 _log.info(
-                    "Auto-filled %s %s: nozzle=%s/%s bed=%s/%s density=%s",
+                    "Auto-filled %s %s: nozzle=%s/%s bed=%s/%s density=%s dry=%s°C/%sh",
                     filament.brand, filament.material,
                     filament.nozzle_temp_min, filament.nozzle_temp_max,
                     filament.bed_temp, filament.bed_temp_max,
-                    filament.density,
+                    filament.density, filament.dry_temp, filament.dry_time,
                 )
 
         if updated:

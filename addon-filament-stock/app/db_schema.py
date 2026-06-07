@@ -22,6 +22,7 @@ def apply_sqlite_migrations() -> None:
         _migrate_counters_to_spool_instances(conn)
         _filaments_temp_range_columns(conn)
         _upgrade_generic_abs_to_ys_filament(conn)
+        _filaments_drying_columns(conn)
 
 
 def _table_columns(conn, table: str) -> set[str]:
@@ -217,6 +218,15 @@ def _filaments_temp_range_columns(conn) -> None:
     """0.16.4: add bed_temp_max and chamber_temp columns to filaments."""
     cols = _table_columns(conn, "filaments")
     for col in ("bed_temp_max", "chamber_temp"):
+        if col not in cols:
+            conn.execute(text(f"ALTER TABLE filaments ADD COLUMN {col} INTEGER"))
+            _log.info("Added filaments.%s column", col)
+
+
+def _filaments_drying_columns(conn) -> None:
+    """Add dry_temp and dry_time columns to filaments."""
+    cols = _table_columns(conn, "filaments")
+    for col in ("dry_temp", "dry_time"):
         if col not in cols:
             conn.execute(text(f"ALTER TABLE filaments ADD COLUMN {col} INTEGER"))
             _log.info("Added filaments.%s column", col)

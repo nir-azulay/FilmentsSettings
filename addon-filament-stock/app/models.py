@@ -20,6 +20,8 @@ class Filament(Base):
     bed_temp = Column(Integer, nullable=True)
     bed_temp_max = Column(Integer, nullable=True)
     chamber_temp = Column(Integer, nullable=True)
+    dry_temp = Column(Integer, nullable=True)   # drying temperature in °C
+    dry_time = Column(Integer, nullable=True)   # drying duration in hours
     amazon_url = Column(String, default="")
     brand_logo_url = Column(String, default="")
     notes = Column(String, default="")
