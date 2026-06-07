@@ -382,22 +382,28 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
         )}
       </div>
 
-      {/* Spool toggle bar */}
-      <div style={spoolToggleBar}>
-        <button
-          onClick={() => setShowSpools(!showSpools)}
-          style={spoolToggleBtn}
+      {/* Spool tracking toggle */}
+      <button
+        onClick={() => setShowSpools(!showSpools)}
+        style={spoolToggleBtnStyle}
+      >
+        <svg
+          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         >
-          <svg
-            width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transform: showSpools ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-          Individual Spools
-        </button>
-      </div>
+          <polyline points="6 9 6 2 18 2 18 9" />
+          <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+          <rect x="6" y="14" width="12" height="8" />
+        </svg>
+        {showSpools ? "Hide Spools" : "Spools & Labels"}
+        <svg
+          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: showSpools ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: "auto" }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
 
       {showSpools && (
         <SpoolListPanel
@@ -775,13 +781,12 @@ const sugItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 7,
   padding: "5px 10px", cursor: "pointer", fontSize: 12,
 };
-const spoolToggleBar: React.CSSProperties = {
-  padding: "2px 10px",
-};
-const spoolToggleBtn: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 5,
-  background: "none", border: "none",
-  color: "var(--ha-secondary-text)", fontSize: 10,
-  fontWeight: 500, cursor: "pointer", padding: "2px 4px",
-  textTransform: "uppercase", letterSpacing: "0.04em",
+const spoolToggleBtnStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 6,
+  width: "100%", padding: "7px 12px", marginTop: 4,
+  background: "rgba(3,169,244,0.06)",
+  border: "1px dashed rgba(3,169,244,0.3)",
+  borderRadius: 6, cursor: "pointer",
+  color: "var(--ha-primary-color, #1976d2)",
+  fontSize: 12, fontWeight: 500,
 };
