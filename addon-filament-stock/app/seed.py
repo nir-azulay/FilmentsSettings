@@ -43,9 +43,16 @@ SEED_FILAMENTS = [
     },
     {
         "filament": {
-            "brand": "Generic",
+            "brand": "YS Filament",
             "material": "ABS",
             "filament_type": "ABS",
+            "nozzle_temp_min": 220,
+            "nozzle_temp_max": 260,
+            "bed_temp": 80,
+            "bed_temp_max": 110,
+            "chamber_temp": 60,
+            "density": 1.04,
+            "amazon_url": "https://a.co/d/02OrrAfC",
         },
         "colors": [
             {"color_name": "Black", "color_hex": "#1A1A1A", "quantity": 3},
