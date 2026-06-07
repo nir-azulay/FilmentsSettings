@@ -40,7 +40,6 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
   const isLow       = filamentHasLowStock(filament, staplePools, ignoredStaples);
   const matColor    = getMaterialColor(filament.filament_type);
   const [showProfile, setShowProfile] = useState(false);
-  const [showSpools, setShowSpools] = useState(false);
 
   return (
     <div id={`filament-${filament.id}`} className="ha-card" style={cardWrap}>
@@ -148,52 +147,6 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
         </button>
       </div>
 
-      {/* Spools & Labels toggle — card-level, below the action row */}
-      <button
-        onClick={() => setShowSpools(!showSpools)}
-        style={spoolToggleBtnStyle}
-      >
-        <svg
-          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        >
-          <polyline points="6 9 6 2 18 2 18 9" />
-          <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-          <rect x="6" y="14" width="12" height="8" />
-        </svg>
-        {showSpools ? "Hide Spools & Labels" : "Spools & Labels"}
-        <svg
-          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transform: showSpools ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: "auto" }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-
-      {showSpools && (
-        <div style={spoolsExpandedWrap}>
-          {filament.colors.length === 0 && (
-            <p style={{ fontSize: 12, color: "var(--ha-disabled-text)", padding: "8px 12px" }}>
-              Add a color first to register individual spools.
-            </p>
-          )}
-          {filament.colors.map((c) => (
-            <div key={c.id}>
-              <div style={spoolColorHeader}>
-                <div style={{ width: 14, height: 14, borderRadius: 3, background: c.color_hex, border: "1px solid rgba(0,0,0,0.15)", flexShrink: 0 }} />
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ha-primary-text)" }}>{c.color_name}</span>
-              </div>
-              <SpoolListPanel
-                colorStockId={c.id}
-                colorHex={c.color_hex}
-                onStockChanged={onUpdate}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
       {showProfile && <FilamentProfilePanel filament={filament} />}
     </div>
   );
@@ -216,6 +169,7 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingColor, setDeletingColor] = useState(false);
+  const [showSpools, setShowSpools] = useState(false);
 
   useEffect(() => {
     setQty(color.quantity);
@@ -427,6 +381,36 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
           </div>
         )}
       </div>
+
+      <button
+        onClick={() => setShowSpools(!showSpools)}
+        style={spoolToggleBtnStyle}
+      >
+        <svg
+          width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        >
+          <polyline points="6 9 6 2 18 2 18 9" />
+          <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+          <rect x="6" y="14" width="12" height="8" />
+        </svg>
+        {showSpools ? "Hide Spools" : "Spools & Labels"}
+        <svg
+          width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: showSpools ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: "auto" }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {showSpools && (
+        <SpoolListPanel
+          colorStockId={color.id}
+          colorHex={color.color_hex}
+          onStockChanged={onUpdate}
+        />
+      )}
 
       {showDeleteModal && (
         <DeleteColorModal
@@ -797,21 +781,12 @@ const sugItem: React.CSSProperties = {
   padding: "5px 10px", cursor: "pointer", fontSize: 12,
 };
 const spoolToggleBtnStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 6,
-  width: "100%", padding: "8px 16px",
+  display: "flex", alignItems: "center", gap: 5,
+  width: "100%", padding: "5px 8px",
+  marginTop: 4,
   background: "rgba(3,169,244,0.06)",
-  borderTop: "1px solid var(--ha-divider)",
-  border: "none", borderTopStyle: "solid", borderTopWidth: 1, borderTopColor: "var(--ha-divider)",
-  cursor: "pointer",
+  border: "1px dashed rgba(3,169,244,0.25)",
+  borderRadius: 5, cursor: "pointer",
   color: "var(--ha-primary-color, #1976d2)",
-  fontSize: 12, fontWeight: 500,
-};
-const spoolsExpandedWrap: React.CSSProperties = {
-  borderTop: "1px solid var(--ha-divider)",
-  background: "rgba(3,169,244,0.02)",
-};
-const spoolColorHeader: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 6,
-  padding: "8px 12px 2px",
-  borderTop: "1px solid var(--ha-divider)",
+  fontSize: 11, fontWeight: 500,
 };

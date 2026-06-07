@@ -1,10 +1,9 @@
 # Changelog
 
-## 0.15.5 -- Move Spools & Labels to card footer
+## 0.15.6 -- Spools & Labels per color row
 
-Moved the "Spools & Labels" button from inside each color row to the
-card's action area (below Delete). Clicking it expands a panel showing
-all colors with their individual spool records, labels, and actions.
+The "Spools & Labels" button is now below the delete icon on each color
+row. Clicking it expands the spool list inline under that specific color.
 
 ## 0.15.4 -- Fix update dialog (trimmed changelog)
 
