@@ -276,6 +276,7 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
   const vis = getColorVisual(color.color_hex, status !== "in_stock");
 
   return (
+    <>
     <div
       className="ha-entity-row color-stock-row"
       style={{
@@ -409,14 +410,6 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
         )}
       </div>
 
-      {showSpools && (
-        <SpoolListPanel
-          colorStockId={color.id}
-          colorHex={color.color_hex}
-          onStockChanged={onUpdate}
-        />
-      )}
-
       {showDeleteModal && (
         <DeleteColorModal
           colorName={color.color_name}
@@ -426,6 +419,17 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
         />
       )}
     </div>
+
+    {showSpools && (
+      <div style={spoolExpansionRow}>
+        <SpoolListPanel
+          colorStockId={color.id}
+          colorHex={color.color_hex}
+          onStockChanged={onUpdate}
+        />
+      </div>
+    )}
+    </>
   );
 }
 
@@ -783,6 +787,13 @@ const sugBox: React.CSSProperties = {
 const sugItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 7,
   padding: "5px 10px", cursor: "pointer", fontSize: 12,
+};
+const spoolExpansionRow: React.CSSProperties = {
+  margin: "0 10px 4px",
+  padding: "8px 10px",
+  background: "rgba(3,169,244,0.04)",
+  border: "1px solid rgba(3,169,244,0.15)",
+  borderRadius: 8,
 };
 const iconColumn: React.CSSProperties = {
   display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
