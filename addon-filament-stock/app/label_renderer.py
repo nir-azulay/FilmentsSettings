@@ -4,12 +4,15 @@ Target: Niimbot B21 Pro -- 300 DPI, 591px printhead width.
 Label size: 50x30mm = 591x354 pixels at 300 DPI.
 Black & white only (thermal printer).
 
-Layout:
+Layout (QR on right):
   +------------------------------------------------------+
-  |  [QR]   SUNLU PETG HS                               |
-  |  [QR]   Cold White                                   |
-  |  [QR]   PLA  |  Nozzle 230-250°C  |  Bed 70°C       |
-  |         Density: 1.24 g/cm³       SP-A1B2C3D4  SPOOL |
+  |  PETG                                         [QR]   |
+  |  SUNLU PETG HS                                [QR]   |
+  |  Cold White                                   [QR]   |
+  |  Nozzle: 230-250°C   Bed: 70°C                      |
+  |  Density: 1.24 g/cm³                                |
+  |  ────────────────────────────────────────────        |
+  |  SP-A1B2C3D4                           SPOOL         |
   +------------------------------------------------------+
 """
 
@@ -31,7 +34,6 @@ LABEL_W = 591
 LABEL_H = 354
 QR_SIZE = 150
 MARGIN = 10
-TEXT_LEFT = MARGIN + QR_SIZE + 12
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -97,59 +99,71 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     img = Image.new("RGB", (LABEL_W, LABEL_H), "white")
     draw = ImageDraw.Draw(img)
 
-    font_title = _get_font(36)
-    font_color = _get_font(30)
+    font_type = _get_font(34)
+    font_title = _get_font(30)
+    font_color = _get_font(26)
     font_specs = _get_font_regular(20)
-    font_uid = _get_font(18)
-    font_small = _get_font_regular(16)
+    font_uid = _get_font(16)
+    font_small = _get_font_regular(17)
 
-    # QR code -- vertically centered
+    # QR code -- right side, vertically centered
     qr_img = _make_qr(qr_data)
+    qr_x = LABEL_W - MARGIN - QR_SIZE
     qr_y = (LABEL_H - QR_SIZE) // 2
-    img.paste(qr_img, (MARGIN, qr_y))
+    img.paste(qr_img, (qr_x, qr_y))
 
-    text_right = LABEL_W - MARGIN
-    y = MARGIN + 4
+    text_left = MARGIN + 4
+    text_right = qr_x - 12
+    y = MARGIN
 
-    # Row 1: Brand + Material (large bold)
-    draw.text((TEXT_LEFT, y), f"{brand} {material}", fill="black", font=font_title)
-    y += 46
-
-    # Row 2: Color name (large)
-    draw.text((TEXT_LEFT, y), color_name, fill="black", font=font_color)
-    y += 40
-
-    # Row 3: Specs line (type | nozzle temp | bed temp)
-    specs_parts: list[str] = []
+    # Row 1: Filament type (big bold, e.g. "PETG")
     if filament_type:
-        specs_parts.append(filament_type)
-    if nozzle_min and nozzle_max:
-        specs_parts.append(f"Nozzle {nozzle_min}-{nozzle_max}\u00b0C")
-    elif nozzle_min or nozzle_max:
-        specs_parts.append(f"Nozzle {nozzle_min or nozzle_max}\u00b0C")
-    if bed_temp:
-        specs_parts.append(f"Bed {bed_temp}\u00b0C")
-    if specs_parts:
-        draw.text((TEXT_LEFT, y), "  \u2502  ".join(specs_parts), fill="black", font=font_specs)
-    y += 28
+        draw.text((text_left, y), filament_type, fill="black", font=font_type)
+        y += 40
 
-    # Row 4: Density
-    if density:
-        draw.text((TEXT_LEFT, y), f"Density: {density} g/cm\u00b3", fill="#333333", font=font_small)
+    # Row 2: Brand + Material
+    draw.text((text_left, y), f"{brand} {material}", fill="black", font=font_title)
+    y += 36
+
+    # Row 3: Color name
+    draw.text((text_left, y), color_name, fill="black", font=font_color)
+    y += 34
+
+    # Row 4: Nozzle temperature
+    if nozzle_min and nozzle_max:
+        draw.text(
+            (text_left, y),
+            f"Nozzle: {nozzle_min}-{nozzle_max}\u00b0C",
+            fill="black", font=font_specs,
+        )
+    elif nozzle_min or nozzle_max:
+        draw.text(
+            (text_left, y),
+            f"Nozzle: {nozzle_min or nozzle_max}\u00b0C",
+            fill="black", font=font_specs,
+        )
     y += 24
 
+    # Row 5: Bed temperature + density on same line
+    row5_parts: list[str] = []
+    if bed_temp:
+        row5_parts.append(f"Bed: {bed_temp}\u00b0C")
+    if density:
+        row5_parts.append(f"Density: {density} g/cm\u00b3")
+    if row5_parts:
+        draw.text((text_left, y), "   ".join(row5_parts), fill="black", font=font_specs)
+    y += 24
+
+    # Thin separator line
+    sep_y = LABEL_H - MARGIN - 28
+    draw.line([(text_left, sep_y), (text_right, sep_y)], fill="#aaaaaa", width=1)
+
     # Bottom row: UID on left, packaging on right
-    bottom_y = LABEL_H - MARGIN - 24
-    draw.text((TEXT_LEFT, bottom_y), spool.uid, fill="#666666", font=font_uid)
+    bottom_y = LABEL_H - MARGIN - 22
+    draw.text((text_left, bottom_y), spool.uid, fill="#555555", font=font_uid)
 
     pkg_label = spool.packaging.upper()
     pkg_w = draw.textlength(pkg_label, font=font_uid)
-    draw.text((text_right - pkg_w, bottom_y), pkg_label, fill="#666666", font=font_uid)
-
-    # Thin separator line above bottom row
-    draw.line(
-        [(TEXT_LEFT, bottom_y - 6), (text_right, bottom_y - 6)],
-        fill="#cccccc", width=1,
-    )
+    draw.text((text_right - pkg_w, bottom_y), pkg_label, fill="#555555", font=font_uid)
 
     return img
