@@ -340,14 +340,16 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
                 disabled={saving}
               />
             </div>
-            <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
-            <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-            </button>
+            <div style={iconColumn}>
+              <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
+              <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 
@@ -369,14 +371,16 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
               </svg>
               Arrived
             </button>
-            <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
-            <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-            </button>
+            <div style={iconColumn}>
+              <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
+              <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
 
@@ -391,14 +395,16 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
               + Refill
             </button>
             <button onClick={handleMarkOrdered} style={reorderBtn}>↺ Reorder</button>
-            <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
-            <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 6 2 18 2 18 9" />
-                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-                <rect x="6" y="14" width="12" height="8" />
-              </svg>
-            </button>
+            <div style={iconColumn}>
+              <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
+              <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -777,6 +783,10 @@ const sugBox: React.CSSProperties = {
 const sugItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 7,
   padding: "5px 10px", cursor: "pointer", fontSize: 12,
+};
+const iconColumn: React.CSSProperties = {
+  display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+  flexShrink: 0,
 };
 const printIconBtn: React.CSSProperties = {
   width: 28, height: 28,
