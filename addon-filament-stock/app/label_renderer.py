@@ -4,13 +4,15 @@ Target: Niimbot B21 Pro -- 300 DPI, 591px printhead width.
 Label size: 50x30mm = 591x354 pixels at 300 DPI.
 Black & white only (thermal printer).
 
-Layout (QR on right):
+Layout (QR on right, params at bottom):
   +------------------------------------------------------+
   |  PETG                                         [QR]   |
-  |  SUNLU PETG HS                                [QR]   |
-  |  Cold White                                   [QR]   |
-  |  Nozzle: 230-250°C   Bed: 70-90°C                   |
-  |  Chamber: 50°C   Density: 1.24 g/cm³               |
+  |  YS Filament ABS                              [QR]   |
+  |  Black                                        [QR]   |
+  |                                                      |
+  |  Nozzle: 220-260°C                                  |
+  |  Bed: 80-110°C                                      |
+  |  Chamber: 60°C                                      |
   |  ────────────────────────────────────────────        |
   |  SP-A1B2C3D4                           SPOOL         |
   +------------------------------------------------------+
@@ -104,9 +106,8 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     font_type = _get_font(34)
     font_title = _get_font(30)
     font_color = _get_font(26)
-    font_specs = _get_font_regular(20)
+    font_specs = _get_font_regular(18)
     font_uid = _get_font(16)
-    font_small = _get_font_regular(17)
 
     # QR code -- right side, vertically centered
     qr_img = _make_qr(qr_data)
@@ -116,55 +117,51 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
 
     text_left = MARGIN + 4
     text_right = qr_x - 12
+    SPEC_LINE_H = 22
+
+    # ── Top section: filament identity ──────────────────────────────────
     y = MARGIN
 
-    # Row 1: Filament type (big bold, e.g. "PETG")
     if filament_type:
         draw.text((text_left, y), filament_type, fill="black", font=font_type)
         y += 40
 
-    # Row 2: Brand + Material
     draw.text((text_left, y), f"{brand} {material}", fill="black", font=font_title)
     y += 36
 
-    # Row 3: Color name
     draw.text((text_left, y), color_name, fill="black", font=font_color)
-    y += 34
 
-    # Row 4: Nozzle + Bed temperature on same line
-    row4_parts: list[str] = []
-    if nozzle_min and nozzle_max:
-        row4_parts.append(f"Nozzle: {nozzle_min}-{nozzle_max}\u00b0C")
-    elif nozzle_min or nozzle_max:
-        row4_parts.append(f"Nozzle: {nozzle_min or nozzle_max}\u00b0C")
-    if bed_temp and bed_temp_max and bed_temp != bed_temp_max:
-        row4_parts.append(f"Bed: {bed_temp}-{bed_temp_max}\u00b0C")
-    elif bed_temp:
-        row4_parts.append(f"Bed: {bed_temp}\u00b0C")
-    if row4_parts:
-        draw.text((text_left, y), "   ".join(row4_parts), fill="black", font=font_specs)
-    y += 24
-
-    # Row 5: Chamber temperature + density on same line
-    row5_parts: list[str] = []
-    if chamber_temp:
-        row5_parts.append(f"Chamber: {chamber_temp}\u00b0C")
-    if density:
-        row5_parts.append(f"Density: {density} g/cm\u00b3")
-    if row5_parts:
-        draw.text((text_left, y), "   ".join(row5_parts), fill="black", font=font_specs)
-    y += 24
-
-    # Thin separator line
-    sep_y = LABEL_H - MARGIN - 28
-    draw.line([(text_left, sep_y), (text_right, sep_y)], fill="#aaaaaa", width=1)
-
-    # Bottom row: UID on left, packaging on right
-    bottom_y = LABEL_H - MARGIN - 22
+    # ── Bottom section: build upward from the bottom ────────────────────
+    # UID row (very bottom)
+    bottom_y = LABEL_H - MARGIN - 20
     draw.text((text_left, bottom_y), spool.uid, fill="#555555", font=font_uid)
-
     pkg_label = spool.packaging.upper()
     pkg_w = draw.textlength(pkg_label, font=font_uid)
     draw.text((text_right - pkg_w, bottom_y), pkg_label, fill="#555555", font=font_uid)
+
+    # Separator line above UID
+    sep_y = bottom_y - 8
+    draw.line([(text_left, sep_y), (text_right, sep_y)], fill="#aaaaaa", width=1)
+
+    # Collect spec lines (each on its own row)
+    spec_lines: list[str] = []
+    if nozzle_min and nozzle_max and nozzle_min != nozzle_max:
+        spec_lines.append(f"Nozzle: {nozzle_min}-{nozzle_max}\u00b0C")
+    elif nozzle_min or nozzle_max:
+        spec_lines.append(f"Nozzle: {nozzle_min or nozzle_max}\u00b0C")
+    if bed_temp and bed_temp_max and bed_temp != bed_temp_max:
+        spec_lines.append(f"Bed: {bed_temp}-{bed_temp_max}\u00b0C")
+    elif bed_temp:
+        spec_lines.append(f"Bed: {bed_temp}\u00b0C")
+    if chamber_temp:
+        spec_lines.append(f"Chamber: {chamber_temp}\u00b0C")
+    if density:
+        spec_lines.append(f"Density: {density} g/cm\u00b3")
+
+    # Draw spec lines bottom-up, just above the separator
+    spec_y = sep_y - 6 - (len(spec_lines) * SPEC_LINE_H)
+    for line in spec_lines:
+        draw.text((text_left, spec_y), line, fill="black", font=font_specs)
+        spec_y += SPEC_LINE_H
 
     return img

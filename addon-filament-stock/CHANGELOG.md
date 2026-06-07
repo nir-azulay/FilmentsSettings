@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.8 -- Label layout: parameters at bottom, each on own line
+
+Redesigned label layout: filament identity (type, brand, color) stays at
+the top, printing parameters (nozzle, bed, chamber, density) are now at
+the bottom above the UID row, each on its own separate line.
+
 ## 0.16.7 -- Convert Generic ABS to YS Filament ABS
 
 Automatically upgrades the "Generic ABS" filament entry to "YS Filament ABS"
