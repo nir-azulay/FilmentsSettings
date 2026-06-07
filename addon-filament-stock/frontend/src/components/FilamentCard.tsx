@@ -341,6 +341,13 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
               />
             </div>
             <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
+            <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+            </button>
           </div>
         )}
 
@@ -363,6 +370,13 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
               Arrived
             </button>
             <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
+            <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+            </button>
           </div>
         )}
 
@@ -378,31 +392,16 @@ function ColorRow({ color, onUpdate }: { color: ColorStock; onUpdate: () => Prom
             </button>
             <button onClick={handleMarkOrdered} style={reorderBtn}>↺ Reorder</button>
             <TrashIconButton onClick={() => setShowDeleteModal(true)} title="Delete color" />
+            <button onClick={() => setShowSpools(!showSpools)} style={printIconBtn} title="Spools & Labels">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+            </button>
           </div>
         )}
       </div>
-
-      <button
-        onClick={() => setShowSpools(!showSpools)}
-        style={spoolToggleBtnStyle}
-      >
-        <svg
-          width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        >
-          <polyline points="6 9 6 2 18 2 18 9" />
-          <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
-          <rect x="6" y="14" width="12" height="8" />
-        </svg>
-        {showSpools ? "Hide Spools" : "Spools & Labels"}
-        <svg
-          width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-          style={{ transform: showSpools ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: "auto" }}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
 
       {showSpools && (
         <SpoolListPanel
@@ -780,13 +779,12 @@ const sugItem: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 7,
   padding: "5px 10px", cursor: "pointer", fontSize: 12,
 };
-const spoolToggleBtnStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", gap: 5,
-  width: "100%", padding: "5px 8px",
-  marginTop: 4,
-  background: "rgba(3,169,244,0.06)",
-  border: "1px dashed rgba(3,169,244,0.25)",
-  borderRadius: 5, cursor: "pointer",
+const printIconBtn: React.CSSProperties = {
+  width: 28, height: 28,
+  display: "flex", alignItems: "center", justifyContent: "center",
+  background: "rgba(3,169,244,0.1)",
+  border: "1px solid rgba(3,169,244,0.25)",
+  borderRadius: 6, cursor: "pointer",
   color: "var(--ha-primary-color, #1976d2)",
-  fontSize: 11, fontWeight: 500,
+  flexShrink: 0,
 };
