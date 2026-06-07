@@ -640,7 +640,6 @@ const colorEntityRow: React.CSSProperties = {
   margin: "4px 10px",
   borderRadius: 10,
   minHeight: 52,
-  overflow: "hidden",
 };
 const stepBtn: React.CSSProperties = {
   width: 20, height: 20,

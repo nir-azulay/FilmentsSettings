@@ -195,7 +195,7 @@ def reset_cache_for_tests() -> None:
     _cached = None
 
 
-ADDON_VERSION = "0.15.8"
+ADDON_VERSION = "0.15.9"
 
 
 def options_as_dict() -> dict[str, Any]:
