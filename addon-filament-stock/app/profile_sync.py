@@ -106,99 +106,97 @@ def _chamber_temp_for_type(filament_type: str | None) -> int | None:
 
 
 def sync_filaments_from_profiles() -> int:
-    """Fill missing filament fields from bundled profiles. Returns count updated."""
-    if not PROFILES_ROOT.is_dir():
-        _log.info("No profiles directory found, skipping sync")
-        return 0
+    """Fill missing filament fields from profiles + generic defaults.
 
+    Two passes, both run on every startup:
+      1. Profile pass  — filaments that have a bundled BambuStudio profile:
+                         fills from the exact profile JSON values.
+      2. Generic pass  — ALL remaining filaments (no profile, or profile pass
+                         left some fields NULL): fills from material-type
+                         generic defaults.  Runs unconditionally so existing
+                         filaments always get populated even if the profiles
+                         directory is absent.
+    Only NULL fields are touched; any value the user set manually is preserved.
+    """
     db: Session = SessionLocal()
     updated = 0
     try:
-        for filament in db.query(Filament).all():
-            bundle = bundle_for(filament.brand, filament.material)
-            if not bundle or not bundle.base_file:
-                continue
+        all_filaments = db.query(Filament).all()
 
-            base_path = PROFILES_ROOT / bundle.base_file
-            data = _read_base_profile(base_path)
-            if not data:
-                continue
+        # ── Pass 1: profile-based fill ────────────────────────────────────────
+        if PROFILES_ROOT.is_dir():
+            for filament in all_filaments:
+                bundle = bundle_for(filament.brand, filament.material)
+                if not bundle or not bundle.base_file:
+                    continue
 
-            changed = False
+                base_path = PROFILES_ROOT / bundle.base_file
+                data = _read_base_profile(base_path)
+                if not data:
+                    continue
 
-            nozzle_low = _int_from_profile(data.get("nozzle_temperature_range_low"))
-            nozzle_high = _int_from_profile(data.get("nozzle_temperature_range_high"))
-            nozzle_default = _int_from_profile(data.get("nozzle_temperature"))
-            if filament.nozzle_temp_min is None:
-                filament.nozzle_temp_min = nozzle_low or nozzle_default
-                if filament.nozzle_temp_min is not None:
-                    changed = True
-            if filament.nozzle_temp_max is None:
-                filament.nozzle_temp_max = nozzle_high or nozzle_default
-                if filament.nozzle_temp_max is not None:
-                    changed = True
+                changed = False
 
-            # Bed temp: collect all plate types, exclude 0 (= "not recommended
-            # for this plate" in BambuStudio), then take min/max of the range.
-            plate_raw = (
-                _int_from_profile(data.get("cool_plate_temp")),
-                _int_from_profile(data.get("hot_plate_temp")),
-                _int_from_profile(data.get("textured_plate_temp")),
-                _int_from_profile(data.get("eng_plate_temp")),
-                _int_from_profile(data.get("supertack_plate_temp")),
-            )
-            plate_temps = [t for t in plate_raw if t is not None and t > 0]
+                nozzle_low = _int_from_profile(data.get("nozzle_temperature_range_low"))
+                nozzle_high = _int_from_profile(data.get("nozzle_temperature_range_high"))
+                nozzle_default = _int_from_profile(data.get("nozzle_temperature"))
+                if filament.nozzle_temp_min is None:
+                    filament.nozzle_temp_min = nozzle_low or nozzle_default
+                    if filament.nozzle_temp_min is not None:
+                        changed = True
+                if filament.nozzle_temp_max is None:
+                    filament.nozzle_temp_max = nozzle_high or nozzle_default
+                    if filament.nozzle_temp_max is not None:
+                        changed = True
 
-            if plate_temps:
-                bed_min = min(plate_temps)
-                bed_max = max(plate_temps)
-                if filament.bed_temp is None:
-                    filament.bed_temp = bed_min
-                    changed = True
-                if filament.bed_temp_max is None:
-                    filament.bed_temp_max = bed_max
-                    changed = True
-
-            density = _float_from_profile(data.get("filament_density"))
-            if filament.density is None and density is not None:
-                filament.density = density
-                changed = True
-
-            # Chamber temp: not stored in filament profiles (always 0); derive
-            # from the material family instead.
-            if filament.chamber_temp is None:
-                chamber = _chamber_temp_for_type(filament.filament_type)
-                if chamber is not None:
-                    filament.chamber_temp = chamber
-                    changed = True
-
-            dry_temp = _int_from_profile(data.get("filament_dev_ams_drying_temperature"))
-            if filament.dry_temp is None and dry_temp is not None:
-                filament.dry_temp = dry_temp
-                changed = True
-
-            dry_time = _int_from_profile(data.get("filament_dev_ams_drying_time"))
-            if filament.dry_time is None and dry_time is not None:
-                filament.dry_time = dry_time
-                changed = True
-
-            if changed:
-                updated += 1
-                _log.info(
-                    "Auto-filled %s %s: nozzle=%s/%s bed=%s/%s density=%s dry=%s°C/%sh",
-                    filament.brand, filament.material,
-                    filament.nozzle_temp_min, filament.nozzle_temp_max,
-                    filament.bed_temp, filament.bed_temp_max,
-                    filament.density, filament.dry_temp, filament.dry_time,
+                # Bed temp: all plate types, exclude 0 (= "not for this plate").
+                plate_raw = (
+                    _int_from_profile(data.get("cool_plate_temp")),
+                    _int_from_profile(data.get("hot_plate_temp")),
+                    _int_from_profile(data.get("textured_plate_temp")),
+                    _int_from_profile(data.get("eng_plate_temp")),
+                    _int_from_profile(data.get("supertack_plate_temp")),
                 )
+                plate_temps = [t for t in plate_raw if t is not None and t > 0]
+                if plate_temps:
+                    if filament.bed_temp is None:
+                        filament.bed_temp = min(plate_temps)
+                        changed = True
+                    if filament.bed_temp_max is None:
+                        filament.bed_temp_max = max(plate_temps)
+                        changed = True
 
-        # Second pass: filaments with no bundled profile — fill from generic
-        # material-type defaults so they still get useful values on the label.
-        for filament in db.query(Filament).all():
-            bundle = bundle_for(filament.brand, filament.material)
-            if bundle:
-                continue  # already handled above
+                density = _float_from_profile(data.get("filament_density"))
+                if filament.density is None and density is not None:
+                    filament.density = density
+                    changed = True
 
+                dry_temp = _int_from_profile(data.get("filament_dev_ams_drying_temperature"))
+                if filament.dry_temp is None and dry_temp is not None:
+                    filament.dry_temp = dry_temp
+                    changed = True
+
+                dry_time = _int_from_profile(data.get("filament_dev_ams_drying_time"))
+                if filament.dry_time is None and dry_time is not None:
+                    filament.dry_time = dry_time
+                    changed = True
+
+                if changed:
+                    updated += 1
+                    _log.info(
+                        "Profile-filled %s %s: nozzle=%s/%s bed=%s/%s density=%s dry=%s°C/%sh",
+                        filament.brand, filament.material,
+                        filament.nozzle_temp_min, filament.nozzle_temp_max,
+                        filament.bed_temp, filament.bed_temp_max,
+                        filament.density, filament.dry_temp, filament.dry_time,
+                    )
+        else:
+            _log.info("Profiles directory not found — skipping profile-based fill")
+
+        # ── Pass 2: generic defaults — runs for ALL filaments ─────────────────
+        # Covers: filaments with no profile, and any field left NULL by pass 1
+        # (including chamber_temp, which profiles never store meaningfully).
+        for filament in all_filaments:
             defaults = _generic_defaults_for(filament.filament_type)
             if not defaults:
                 continue
