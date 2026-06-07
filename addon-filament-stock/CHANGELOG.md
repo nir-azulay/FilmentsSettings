@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.5 -- Move Spools & Labels to card footer
+
+Moved the "Spools & Labels" button from inside each color row to the
+card's action area (below Delete). Clicking it expands a panel showing
+all colors with their individual spool records, labels, and actions.
+
 ## 0.15.4 -- Fix update dialog (trimmed changelog)
 
 Trimmed the massive changelog that was preventing HA's update dialog
