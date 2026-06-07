@@ -21,6 +21,7 @@ def apply_sqlite_migrations() -> None:
         _tray_assignments_spool_instance_column(conn)
         _migrate_counters_to_spool_instances(conn)
         _filaments_temp_range_columns(conn)
+        _upgrade_generic_abs_to_ys_filament(conn)
 
 
 def _table_columns(conn, table: str) -> set[str]:
@@ -219,3 +220,30 @@ def _filaments_temp_range_columns(conn) -> None:
         if col not in cols:
             conn.execute(text(f"ALTER TABLE filaments ADD COLUMN {col} INTEGER"))
             _log.info("Added filaments.%s column", col)
+
+
+def _upgrade_generic_abs_to_ys_filament(conn) -> None:
+    """0.16.7: convert 'Generic ABS' filament to 'YS Filament ABS' with TDS data."""
+    row = conn.execute(
+        text("SELECT id FROM filaments WHERE brand = 'Generic' AND material = 'ABS' LIMIT 1")
+    ).fetchone()
+    if not row:
+        return
+    conn.execute(
+        text(
+            "UPDATE filaments SET "
+            "brand = 'YS Filament', "
+            "material = 'ABS', "
+            "filament_type = 'ABS', "
+            "nozzle_temp_min = 220, "
+            "nozzle_temp_max = 260, "
+            "bed_temp = 80, "
+            "bed_temp_max = 110, "
+            "chamber_temp = 60, "
+            "density = 1.04, "
+            "amazon_url = 'https://a.co/d/02OrrAfC' "
+            "WHERE id = :fid"
+        ),
+        {"fid": row[0]},
+    )
+    _log.info("Upgraded Generic ABS (id=%s) to YS Filament ABS", row[0])

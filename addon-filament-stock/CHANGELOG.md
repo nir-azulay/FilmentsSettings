@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.7 -- Convert Generic ABS to YS Filament ABS
+
+Automatically upgrades the "Generic ABS" filament entry to "YS Filament ABS"
+with all TDS data: nozzle 220-260°C, bed 80-110°C, chamber 60°C, density
+1.04 g/cm³, and Amazon URL. No manual editing needed.
+
 ## 0.16.6 -- Auto-fill filament data from bundled profiles
 
 On startup, the add-on now reads the bundled BambuStudio profiles and
