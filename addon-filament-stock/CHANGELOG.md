@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.18.0 -- Spool lifecycle timeline, batch labels, and overview dashboard
+
+Three major spool tracking improvements:
+
+**Spool Lifecycle Timeline** -- Every spool now logs lifecycle events
+(created, assigned, unassigned, emptied). Click the clock icon on any spool
+to see its full history as a vertical timeline. Existing spools are
+backfilled from their timestamps on upgrade.
+
+**Batch Label Printing** -- Register multiple spools at once with a quantity
+picker (1-50). After batch creation, a dialog shows all labels with
+"Download All" (single PNG) and "Print All" (sequential Niimbot print)
+actions.
+
+**Spool Overview Dashboard** -- New collapsible "All Spools" panel between
+AMS and the filament cards. Shows every spool instance with status filters
+(All/In Stock/In Tray/Empty), search, status pills, and per-row actions
+(label, timeline, unassign, empty, delete). Collapse state persists in
+localStorage.
+
 ## 0.17.4 -- Scan to select spool in Assign dialog
 
 Added a **Scan** button next to the search bar in the "Assign filament to tray"

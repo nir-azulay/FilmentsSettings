@@ -731,3 +731,72 @@ export async function printSpoolLabel(uid: string): Promise<{ ok: boolean; error
   }
   return res.json();
 }
+
+// ── Spool events (timeline) ───────────────────────────────────────────────
+
+export interface SpoolEvent {
+  id: number;
+  event_type: string;
+  timestamp: string | null;
+  details: Record<string, any>;
+}
+
+export async function fetchSpoolEvents(uid: string): Promise<SpoolEvent[]> {
+  const res = await fetch(`${BASE}/spools/${encodeURIComponent(uid)}/events`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Batch operations ──────────────────────────────────────────────────────
+
+export async function createSpoolsBatch(data: {
+  color_stock_id: number;
+  packaging: PackagingType;
+  count: number;
+}): Promise<SpoolInstance[]> {
+  const res = await fetch(`${BASE}/spools/batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function batchPrintLabels(uids: string[]): Promise<{
+  results: { uid: string; ok: boolean; error: string }[];
+}> {
+  const res = await fetch(`${BASE}/spools/batch-print`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uids }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+export function batchLabelsUrl(uids: string[]): string {
+  return `${BASE}/spools/batch-labels?uids=${uids.map(encodeURIComponent).join(",")}`;
+}
+
+// ── Spool summary ─────────────────────────────────────────────────────────
+
+export interface SpoolsSummary {
+  in_stock: number;
+  in_tray: number;
+  empty: number;
+  total: number;
+  spools: SpoolInstance[];
+}
+
+export async function fetchSpoolsSummary(): Promise<SpoolsSummary> {
+  const res = await fetch(`${BASE}/spools/summary`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}

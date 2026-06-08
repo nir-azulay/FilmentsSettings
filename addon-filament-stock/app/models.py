@@ -169,3 +169,22 @@ class SpoolInstance(Base):
 
     color_stock = relationship("ColorStock")
     tray_assignment = relationship("TrayAssignment", back_populates="spool_instance")
+    events = relationship("SpoolEvent", back_populates="spool_instance", cascade="all, delete-orphan", order_by="SpoolEvent.timestamp")
+
+
+class SpoolEvent(Base):
+    """Immutable log entry for a spool lifecycle transition.
+
+    Kept forever so the timeline view shows the full history:
+    created -> assigned (Tray 3) -> unassigned -> assigned (Tray 1) -> emptied.
+    """
+
+    __tablename__ = "spool_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spool_id = Column(Integer, ForeignKey("spool_instances.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_type = Column(String, nullable=False)  # created | assigned | unassigned | emptied | deleted
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    details = Column(String, default="", nullable=False)  # JSON string with extra context
+
+    spool_instance = relationship("SpoolInstance", back_populates="events")

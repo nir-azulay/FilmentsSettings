@@ -25,6 +25,7 @@ def apply_sqlite_migrations() -> None:
         _filaments_drying_columns(conn)
         _reset_zero_bed_temps(conn)
         _backfill_non_profile_filaments(conn)
+        _backfill_spool_events(conn)
 
 
 def _table_columns(conn, table: str) -> set[str]:
@@ -304,6 +305,70 @@ def _backfill_non_profile_filaments(conn) -> None:
                 params,
             )
             _log.info("Backfilled %s %s: %s", brand, material, list(params.keys() - {"fid"}))
+
+
+def _backfill_spool_events(conn) -> None:
+    """0.18.0: create spool_events rows from existing SpoolInstance timestamps.
+
+    Runs once -- if spool_events already has rows we skip entirely.
+    """
+    if not _table_exists(conn, "spool_events"):
+        return
+    if not _table_exists(conn, "spool_instances"):
+        return
+
+    existing = conn.execute(text("SELECT COUNT(*) FROM spool_events")).scalar()
+    if existing:
+        return
+
+    import json
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+
+    spools = conn.execute(
+        text(
+            "SELECT id, uid, status, created_at, assigned_at, emptied_at, "
+            "tray_entity_id, packaging "
+            "FROM spool_instances"
+        )
+    ).fetchall()
+
+    count = 0
+    for row in spools:
+        s_id, uid, status, created_at, assigned_at, emptied_at, tray_eid, pkg = row
+        ts = created_at or now
+        conn.execute(
+            text(
+                "INSERT INTO spool_events (spool_id, event_type, timestamp, details) "
+                "VALUES (:sid, 'created', :ts, :d)"
+            ),
+            {"sid": s_id, "ts": ts, "d": json.dumps({"packaging": pkg})},
+        )
+        count += 1
+
+        if assigned_at:
+            conn.execute(
+                text(
+                    "INSERT INTO spool_events (spool_id, event_type, timestamp, details) "
+                    "VALUES (:sid, 'assigned', :ts, :d)"
+                ),
+                {"sid": s_id, "ts": assigned_at,
+                 "d": json.dumps({"tray": tray_eid or "unknown"})},
+            )
+            count += 1
+
+        if emptied_at:
+            conn.execute(
+                text(
+                    "INSERT INTO spool_events (spool_id, event_type, timestamp, details) "
+                    "VALUES (:sid, 'emptied', :ts, :d)"
+                ),
+                {"sid": s_id, "ts": emptied_at, "d": "{}"},
+            )
+            count += 1
+
+    if count:
+        _log.info("Backfilled %d spool events from existing timestamps", count)
 
 
 def _filaments_drying_columns(conn) -> None:

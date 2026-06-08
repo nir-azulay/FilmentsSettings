@@ -3,7 +3,7 @@ import {
   AddonConfig,
   DEFAULT_ADDON_CONFIG,
   SpoolInstance,
-  createSpool,
+  createSpoolsBatch,
   deleteSpool,
   fetchAddonConfig,
   fetchSpools,
@@ -11,7 +11,9 @@ import {
   unassignSpool,
   PackagingType,
 } from "../api";
+import BatchLabelDialog from "./BatchLabelDialog";
 import LabelDialog from "./LabelDialog";
+import SpoolTimelineDialog from "./SpoolTimelineDialog";
 
 interface Props {
   colorStockId: number;
@@ -30,8 +32,11 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<AddonConfig>(DEFAULT_ADDON_CONFIG);
   const [labelSpool, setLabelSpool] = useState<SpoolInstance | null>(null);
+  const [batchSpools, setBatchSpools] = useState<SpoolInstance[] | null>(null);
+  const [timelineUid, setTimelineUid] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [addPkg, setAddPkg] = useState<PackagingType>("spool");
+  const [addQty, setAddQty] = useState(1);
 
   const reload = useCallback(async () => {
     const rows = await fetchSpools(colorStockId);
@@ -53,11 +58,19 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
   const handleAdd = async () => {
     setAdding(true);
     try {
-      await createSpool({ color_stock_id: colorStockId, packaging: addPkg });
+      const created = await createSpoolsBatch({
+        color_stock_id: colorStockId,
+        packaging: addPkg,
+        count: addQty,
+      });
       await reload();
       await onStockChanged();
+      if (created.length > 0) {
+        setBatchSpools(created);
+      }
     } finally {
       setAdding(false);
+      setAddQty(1);
     }
   };
 
@@ -89,6 +102,15 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
       <div style={headerRow}>
         <span style={headerLabel}>Individual Spools</span>
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={addQty}
+            onChange={(e) => setAddQty(Math.max(1, Math.min(50, Number(e.target.value) || 1)))}
+            style={qtyInput}
+            title="Quantity"
+          />
           <select
             value={addPkg}
             onChange={(e) => setAddPkg(e.target.value as PackagingType)}
@@ -98,7 +120,7 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
             <option value="refill">Refill</option>
           </select>
           <button onClick={handleAdd} disabled={adding} style={addBtn}>
-            + Register
+            {adding ? "..." : `+ Register${addQty > 1 ? ` (${addQty})` : ""}`}
           </button>
         </div>
       </div>
@@ -135,6 +157,15 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
                   <polyline points="6 9 6 2 18 2 18 9" />
                   <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
                   <rect x="6" y="14" width="12" height="8" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setTimelineUid(s.uid)}
+                style={iconBtn}
+                title="View timeline"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
               </button>
               {s.status === "in_tray" && (
@@ -184,6 +215,21 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
           onClose={() => setLabelSpool(null)}
         />
       )}
+
+      {batchSpools && (
+        <BatchLabelDialog
+          spools={batchSpools}
+          config={config}
+          onClose={() => setBatchSpools(null)}
+        />
+      )}
+
+      {timelineUid && (
+        <SpoolTimelineDialog
+          uid={timelineUid}
+          onClose={() => setTimelineUid(null)}
+        />
+      )}
     </div>
   );
 }
@@ -205,6 +251,11 @@ const loadingText: React.CSSProperties = {
 };
 const emptyText: React.CSSProperties = {
   fontSize: 12, color: "var(--ha-disabled-text)", margin: "4px 0",
+};
+const qtyInput: React.CSSProperties = {
+  width: 38, fontSize: 11, padding: "3px 4px", borderRadius: 4,
+  border: "1px solid var(--ha-divider)", background: "#fff",
+  textAlign: "center",
 };
 const selectStyle: React.CSSProperties = {
   fontSize: 11, padding: "3px 6px", borderRadius: 4,

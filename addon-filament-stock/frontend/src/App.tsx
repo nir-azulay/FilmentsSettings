@@ -20,6 +20,7 @@ import EmptyState from "./components/EmptyState";
 import QrScannerDialog from "./components/QrScannerDialog";
 import ScanAssignDialog from "./components/ScanAssignDialog";
 import SetupChecklist from "./components/SetupChecklist";
+import SpoolOverviewPanel from "./components/SpoolOverviewPanel";
 import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
 import { SpoolIcon } from "./components/SpoolIcon";
 import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
@@ -205,6 +206,8 @@ export default function App() {
         {!addonConfig.disable_bambu_integration && (
           <AmsPanel onJumpToFilament={jumpToFilament} onStockChanged={() => void reload()} />
         )}
+
+        <SpoolOverviewPanel onStockChanged={() => void reload()} />
 
         {filaments.length === 0 ? (
           <EmptyState

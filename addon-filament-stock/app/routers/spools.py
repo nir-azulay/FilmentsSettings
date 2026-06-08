@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from ..addon_options import get_options
 from ..database import get_db
-from ..models import ColorStock, Filament, SpoolInstance, TrayAssignment
+from ..models import ColorStock, Filament, SpoolEvent, SpoolInstance, TrayAssignment
 
 router = APIRouter(tags=["spools"])
 _log = logging.getLogger("filament_stock.spools")
@@ -119,6 +119,16 @@ def _get_spool_or_404(db: Session, uid: str) -> SpoolInstance:
     return spool
 
 
+def _emit_event(db: Session, spool: SpoolInstance, event_type: str, details: dict | None = None) -> None:
+    import json
+    ev = SpoolEvent(
+        spool_id=spool.id,
+        event_type=event_type,
+        details=json.dumps(details or {}),
+    )
+    db.add(ev)
+
+
 # ── CRUD ────────────────────────────────────────────────────────────────────
 
 
@@ -135,6 +145,156 @@ def list_spools(
         q = q.filter(SpoolInstance.status == status)
     rows = q.order_by(SpoolInstance.created_at.desc()).all()
     return [_serialize_spool(s) for s in rows]
+
+
+@router.get("/spools/summary")
+def get_spools_summary(db: Session = Depends(get_db)):
+    """All spools with status counts for the overview dashboard."""
+    all_spools = (
+        db.query(SpoolInstance)
+        .order_by(SpoolInstance.status.asc(), SpoolInstance.created_at.desc())
+        .all()
+    )
+    counts = {"in_stock": 0, "in_tray": 0, "empty": 0}
+    for s in all_spools:
+        if s.status in counts:
+            counts[s.status] += 1
+    return {
+        **counts,
+        "total": len(all_spools),
+        "spools": [_serialize_spool(s) for s in all_spools],
+    }
+
+
+@router.get("/spools/batch-labels")
+def get_batch_labels(
+    uids: str = Query(..., description="Comma-separated spool UIDs"),
+    db: Session = Depends(get_db),
+):
+    """Return a single PNG with all requested labels stacked vertically."""
+    from PIL import Image
+    from ..label_renderer import render_label
+
+    uid_list = [u.strip() for u in uids.split(",") if u.strip()]
+    if not uid_list:
+        raise HTTPException(400, "No UIDs provided")
+    if len(uid_list) > 50:
+        raise HTTPException(400, "Maximum 50 labels per batch")
+
+    images: list[Image.Image] = []
+    for uid in uid_list:
+        spool = db.query(SpoolInstance).filter(SpoolInstance.uid == uid).first()
+        if not spool:
+            continue
+        ha_url = _build_spool_qr_url(uid)
+        images.append(render_label(spool, ha_url))
+
+    if not images:
+        raise HTTPException(404, "No valid spools found")
+
+    total_height = sum(img.height for img in images)
+    max_width = max(img.width for img in images)
+    combined = Image.new("RGB", (max_width, total_height), "white")
+    y = 0
+    for img in images:
+        combined.paste(img, (0, y))
+        y += img.height
+
+    buf = io.BytesIO()
+    combined.save(buf, format="PNG")
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": 'inline; filename="batch-labels.png"',
+            "Cache-Control": "no-cache",
+        },
+    )
+
+
+@router.post("/spools/batch", status_code=201)
+def create_spools_batch(
+    payload: dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """Create multiple spool instances at once."""
+    color_stock_id = payload.get("color_stock_id")
+    packaging = (payload.get("packaging") or "spool").strip().lower()
+    count = int(payload.get("count", 1))
+
+    if not isinstance(color_stock_id, int):
+        raise HTTPException(400, "color_stock_id (int) is required")
+    if packaging not in ("spool", "refill"):
+        raise HTTPException(400, f"packaging must be 'spool' or 'refill'")
+    if count < 1 or count > 50:
+        raise HTTPException(400, "count must be between 1 and 50")
+
+    color = db.query(ColorStock).filter(ColorStock.id == color_stock_id).first()
+    if not color:
+        raise HTTPException(404, "ColorStock not found")
+
+    created = []
+    for _ in range(count):
+        uid = _generate_uid(db)
+        spool = SpoolInstance(
+            uid=uid,
+            color_stock_id=color_stock_id,
+            packaging=packaging,
+            status="in_stock",
+            notes="",
+        )
+        db.add(spool)
+        if packaging == "spool":
+            color.quantity = (color.quantity or 0) + 1
+        else:
+            color.quantity_refill = (color.quantity_refill or 0) + 1
+        db.flush()
+        _emit_event(db, spool, "created", {"packaging": packaging, "batch": True})
+        created.append(spool)
+
+    db.commit()
+    for s in created:
+        db.refresh(s)
+    _log.info("Batch created %d spools for color_stock %d", count, color_stock_id)
+    return [_serialize_spool(s) for s in created]
+
+
+@router.post("/spools/batch-print")
+async def batch_print_labels(
+    payload: dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+):
+    """Print labels for multiple spools sequentially."""
+    uids = payload.get("uids", [])
+    if not isinstance(uids, list) or len(uids) == 0:
+        raise HTTPException(400, "uids (list of strings) is required")
+    if len(uids) > 50:
+        raise HTTPException(400, "Maximum 50 labels per batch")
+
+    opts = get_options()
+    printer_addr = getattr(opts, "niimbot_address", "") or ""
+    if not printer_addr:
+        raise HTTPException(400, "Niimbot printer address not configured.")
+
+    from ..label_renderer import render_label
+    from ..niimbot_client import print_to_niimbot
+
+    results = []
+    for uid in uids:
+        spool = db.query(SpoolInstance).filter(SpoolInstance.uid == uid).first()
+        if not spool:
+            results.append({"uid": uid, "ok": False, "error": "Not found"})
+            continue
+        try:
+            ha_url = _build_spool_qr_url(uid)
+            img = render_label(spool, ha_url)
+            res = await print_to_niimbot(img, printer_addr)
+            results.append({"uid": uid, "ok": res.get("ok", False), "error": res.get("error", "")})
+        except Exception as exc:
+            results.append({"uid": uid, "ok": False, "error": str(exc)})
+
+    return {"results": results}
 
 
 @router.get("/spools/{uid}")
@@ -175,6 +335,8 @@ def create_spool(
     else:
         color.quantity_refill = (color.quantity_refill or 0) + 1
 
+    db.flush()
+    _emit_event(db, spool, "created", {"packaging": packaging})
     db.commit()
     db.refresh(spool)
     _log.info("Created spool %s for color_stock %d (%s)", uid, color_stock_id, packaging)
@@ -211,6 +373,8 @@ def delete_spool(uid: str = Path(...), db: Session = Depends(get_db)):
         else:
             color.quantity_refill = max(0, (color.quantity_refill or 0) - 1)
 
+    _emit_event(db, spool, "deleted")
+    db.flush()
     db.delete(spool)
     db.commit()
     return {"ok": True, "uid": uid}
@@ -294,6 +458,8 @@ async def assign_spool_to_tray(
     spool.tray_assignment_id = assignment.id
     spool.assigned_at = now
 
+    _emit_event(db, spool, "assigned", {"tray": location_label or entity_id})
+
     pushed_ok = False
     push_error = ""
     if push_to_printer:
@@ -347,6 +513,7 @@ def unassign_spool(uid: str = Path(...), db: Session = Depends(get_db)):
         if assignment and assignment.unassigned_at is None:
             assignment.unassigned_at = datetime.now(timezone.utc)
 
+    _emit_event(db, spool, "unassigned", {"tray": spool.tray_entity_id or ""})
     spool.status = "in_stock"
     spool.tray_entity_id = None
     spool.tray_assignment_id = None
@@ -381,6 +548,7 @@ def mark_spool_empty(uid: str = Path(...), db: Session = Depends(get_db)):
     spool.emptied_at = datetime.now(timezone.utc)
     spool.tray_entity_id = None
     spool.tray_assignment_id = None
+    _emit_event(db, spool, "emptied")
     db.commit()
     db.refresh(spool)
     return {"ok": True, "spool": _serialize_spool(spool)}
@@ -426,3 +594,27 @@ async def print_spool_label(uid: str = Path(...), db: Session = Depends(get_db))
     img = render_label(spool, ha_url)
     result = await print_to_niimbot(img, printer_addr)
     return result
+
+
+# ── Events / Timeline ───────────────────────────────────────────────────────
+
+
+@router.get("/spools/{uid}/events")
+def get_spool_events(uid: str = Path(...), db: Session = Depends(get_db)):
+    import json
+    spool = _get_spool_or_404(db, uid)
+    events = (
+        db.query(SpoolEvent)
+        .filter(SpoolEvent.spool_id == spool.id)
+        .order_by(SpoolEvent.timestamp.asc())
+        .all()
+    )
+    return [
+        {
+            "id": e.id,
+            "event_type": e.event_type,
+            "timestamp": e.timestamp.isoformat() if e.timestamp else None,
+            "details": json.loads(e.details) if e.details else {},
+        }
+        for e in events
+    ]
