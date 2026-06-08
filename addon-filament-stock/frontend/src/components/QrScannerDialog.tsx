@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 interface Props {
@@ -9,47 +9,42 @@ interface Props {
 const SP_RE = /SP-[A-F0-9]{8}/i;
 
 export default function QrScannerDialog({ onScanned, onClose }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [decoding, setDecoding] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(true);
-  const handledRef = useRef(false);
+  const [manualUid, setManualUid] = useState("");
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDecoding(true);
+    setError(null);
+    try {
+      const scanner = new Html5Qrcode("qr-decode-tmp");
+      const decoded = await scanner.scanFile(file, false);
+      const match = decoded.match(SP_RE);
+      if (match) {
+        onScanned(match[0].toUpperCase());
+      } else {
+        setError(`QR decoded but no spool UID found: "${decoded}"`);
+      }
+    } catch {
+      setError("Could not read a QR code from the photo. Try again with a clearer image.");
+    } finally {
+      setDecoding(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
 
-    const scanner = new Html5Qrcode("qr-reader");
-    scannerRef.current = scanner;
-
-    scanner
-      .start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decoded) => {
-          if (handledRef.current) return;
-          const match = decoded.match(SP_RE);
-          if (match) {
-            handledRef.current = true;
-            scanner.stop().catch(() => {});
-            onScanned(match[0].toUpperCase());
-          }
-        },
-        () => {},
-      )
-      .then(() => setStarting(false))
-      .catch((err) => {
-        setStarting(false);
-        setError(
-          typeof err === "string"
-            ? err
-            : err?.message || "Camera access denied or unavailable",
-        );
-      });
-
-    return () => {
-      scanner.stop().catch(() => {});
-    };
-  }, [onScanned]);
+  const handleManualSubmit = () => {
+    const trimmed = manualUid.trim().toUpperCase();
+    const match = trimmed.match(SP_RE);
+    if (match) {
+      onScanned(match[0]);
+    } else {
+      setError("Invalid spool UID. Expected format: SP-XXXXXXXX");
+    }
+  };
 
   return (
     <div style={overlay} onClick={onClose}>
@@ -63,17 +58,59 @@ export default function QrScannerDialog({ onScanned, onClose }: Props) {
           </button>
         </div>
 
-        <div style={scannerWrap}>
-          <div id="qr-reader" ref={containerRef} style={{ width: "100%" }} />
+        {/* Hidden element for html5-qrcode file scanning */}
+        <div id="qr-decode-tmp" style={{ display: "none" }} />
+
+        <div style={body}>
+          {/* Primary: take photo with camera */}
+          <p style={instruction}>
+            Take a photo of the QR code on the spool label:
+          </p>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFile}
+            style={{ display: "none" }}
+            id="qr-file-input"
+          />
+
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={decoding}
+            style={cameraBtn}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            {decoding ? "Decoding..." : "Take Photo"}
+          </button>
+
+          {error && <p style={errorText}>{error}</p>}
+
+          {/* Divider */}
+          <div style={divider}>
+            <span style={dividerText}>or enter UID manually</span>
+          </div>
+
+          {/* Fallback: manual UID entry */}
+          <div style={manualRow}>
+            <input
+              type="text"
+              value={manualUid}
+              onChange={(e) => setManualUid(e.target.value)}
+              placeholder="SP-XXXXXXXX"
+              style={manualInput}
+              onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
+            />
+            <button onClick={handleManualSubmit} style={manualBtn}>
+              Assign
+            </button>
+          </div>
         </div>
-
-        {starting && <p style={infoText}>Starting camera...</p>}
-        {error && <p style={errorText}>{error}</p>}
-
-        <p style={hint}>
-          Point your camera at the QR code on a spool label.
-          The spool UID (SP-XXXXXXXX) will be detected automatically.
-        </p>
       </div>
     </div>
   );
@@ -86,7 +123,7 @@ const overlay: React.CSSProperties = {
 };
 const dialog: React.CSSProperties = {
   background: "var(--ha-card-bg, #fff)", borderRadius: 12, padding: 0,
-  width: "min(420px, 92vw)", maxHeight: "90vh", overflowY: "auto",
+  width: "min(400px, 92vw)", maxHeight: "90vh", overflowY: "auto",
   boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
 };
 const header: React.CSSProperties = {
@@ -101,18 +138,44 @@ const closeBtn: React.CSSProperties = {
   width: 32, height: 32, display: "flex", alignItems: "center",
   justifyContent: "center", borderRadius: "50%", cursor: "pointer",
 };
-const scannerWrap: React.CSSProperties = {
-  padding: "12px 16px 0",
+const body: React.CSSProperties = {
+  padding: "16px 20px 20px",
 };
-const infoText: React.CSSProperties = {
-  fontSize: 13, color: "var(--ha-secondary-text)", textAlign: "center",
-  padding: "8px 16px",
+const instruction: React.CSSProperties = {
+  fontSize: 14, color: "var(--ha-primary-text)", textAlign: "center",
+  margin: "0 0 14px", lineHeight: 1.5,
+};
+const cameraBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+  width: "100%", padding: "14px 20px",
+  background: "var(--ha-primary-color, #1976d2)", color: "#fff",
+  border: "none", borderRadius: 8,
+  fontSize: 16, fontWeight: 600, cursor: "pointer",
 };
 const errorText: React.CSSProperties = {
   fontSize: 13, color: "var(--ha-error, #c62828)", textAlign: "center",
-  padding: "8px 16px",
+  padding: "10px 0 0", margin: 0,
 };
-const hint: React.CSSProperties = {
-  fontSize: 12, color: "var(--ha-secondary-text)", textAlign: "center",
-  padding: "8px 16px 16px", margin: 0, lineHeight: 1.5,
+const divider: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 12,
+  margin: "18px 0 14px",
+};
+const dividerText: React.CSSProperties = {
+  fontSize: 12, color: "var(--ha-secondary-text)",
+  whiteSpace: "nowrap", flex: "0 0 auto",
+};
+const manualRow: React.CSSProperties = {
+  display: "flex", gap: 8,
+};
+const manualInput: React.CSSProperties = {
+  flex: 1, padding: "8px 12px",
+  border: "1px solid var(--ha-divider, #e0e0e0)", borderRadius: 6,
+  fontSize: 14, fontFamily: "ui-monospace, monospace",
+  color: "var(--ha-primary-text)", background: "#fff",
+};
+const manualBtn: React.CSSProperties = {
+  padding: "8px 16px",
+  background: "var(--ha-primary-color, #1976d2)", color: "#fff",
+  border: "none", borderRadius: 6,
+  fontSize: 13, fontWeight: 600, cursor: "pointer",
 };

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.17.1 -- Fix QR scanner: use photo capture instead of live camera
+
+The live camera stream (`getUserMedia`) is blocked inside HA Ingress iframes.
+Replaced with a **photo capture** approach: tap the camera button, snap a photo
+of the QR code, and the app decodes the spool UID from the image. Also added a
+**manual UID entry** field as a fallback.
+
 ## 0.17.0 -- In-app QR scanner for scan-to-assign
 
 Added a **Scan** button in the toolbar that opens the phone camera to
