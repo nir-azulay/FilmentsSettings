@@ -25,18 +25,22 @@ from ..models import ColorStock, Filament, SpoolInstance, TrayAssignment
 router = APIRouter(tags=["spools"])
 _log = logging.getLogger("filament_stock.spools")
 
-_ingress_entry: str | None = None
+_addon_slug: str | None = None
 
 
-def _get_ingress_entry() -> str:
-    """Fetch the Ingress entry path from the Supervisor API (cached)."""
-    global _ingress_entry
-    if _ingress_entry is not None:
-        return _ingress_entry
+def _get_addon_slug() -> str:
+    """Fetch the add-on's full slug from the Supervisor API (cached).
+    
+    The user-facing Ingress URL in HA is /hassio/ingress/<slug>/,
+    NOT the internal /api/hassio_ingress/<token>/ path.
+    """
+    global _addon_slug
+    if _addon_slug is not None:
+        return _addon_slug
     token = os.environ.get("SUPERVISOR_TOKEN", "")
     if not token:
-        _ingress_entry = "/"
-        return _ingress_entry
+        _addon_slug = "local_filament_stock"
+        return _addon_slug
     try:
         resp = httpx.get(
             "http://supervisor/addons/self/info",
@@ -45,26 +49,28 @@ def _get_ingress_entry() -> str:
         )
         if resp.status_code == 200:
             data = resp.json().get("data", {})
-            entry = data.get("ingress_entry", "/")
-            _ingress_entry = entry if entry.endswith("/") else entry + "/"
-            _log.info("Ingress entry: %s", _ingress_entry)
+            _addon_slug = data.get("slug", "local_filament_stock")
+            _log.info("Add-on slug: %s", _addon_slug)
         else:
             _log.warning("Supervisor /addons/self/info returned %s", resp.status_code)
-            _ingress_entry = "/"
+            _addon_slug = "local_filament_stock"
     except Exception as exc:
-        _log.warning("Failed to fetch Ingress entry: %s", exc)
-        _ingress_entry = "/"
-    return _ingress_entry
+        _log.warning("Failed to fetch add-on slug: %s", exc)
+        _addon_slug = "local_filament_stock"
+    return _addon_slug
 
 
 def _build_spool_qr_url(spool_uid: str) -> str | None:
-    """Build the full QR code URL for a spool, or None if no external URL."""
+    """Build the full QR code URL for a spool, or None if no external URL.
+    
+    Uses the HA user-facing Ingress path: /hassio/ingress/<slug>/
+    """
     opts = get_options()
     ha_url = (getattr(opts, "ha_external_url", "") or "").rstrip("/")
     if not ha_url:
         return None
-    ingress = _get_ingress_entry()
-    return f"{ha_url}{ingress}"
+    slug = _get_addon_slug()
+    return f"{ha_url}/hassio/ingress/{slug}/"
 
 
 def _generate_uid(db: Session) -> str:

@@ -1,11 +1,11 @@
 # Changelog
 
-## 0.16.14 -- Fix QR code URL for Ingress (scan-to-assign)
+## 0.16.15 -- Fix QR code URL for Ingress (scan-to-assign)
 
-QR codes on spool labels now use the correct HA Ingress path instead of
-a bare `/filaments/` path. The add-on auto-detects its Ingress entry
-from the Supervisor API, so scanning a label QR code with your phone
-camera now opens the assign dialog correctly via Nabu Casa or local URL.
+QR codes now use the correct user-facing HA Ingress URL format:
+`/hassio/ingress/<addon-slug>/` instead of the internal API path.
+The add-on auto-detects its slug from the Supervisor API. Scanning a
+label QR with the HA Companion app opens the assign dialog correctly.
 
 ## 0.16.8 -- Label layout: parameters at bottom, each on own line
 
