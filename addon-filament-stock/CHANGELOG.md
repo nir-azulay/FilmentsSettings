@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.1 -- Fix: filters no longer jump to top of page
+
+Removed the forced `scrollTo(top: 0)` that fired on every filter change.
+Material, brand, and color filters now keep your scroll position.
+
 ## 0.18.0 -- Spool lifecycle timeline, batch labels, and overview dashboard
 
 Three major spool tracking improvements:

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { Filament, StapleAlertIgnore, deleteFilament } from "../api";
 import { ColorFamilyId, familyFor } from "../colorFamilies";
 import { MOBILE_QUERY, useMediaQuery } from "../useMediaQuery";
@@ -85,16 +85,6 @@ export default function Dashboard({ filaments, alertIgnores, onUpdate }: Props) 
       return true;
     });
   }, [filaments, selectedTypes, selectedBrands, selectedColorFamilies]);
-
-  const filterKey =
-    `${[...selectedTypes].sort().join(",")}` +
-    `|${[...selectedBrands].sort().join(",")}` +
-    `|${[...selectedColorFamilies].sort().join(",")}`;
-
-  useEffect(() => {
-    if (!isMobile) return;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [filterKey, isMobile]);
 
   const refreshedSelected = selectedFilament
     ? filaments.find((f) => f.id === selectedFilament.id) ?? null
