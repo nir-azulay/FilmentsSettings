@@ -17,6 +17,7 @@ import AmsPanel from "./components/AmsPanel";
 import CreateFilamentDialog from "./components/CreateFilamentDialog";
 import Dashboard from "./components/Dashboard";
 import EmptyState from "./components/EmptyState";
+import QrScannerDialog from "./components/QrScannerDialog";
 import ScanAssignDialog from "./components/ScanAssignDialog";
 import SetupChecklist from "./components/SetupChecklist";
 import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
@@ -50,6 +51,7 @@ export default function App() {
   // fetch the config separately for fields they care about.
   const [addonConfig, setAddonConfig] = useState<AddonConfig>(DEFAULT_ADDON_CONFIG);
   const [scanTarget, setScanTarget] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   // Hash-based deep linking: #spool/SP-XXXXXXXX opens the scan-assign dialog
   useEffect(() => {
@@ -145,6 +147,14 @@ export default function App() {
               {importMsg.text}
             </span>
           )}
+          <button onClick={() => setShowScanner(true)} style={scanBtn} title="Scan spool QR code">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" />
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+              <rect x="7" y="7" width="10" height="10" rx="1" />
+            </svg>
+            Scan
+          </button>
           <button onClick={() => setShowCreateDialog(true)} style={addFilamentBtn}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -210,6 +220,16 @@ export default function App() {
         <CreateFilamentDialog
           onClose={() => setShowCreateDialog(false)}
           onCreated={reload}
+        />
+      )}
+
+      {showScanner && (
+        <QrScannerDialog
+          onScanned={(uid) => {
+            setShowScanner(false);
+            setScanTarget(uid);
+          }}
+          onClose={() => setShowScanner(false)}
         />
       )}
 
@@ -281,6 +301,16 @@ const loaderRing: React.CSSProperties = {
 };
 const toolbarTitle: React.CSSProperties = {
   fontSize: 18, fontWeight: 400, color: "var(--ha-primary-text)", letterSpacing: 0,
+};
+const scanBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 5,
+  padding: "7px 14px",
+  background: "var(--ha-primary-color)",
+  color: "#fff",
+  border: "none",
+  borderRadius: "var(--ha-btn-radius)",
+  fontSize: 13, fontWeight: 600,
+  cursor: "pointer",
 };
 const addFilamentBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,

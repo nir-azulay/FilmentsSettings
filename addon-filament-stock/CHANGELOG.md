@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0 -- In-app QR scanner for scan-to-assign
+
+Added a **Scan** button in the toolbar that opens the phone camera to
+scan spool QR codes directly inside the add-on. No more URL/Ingress
+issues -- the scanner reads the spool UID from the QR code and opens
+the assign dialog immediately. QR codes now encode just the spool UID
+(simpler = faster to scan).
+
 ## 0.16.15 -- Fix QR code URL for Ingress (scan-to-assign)
 
 QR codes now use the correct user-facing HA Ingress URL format:
