@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.17.2 -- Reliable QR scanning via native BarcodeDetector
+
+Replaced `html5-qrcode` library with the browser's **native BarcodeDetector
+API** (Chrome 83+, Safari 15.4+). This is the OS-level barcode engine and
+handles phone camera photos far more reliably. Falls back to progressively
+cropped canvas attempts if the first pass misses. Bundle size cut in half
+(662KB -> 326KB). If QR scanning isn't supported, the manual UID entry
+field is shown as the primary option.
+
 ## 0.17.1 -- Fix QR scanner: use photo capture instead of live camera
 
 The live camera stream (`getUserMedia`) is blocked inside HA Ingress iframes.
