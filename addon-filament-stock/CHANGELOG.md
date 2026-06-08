@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.3 -- Reliable QR scanning with jsQR
+
+Replaced `BarcodeDetector` (not available on all devices) with **jsQR** —
+a pure JavaScript QR decoder that works everywhere by analyzing pixel
+data on a canvas. Take a photo of the spool label with the "Take Photo"
+button, and jsQR decodes it instantly. Tries full image + center crops
+for best detection. Manual UID entry always available as fallback.
+
 ## 0.17.2 -- Reliable QR scanning via native BarcodeDetector
 
 Replaced `html5-qrcode` library with the browser's **native BarcodeDetector

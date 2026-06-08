@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import jsQR from "jsqr";
 
 interface Props {
   onScanned: (uid: string) => void;
@@ -7,59 +8,49 @@ interface Props {
 
 const SP_RE = /SP-[A-F0-9]{8}/i;
 
+/** Load an image file onto a canvas and return the context + dimensions. */
+function loadImageToCanvas(
+  file: File,
+  maxDim = 1400,
+): Promise<{ ctx: CanvasRenderingContext2D; w: number; h: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(img.src);
+      resolve({ ctx, w, h });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error("Failed to load image"));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 /**
- * Decode a QR code from an image file using the browser's native
- * BarcodeDetector API (Chrome 83+, Safari 15.4+). Falls back to
- * canvas + manual pixel scanning if unavailable.
+ * Decode a QR code from an image file.
+ * Strategy: load to canvas, try jsQR on full image and progressively
+ * tighter center crops until the QR code is found.
  */
 async function decodeQR(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file);
+  const { ctx, w, h } = await loadImageToCanvas(file);
 
-  // Native BarcodeDetector — available on Android webview & iOS Safari
-  if ("BarcodeDetector" in window) {
-    try {
-      const detector = new (window as any).BarcodeDetector({
-        formats: ["qr_code"],
-      });
-      const results = await detector.detect(bitmap);
-      if (results.length > 0) {
-        bitmap.close();
-        return results[0].rawValue as string;
-      }
-    } catch {
-      // detector.detect failed — fall through to canvas fallback
-    }
-  }
-
-  // Fallback: draw to canvas, get ImageData, and try BarcodeDetector
-  // on progressively smaller crops (center 80%, 60%, 40%) to help
-  // the decoder focus on the QR code area.
-  const canvas = document.createElement("canvas");
-  const maxDim = 1200;
-  const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-
-  if ("BarcodeDetector" in window) {
-    const detector = new (window as any).BarcodeDetector({
-      formats: ["qr_code"],
-    });
-    for (const cropFactor of [1, 0.8, 0.6, 0.4]) {
-      const cw = Math.round(canvas.width * cropFactor);
-      const ch = Math.round(canvas.height * cropFactor);
-      const cx = Math.round((canvas.width - cw) / 2);
-      const cy = Math.round((canvas.height - ch) / 2);
-      const imgData = ctx.getImageData(cx, cy, cw, ch);
-      try {
-        const results = await detector.detect(imgData);
-        if (results.length > 0) return results[0].rawValue as string;
-      } catch {
-        // continue
-      }
-    }
+  for (const cropFactor of [1, 0.75, 0.5]) {
+    const cw = Math.round(w * cropFactor);
+    const ch = Math.round(h * cropFactor);
+    const cx = Math.round((w - cw) / 2);
+    const cy = Math.round((h - ch) / 2);
+    const imgData = ctx.getImageData(cx, cy, cw, ch);
+    const result = jsQR(imgData.data, cw, ch);
+    if (result?.data) return result.data;
   }
 
   throw new Error("no_qr");
@@ -70,8 +61,6 @@ export default function QrScannerDialog({ onScanned, onClose }: Props) {
   const [decoding, setDecoding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manualUid, setManualUid] = useState("");
-
-  const hasBarcodeDetector = "BarcodeDetector" in window;
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,44 +110,36 @@ export default function QrScannerDialog({ onScanned, onClose }: Props) {
 
         <div style={body}>
           <p style={instruction}>
-            {hasBarcodeDetector
-              ? "Take a photo of the QR code on the spool label:"
-              : "Your browser doesn't support QR scanning. Enter the spool UID below:"}
+            Take a photo of the QR code on the spool label:
           </p>
 
-          {hasBarcodeDetector && (
-            <>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFile}
-                style={{ display: "none" }}
-                id="qr-file-input"
-              />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFile}
+            style={{ display: "none" }}
+            id="qr-file-input"
+          />
 
-              <button
-                onClick={() => fileRef.current?.click()}
-                disabled={decoding}
-                style={cameraBtn}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-                {decoding ? "Decoding..." : "Take Photo"}
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={decoding}
+            style={cameraBtn}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            {decoding ? "Decoding..." : "Take Photo"}
+          </button>
 
           {error && <p style={errorText}>{error}</p>}
 
           <div style={dividerStyle}>
             <div style={dividerLine} />
-            <span style={dividerText}>
-              {hasBarcodeDetector ? "or enter UID manually" : ""}
-            </span>
+            <span style={dividerText}>or enter UID manually</span>
             <div style={dividerLine} />
           </div>
 
