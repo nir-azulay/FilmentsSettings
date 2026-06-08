@@ -99,7 +99,7 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     dry_time = filament.dry_time if filament else None
 
     if ha_url:
-        qr_data = f"{ha_url.rstrip('/')}/filaments/#spool/{spool.uid}"
+        qr_data = f"{ha_url.rstrip('/')}#spool/{spool.uid}"
     else:
         qr_data = f"{brand} {material} - {color_name} [{spool.uid}]"
 

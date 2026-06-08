@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import io
 import logging
+import os
 import secrets
 from datetime import datetime, timezone
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -22,6 +24,47 @@ from ..models import ColorStock, Filament, SpoolInstance, TrayAssignment
 
 router = APIRouter(tags=["spools"])
 _log = logging.getLogger("filament_stock.spools")
+
+_ingress_entry: str | None = None
+
+
+def _get_ingress_entry() -> str:
+    """Fetch the Ingress entry path from the Supervisor API (cached)."""
+    global _ingress_entry
+    if _ingress_entry is not None:
+        return _ingress_entry
+    token = os.environ.get("SUPERVISOR_TOKEN", "")
+    if not token:
+        _ingress_entry = "/"
+        return _ingress_entry
+    try:
+        resp = httpx.get(
+            "http://supervisor/addons/self/info",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5.0,
+        )
+        if resp.status_code == 200:
+            data = resp.json().get("data", {})
+            entry = data.get("ingress_entry", "/")
+            _ingress_entry = entry if entry.endswith("/") else entry + "/"
+            _log.info("Ingress entry: %s", _ingress_entry)
+        else:
+            _log.warning("Supervisor /addons/self/info returned %s", resp.status_code)
+            _ingress_entry = "/"
+    except Exception as exc:
+        _log.warning("Failed to fetch Ingress entry: %s", exc)
+        _ingress_entry = "/"
+    return _ingress_entry
+
+
+def _build_spool_qr_url(spool_uid: str) -> str | None:
+    """Build the full QR code URL for a spool, or None if no external URL."""
+    opts = get_options()
+    ha_url = (getattr(opts, "ha_external_url", "") or "").rstrip("/")
+    if not ha_url:
+        return None
+    ingress = _get_ingress_entry()
+    return f"{ha_url}{ingress}"
 
 
 def _generate_uid(db: Session) -> str:
@@ -343,8 +386,7 @@ def mark_spool_empty(uid: str = Path(...), db: Session = Depends(get_db)):
 @router.get("/spools/{uid}/label")
 def get_spool_label(uid: str = Path(...), db: Session = Depends(get_db)):
     spool = _get_spool_or_404(db, uid)
-    opts = get_options()
-    ha_url = getattr(opts, "ha_external_url", "") or None
+    ha_url = _build_spool_qr_url(uid)
 
     from ..label_renderer import render_label
     img = render_label(spool, ha_url)
@@ -366,7 +408,7 @@ def get_spool_label(uid: str = Path(...), db: Session = Depends(get_db)):
 async def print_spool_label(uid: str = Path(...), db: Session = Depends(get_db)):
     spool = _get_spool_or_404(db, uid)
     opts = get_options()
-    ha_url = getattr(opts, "ha_external_url", "") or None
+    ha_url = _build_spool_qr_url(uid)
     printer_addr = getattr(opts, "niimbot_address", "") or ""
 
     if not printer_addr:

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.14 -- Fix QR code URL for Ingress (scan-to-assign)
+
+QR codes on spool labels now use the correct HA Ingress path instead of
+a bare `/filaments/` path. The add-on auto-detects its Ingress entry
+from the Supervisor API, so scanning a label QR code with your phone
+camera now opens the assign dialog correctly via Nabu Casa or local URL.
+
 ## 0.16.8 -- Label layout: parameters at bottom, each on own line
 
 Redesigned label layout: filament identity (type, brand, color) stays at
