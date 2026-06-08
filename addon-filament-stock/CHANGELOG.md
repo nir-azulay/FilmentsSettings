@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.17.4 -- Scan to select spool in Assign dialog
+
+Added a **Scan** button next to the search bar in the "Assign filament to tray"
+dialog. Scan a spool's QR code to instantly select that filament in the list
+instead of scrolling/searching. The scanned spool's packaging type is also
+auto-selected.
+
 ## 0.17.3 -- Reliable QR scanning with jsQR
 
 Replaced `BarcodeDetector` (not available on all devices) with **jsQR** —

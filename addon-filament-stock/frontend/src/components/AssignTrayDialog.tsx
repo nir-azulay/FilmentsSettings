@@ -8,10 +8,12 @@ import {
   assignTray,
   fetchAddonConfig,
   fetchAssignSuggestions,
+  fetchSpoolByUid,
   PackagingType,
 } from "../api";
 import { ColorFamilyId, familyFor } from "../colorFamilies";
 import ColorFilter from "./ColorFilter";
+import QrScannerDialog from "./QrScannerDialog";
 import { SpoolIcon } from "./SpoolIcon";
 
 // Local helper so multi-select chip toggles read cleanly. Identical
@@ -43,13 +45,13 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
   const [data, setData] = useState<AssignSuggestionsResponse | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  // Multi-select to match the main Stock page. Empty Set = no filter,
-  // i.e. show all types / brands / colours.
   const [filterTypes, setFilterTypes] = useState<Set<string>>(() => new Set());
   const [filterBrands, setFilterBrands] = useState<Set<string>>(() => new Set());
   const [filterColors, setFilterColors] = useState<Set<ColorFamilyId>>(() => new Set());
   const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
   const [packaging, setPackaging] = useState<PackagingType>("spool");
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   const selectColor = (colorStockId: number) => {
     setSelectedColorId(colorStockId);
@@ -58,6 +60,32 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
       setPackaging(suggestion.available_refill > 0 ? "refill" : "spool");
     }
   };
+
+  const handleScanned = async (uid: string) => {
+    setShowScanner(false);
+    setScanError(null);
+    try {
+      const spool = await fetchSpoolByUid(uid);
+      const match = data?.suggestions.find(
+        (s) => s.color_stock_id === spool.color_stock_id,
+      );
+      if (match) {
+        setSelectedColorId(match.color_stock_id);
+        setPackaging(spool.packaging);
+        setFilterTypes(new Set());
+        setFilterBrands(new Set());
+        setFilterColors(new Set());
+        setSearch("");
+      } else {
+        setScanError(
+          `Spool ${uid} (${spool.brand} ${spool.material} – ${spool.color_name}) is not in the suggestions list for this tray.`,
+        );
+      }
+    } catch {
+      setScanError(`Spool ${uid} not found.`);
+    }
+  };
+
   // Initial value mirrors the compiled-in fallback; the real default
   // arrives with /api/config and is applied below (only if the user
   // hasn't manually toggled the checkbox yet, so we never override an
@@ -296,13 +324,32 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
 
           {data && (
             <>
-              <input
-                type="text"
-                value={search}
-                placeholder="Search by brand, material, or color…"
-                onChange={(e) => setSearch(e.target.value)}
-                style={searchInput}
-              />
+              <div style={searchRow}>
+                <input
+                  type="text"
+                  value={search}
+                  placeholder="Search by brand, material, or color…"
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{ ...searchInput, flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => { setScanError(null); setShowScanner(true); }}
+                  style={scanQrBtn}
+                  title="Scan spool QR code"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                    <rect x="7" y="7" width="10" height="10" rx="1" />
+                  </svg>
+                  Scan
+                </button>
+              </div>
+
+              {scanError && (
+                <div style={scanErrorBox}>{scanError}</div>
+              )}
 
               {uniqueTypes.length > 1 && (
                 <div style={chipRow}>
@@ -457,6 +504,12 @@ export default function AssignTrayDialog({ tray, onClose, onAssigned }: Props) {
             </footer>
           </div>
         )}
+      {showScanner && (
+        <QrScannerDialog
+          onScanned={handleScanned}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
       </div>
     </div>
   );
@@ -837,4 +890,23 @@ const chipActive: React.CSSProperties = {
   color: "var(--ha-primary-color)",
   borderColor: "rgba(3,169,244,0.4)",
   fontWeight: 600,
+};
+const searchRow: React.CSSProperties = {
+  display: "flex",
+  gap: 6,
+  alignItems: "stretch",
+};
+const scanQrBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 5,
+  padding: "0 12px",
+  background: "var(--ha-primary-color, #1976d2)", color: "#fff",
+  border: "none", borderRadius: 6,
+  fontSize: 12, fontWeight: 600, cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+const scanErrorBox: React.CSSProperties = {
+  padding: "6px 10px", borderRadius: 6,
+  background: "var(--ha-error-bg, #ffebee)",
+  color: "var(--ha-error, #c62828)",
+  fontSize: 12,
 };
