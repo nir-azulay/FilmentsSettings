@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.3 -- Move All Spools panel below filament cards + batch print
+
+- **All Spools** overview panel now appears **below** the filament Dashboard cards (last section)
+- Multi-select checkboxes with **"Print N Labels"** batch button in All Spools panel
+
 ## 0.18.2 -- Multi-select batch print in Spool Overview
 
 The **All Spools** overview panel now has checkboxes on every row. Select
