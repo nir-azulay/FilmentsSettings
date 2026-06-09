@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.2 -- Multi-select batch print in Spool Overview
+
+The **All Spools** overview panel now has checkboxes on every row. Select
+multiple spools (or "Select all"), then click **"Print N Labels"** to open
+the batch label dialog with Download All and Print All actions. Much easier
+to find than the per-color-row batch registration.
+
 ## 0.18.1 -- Fix: filters no longer jump to top of page
 
 Removed the forced `scrollTo(top: 0)` that fired on every filter change.

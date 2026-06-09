@@ -11,6 +11,7 @@ import {
   markSpoolEmpty,
   unassignSpool,
 } from "../api";
+import BatchLabelDialog from "./BatchLabelDialog";
 import LabelDialog from "./LabelDialog";
 import SpoolTimelineDialog from "./SpoolTimelineDialog";
 import { SpoolIcon } from "./SpoolIcon";
@@ -49,6 +50,8 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
   const [search, setSearch] = useState("");
   const [labelSpool, setLabelSpool] = useState<SpoolInstance | null>(null);
   const [timelineUid, setTimelineUid] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [showBatchPrint, setShowBatchPrint] = useState(false);
 
   const reload = useCallback(async () => {
     const [summary, cfg] = await Promise.all([
@@ -88,6 +91,27 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
     }
     return list;
   }, [data, statusFilter, search]);
+
+  const toggleSelect = (uid: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid); else next.add(uid);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((s) => s.uid)));
+    }
+  };
+
+  const selectedSpools = useMemo(
+    () => (data?.spools ?? []).filter((s) => selected.has(s.uid)),
+    [data, selected],
+  );
 
   const handleUnassign = async (uid: string) => {
     await unassignSpool(uid);
@@ -157,6 +181,35 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
                 />
               </div>
 
+              {filtered.length > 0 && (
+                <div style={batchBar}>
+                  <label style={selectAllLabel}>
+                    <input
+                      type="checkbox"
+                      checked={selected.size > 0 && selected.size === filtered.length}
+                      ref={(el) => {
+                        if (el) el.indeterminate = selected.size > 0 && selected.size < filtered.length;
+                      }}
+                      onChange={toggleSelectAll}
+                    />
+                    {selected.size > 0 ? `${selected.size} selected` : "Select all"}
+                  </label>
+                  {selected.size > 0 && (
+                    <button
+                      onClick={() => setShowBatchPrint(true)}
+                      style={batchPrintBtn}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="6 9 6 2 18 2 18 9" />
+                        <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" />
+                        <rect x="6" y="14" width="12" height="8" />
+                      </svg>
+                      Print {selected.size} Label{selected.size > 1 ? "s" : ""}
+                    </button>
+                  )}
+                </div>
+              )}
+
               {filtered.length === 0 ? (
                 <p style={infoText}>No spools match your filters.</p>
               ) : (
@@ -170,6 +223,12 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
 
                     return (
                       <div key={s.uid} style={spoolRow}>
+                        <input
+                          type="checkbox"
+                          checked={selected.has(s.uid)}
+                          onChange={() => toggleSelect(s.uid)}
+                          style={rowCheckbox}
+                        />
                         <SpoolIcon colorHex={s.color_hex ?? "#808080"} size={22} />
                         <span style={uidText}>{s.uid}</span>
                         <span style={brandText}>
@@ -218,6 +277,13 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
       )}
       {timelineUid && (
         <SpoolTimelineDialog uid={timelineUid} onClose={() => setTimelineUid(null)} />
+      )}
+      {showBatchPrint && selectedSpools.length > 0 && (
+        <BatchLabelDialog
+          spools={selectedSpools}
+          config={config}
+          onClose={() => { setShowBatchPrint(false); setSelected(new Set()); }}
+        />
       )}
     </section>
   );
@@ -275,6 +341,24 @@ const searchInput: React.CSSProperties = {
   fontSize: 12, border: "1px solid var(--ha-divider)",
   borderRadius: 6, background: "var(--ha-input-bg, #fff)",
   color: "var(--ha-primary-text)",
+};
+const batchBar: React.CSSProperties = {
+  display: "flex", alignItems: "center", justifyContent: "space-between",
+  gap: 8, marginBottom: 6,
+};
+const selectAllLabel: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 6,
+  fontSize: 12, color: "var(--ha-primary-text)", cursor: "pointer",
+};
+const batchPrintBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 6,
+  padding: "6px 14px",
+  background: "var(--ha-primary-color, #1976d2)", color: "#fff",
+  border: "none", borderRadius: 6,
+  fontSize: 12, fontWeight: 600, cursor: "pointer",
+};
+const rowCheckbox: React.CSSProperties = {
+  width: 14, height: 14, cursor: "pointer", flexShrink: 0,
 };
 const listWrap: React.CSSProperties = {
   display: "flex", flexDirection: "column", gap: 2,
