@@ -4,11 +4,11 @@ Target: Niimbot B21 Pro -- 300 DPI, 591px printhead width.
 Label size: 50x30mm = 591x354 pixels at 300 DPI.
 Black & white only (thermal printer).
 
-Layout (QR on right, params at bottom):
+Layout (logo top-left, QR on right, params at bottom):
   +------------------------------------------------------+
-  |  PETG                                         [QR]   |
-  |  YS Filament ABS                              [QR]   |
-  |  Black                                        [QR]   |
+  |  [LOGO]  PETG                               [QR]    |
+  |          YS Filament ABS                     [QR]    |
+  |          Black                               [QR]    |
   |                                                      |
   |  Nozzle: 220-260°C                                  |
   |  Bed: 80-110°C                                      |
@@ -22,9 +22,10 @@ Layout (QR on right, params at bottom):
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import qrcode
 from qrcode.image.pil import PilImage
 
@@ -37,6 +38,12 @@ LABEL_W = 591
 LABEL_H = 354
 QR_SIZE = 150
 MARGIN = 10
+LOGO_SIZE = 48
+
+_LOGO_DIRS = [
+    Path("/usr/share/nginx/html/logos"),
+    Path(__file__).resolve().parent.parent / "frontend" / "public" / "logos",
+]
 
 
 def _get_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -66,6 +73,32 @@ def _get_font_regular(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont
         except (OSError, IOError):
             continue
     return ImageFont.load_default()
+
+
+def _load_brand_logo(logo_url: str | None) -> Image.Image | None:
+    """Load a brand logo from disk and convert to high-contrast grayscale."""
+    if not logo_url:
+        return None
+    filename = logo_url.rstrip("/").split("/")[-1]
+    if not filename:
+        return None
+    for d in _LOGO_DIRS:
+        path = d / filename
+        if path.is_file():
+            try:
+                logo = Image.open(path).convert("RGBA")
+                # Composite onto white background so transparency becomes white
+                bg = Image.new("RGBA", logo.size, (255, 255, 255, 255))
+                bg.paste(logo, mask=logo)
+                gray = bg.convert("L")
+                # Boost contrast for thermal printing
+                gray = ImageOps.autocontrast(gray, cutoff=5)
+                gray = gray.resize((LOGO_SIZE, LOGO_SIZE), Image.LANCZOS)
+                return gray.convert("RGB")
+            except Exception as exc:
+                _log.debug("Failed to load logo %s: %s", path, exc)
+                return None
+    return None
 
 
 def _make_qr(data: str) -> Image.Image:
@@ -98,6 +131,7 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     dry_temp = filament.dry_temp if filament else None
     dry_time = filament.dry_time if filament else None
 
+    logo_url = filament.brand_logo_url if filament else None
     qr_data = spool.uid
 
     img = Image.new("RGB", (LABEL_W, LABEL_H), "white")
@@ -115,7 +149,16 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     qr_y = (LABEL_H - QR_SIZE) // 2
     img.paste(qr_img, (qr_x, qr_y))
 
-    text_left = MARGIN + 4
+    # Brand logo -- top-left corner
+    logo_img = _load_brand_logo(logo_url)
+    if logo_img:
+        logo_x = MARGIN + 2
+        logo_y = MARGIN
+        img.paste(logo_img, (logo_x, logo_y))
+        text_left = MARGIN + 4 + LOGO_SIZE + 8
+    else:
+        text_left = MARGIN + 4
+
     text_right = qr_x - 12
     SPEC_LINE_H = 22
 
@@ -130,6 +173,9 @@ def render_label(spool: SpoolInstance, ha_url: str | None = None) -> Image.Image
     y += 36
 
     draw.text((text_left, y), color_name, fill="black", font=font_color)
+
+    # Reset text_left for specs/bottom section (full width, below logo)
+    text_left = MARGIN + 4
 
     # ── Bottom section: build upward from the bottom ────────────────────
     # UID row (very bottom)
