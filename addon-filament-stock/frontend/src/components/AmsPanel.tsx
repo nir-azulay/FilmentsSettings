@@ -3,6 +3,7 @@ import {
   AmsTray,
   AmsTraysResponse,
   DEFAULT_ADDON_CONFIG,
+  assignSpoolToTray,
   fetchAddonConfig,
   fetchAmsTrays,
   unassignTray,
@@ -97,6 +98,21 @@ export default function AmsPanel({ onJumpToFilament, onStockChanged }: Props) {
     onStockChanged?.();
   }, [load, onStockChanged]);
 
+  const handleDropSpool = useCallback(async (uid: string, entityId: string) => {
+    try {
+      const tray = data?.trays.find((t) => t.entity_id === entityId);
+      await assignSpoolToTray(uid, {
+        entity_id: entityId,
+        push_to_printer: false,
+        location_label: tray?.location_label ?? "",
+      });
+      await load(false);
+      onStockChanged?.();
+    } catch (exc) {
+      window.alert(`Failed to assign spool: ${(exc as Error).message}`);
+    }
+  }, [data, load, onStockChanged]);
+
   useEffect(() => {
     void load(true);
     const id = setInterval(() => void load(false), pollMs);
@@ -185,6 +201,7 @@ export default function AmsPanel({ onJumpToFilament, onStockChanged }: Props) {
                   onAssign={() => setAssignTarget(t)}
                   onUnassign={() => void handleUnassign(t)}
                   unassigning={unassigning === t.entity_id}
+                  onDropSpool={handleDropSpool}
                 />
               ))}
             </div>
@@ -245,18 +262,37 @@ function TrayCard({
   onAssign,
   onUnassign,
   unassigning,
+  onDropSpool,
 }: {
   tray: AmsTray;
   onJumpToFilament?: (filamentDbId: number) => void;
   onAssign: () => void;
   onUnassign: () => void;
   unassigning: boolean;
+  onDropSpool?: (uid: string, entityId: string) => void;
 }) {
+  const [dragOver, setDragOver] = useState(false);
   const swatch = tray.loaded ? tray.color_hex ?? "#9e9e9e" : "#cfd8dc";
   const assignment = tray.assignment ?? null;
 
   return (
-    <div style={trayCard(tray.loaded)}>
+    <div
+      style={{ ...trayCard(tray.loaded), ...(dragOver ? dropHighlight : {}) }}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes("application/x-spool-uid")) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          setDragOver(true);
+        }
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const uid = e.dataTransfer.getData("application/x-spool-uid");
+        if (uid && onDropSpool) onDropSpool(uid, tray.entity_id);
+      }}
+    >
       <span style={trayLocationLabel}>{tray.location_label}</span>
 
       <SpoolIcon colorHex={swatch} size={32} muted={!tray.loaded} />
@@ -476,7 +512,7 @@ const refreshBtn: React.CSSProperties = {
   padding: "5px 12px",
   fontSize: 12,
   fontWeight: 500,
-  background: "rgba(0,0,0,0.04)",
+  background: "var(--ha-subtle-bg)",
   color: "var(--ha-primary-text)",
   border: "1px solid var(--ha-divider)",
   borderRadius: 6,
@@ -523,7 +559,7 @@ const trayCard = (loaded: boolean): React.CSSProperties => ({
   padding: "10px 14px",
   borderRadius: 10,
   border: "1px solid var(--ha-divider)",
-  background: loaded ? "rgba(76,175,80,0.04)" : "rgba(0,0,0,0.02)",
+  background: loaded ? "var(--ha-tray-loaded-bg)" : "var(--ha-tray-empty-bg)",
   display: "flex",
   alignItems: "center",
   gap: 12,
@@ -590,29 +626,29 @@ const stockBadge: React.CSSProperties = {
   border: "1px solid transparent",
 };
 const stockBadgeOk: React.CSSProperties = {
-  background: "rgba(76,175,80,0.12)",
-  color: "#2e7d32",
-  borderColor: "rgba(76,175,80,0.35)",
+  background: "var(--ha-stock-ok-bg)",
+  color: "var(--ha-stock-ok-text)",
+  borderColor: "var(--ha-stock-ok-border)",
 };
 const stockBadgeError: React.CSSProperties = {
-  background: "rgba(244,67,54,0.12)",
+  background: "var(--ha-stock-err-bg)",
   color: "var(--ha-error)",
-  borderColor: "rgba(244,67,54,0.35)",
+  borderColor: "var(--ha-stock-err-border)",
 };
 const stockBadgeWarn: React.CSSProperties = {
-  background: "rgba(255,152,0,0.12)",
-  color: "#bf360c",
-  borderColor: "rgba(255,152,0,0.35)",
+  background: "var(--ha-stock-warn-bg)",
+  color: "var(--ha-stock-warn-text)",
+  borderColor: "var(--ha-stock-warn-border)",
 };
 const stockBadgeInfo: React.CSSProperties = {
-  background: "rgba(3,169,244,0.12)",
-  color: "#0277bd",
-  borderColor: "rgba(3,169,244,0.35)",
+  background: "var(--ha-stock-info-bg)",
+  color: "var(--ha-stock-info-text)",
+  borderColor: "var(--ha-stock-info-border)",
 };
 const emptyBox: React.CSSProperties = {
   padding: "12px 14px",
   borderRadius: 8,
-  background: "rgba(0,0,0,0.03)",
+  background: "var(--ha-subtle-bg)",
   fontSize: 13,
   color: "var(--ha-primary-text)",
 };
@@ -633,9 +669,9 @@ const assignedBadge: React.CSSProperties = {
   fontWeight: 500,
   padding: "4px 8px",
   borderRadius: 6,
-  background: "rgba(156,39,176,0.10)",
-  color: "#6a1b9a",
-  border: "1px solid rgba(156,39,176,0.3)",
+  background: "var(--ha-pill-purple-bg)",
+  color: "var(--ha-pill-purple-text)",
+  border: "1px solid var(--ha-pill-purple-border)",
   display: "flex",
   alignItems: "center",
   gap: 6,
@@ -652,7 +688,7 @@ const assignedBadge: React.CSSProperties = {
 };
 const assignedBadgeIcon: React.CSSProperties = {
   fontSize: 12,
-  color: "#7b1fa2",
+  color: "var(--ha-pill-purple-text)",
 };
 const assignedMeta: React.CSSProperties = {
   opacity: 0.8,
@@ -674,6 +710,11 @@ const assignBtn = (hasAssignment: boolean): React.CSSProperties => ({
   borderRadius: 6,
   cursor: "pointer",
 });
+const dropHighlight: React.CSSProperties = {
+  outline: "2px dashed var(--ha-primary-color)",
+  outlineOffset: -2,
+  background: "var(--ha-primary-color-dim)",
+};
 const unassignBtn: React.CSSProperties = {
   padding: "5px 10px",
   fontSize: 11,

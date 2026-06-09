@@ -13,6 +13,7 @@ import {
 import BrandLogo from "./BrandLogo";
 import DeleteColorModal from "./DeleteColorModal";
 import FilamentProfilePanel from "./FilamentProfilePanel";
+import ShareDialog from "./ShareDialog";
 import SpoolListPanel from "./SpoolListPanel";
 import { SpoolIcon, SpoolStack } from "./SpoolIcon";
 import TrashIconButton from "./TrashIconButton";
@@ -40,6 +41,7 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
   const isLow       = filamentHasLowStock(filament, staplePools, ignoredStaples);
   const matColor    = getMaterialColor(filament.filament_type);
   const [showProfile, setShowProfile] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   return (
     <div id={`filament-${filament.id}`} className="ha-card" style={cardWrap}>
@@ -143,6 +145,17 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
           </a>
         )}
         <button
+          onClick={() => setShowShare(true)}
+          style={shareBtn}
+          title="Share this filament profile"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+          </svg>
+          Share
+        </button>
+        <button
           type="button"
           onClick={onRequestDeleteFilament}
           style={deleteDangerBtn}
@@ -153,6 +166,13 @@ export default function FilamentCard({ filament, staplePools, ignoredStaples, on
       </div>
 
       {showProfile && <FilamentProfilePanel filament={filament} onUpdate={onUpdate} />}
+      {showShare && (
+        <ShareDialog
+          filamentId={filament.id}
+          filamentName={`${filament.brand} ${filament.material}`}
+          onClose={() => setShowShare(false)}
+        />
+      )}
     </div>
   );
 }
@@ -621,7 +641,7 @@ const cardSubtitle: React.CSSProperties = {
 const stockChip = (low: boolean): React.CSSProperties => ({
   display: "flex", flexDirection: "column", alignItems: "center",
   padding: "5px 10px", borderRadius: 8,
-  background: low ? "var(--ha-error-bg)" : "rgba(0,0,0,0.04)",
+  background: low ? "var(--ha-error-bg)" : "var(--ha-subtle-bg)",
   color: low ? "var(--ha-error)" : "var(--ha-primary-text)",
   minWidth: 48, flexShrink: 0,
 });
@@ -659,7 +679,7 @@ const colorEntityRow: React.CSSProperties = {
 const stepBtn: React.CSSProperties = {
   width: 20, height: 20,
   display: "flex", alignItems: "center", justifyContent: "center",
-  background: "rgba(0,0,0,0.06)", border: "none",
+  background: "var(--ha-subtle-bg-hover)", border: "none",
   borderRadius: 4, color: "var(--ha-primary-text)",
   fontSize: 14, cursor: "pointer", lineHeight: 1,
 };
@@ -674,7 +694,7 @@ const packagingPillWrap: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,
   padding: "4px 6px", borderRadius: 8,
   border: "1px solid var(--ha-divider)",
-  background: "rgba(0,0,0,0.02)",
+  background: "var(--ha-tray-empty-bg)",
 };
 const packagingPillCount: React.CSSProperties = {
   minWidth: 18, padding: "1px 6px", borderRadius: 4,
@@ -692,11 +712,12 @@ const addForm: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,
   padding: "6px 16px 8px",
   borderTop: "1px solid var(--ha-divider)",
-  background: "rgba(0,0,0,0.01)",
+  background: "var(--ha-tray-empty-bg)",
 };
+
 const addInput: React.CSSProperties = {
   padding: "5px 8px", fontSize: 12,
-  background: "#fff",
+  background: "var(--ha-input-bg)",
   border: "1px solid var(--ha-divider)",
   borderRadius: 4, color: "var(--ha-primary-text)", outline: "none",
 };
@@ -728,7 +749,7 @@ const buyBtn: React.CSSProperties = {
 };
 const profileBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 5, padding: "7px 12px",
-  background: "rgba(0,0,0,0.04)", color: "var(--ha-primary-text)",
+  background: "var(--ha-subtle-bg)", color: "var(--ha-primary-text)",
   border: "1px solid var(--ha-divider)", borderRadius: 4,
   fontSize: 13, fontWeight: 500, cursor: "pointer",
 };
@@ -736,16 +757,16 @@ const receiveBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,
   padding: "5px 10px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "#c2f2c1", color: "#036730",
-  border: "1px solid #93da98",
+  background: "var(--ha-btn-green-bg)", color: "var(--ha-btn-green-text)",
+  border: "1px solid var(--ha-btn-green-border)",
   cursor: "pointer", whiteSpace: "nowrap",
 };
 const addSpoolBtnCompact: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   padding: "4px 8px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "#c2f2c1", color: "#036730",
-  border: "1px solid #93da98",
+  background: "var(--ha-btn-green-bg)", color: "var(--ha-btn-green-text)",
+  border: "1px solid var(--ha-btn-green-border)",
   cursor: "pointer",
   whiteSpace: "nowrap",
 };
@@ -753,8 +774,8 @@ const useBtnCompact: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   padding: "4px 8px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "#ffe0c8", color: "#7e2900",
-  border: "1px solid #ffbb89",
+  background: "var(--ha-btn-orange-bg)", color: "var(--ha-btn-orange-text)",
+  border: "1px solid var(--ha-btn-orange-border)",
   whiteSpace: "nowrap",
 };
 const addRefillBtnCompact: React.CSSProperties = {
@@ -764,28 +785,28 @@ const addRefillBtnCompact: React.CSSProperties = {
     fontSize: 11, fontWeight: 600,
     whiteSpace: "nowrap", cursor: "pointer",
   },
-  background: "#ffe0b2", color: "#bf360c",
-  border: "1px solid #ffb74d",
+  background: "var(--ha-btn-refill-bg)", color: "var(--ha-btn-refill-text)",
+  border: "1px solid var(--ha-btn-refill-border)",
 };
 const useRefillBtnCompact: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   padding: "4px 8px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "#fff3e0", color: "#bf360c",
-  border: "1px solid #ffb74d",
+  background: "var(--ha-btn-use-refill-bg)", color: "var(--ha-btn-refill-text)",
+  border: "1px solid var(--ha-btn-refill-border)",
   whiteSpace: "nowrap",
 };
 const reorderBtn: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 4,
   padding: "5px 10px", borderRadius: 6,
   fontSize: 11, fontWeight: 600,
-  background: "#dff3fc", color: "#006787",
-  border: "1px solid #7bd4fb",
+  background: "var(--ha-btn-reorder-bg)", color: "var(--ha-btn-reorder-text)",
+  border: "1px solid var(--ha-btn-reorder-border)",
   cursor: "pointer", whiteSpace: "nowrap",
 };
 const sugBox: React.CSSProperties = {
   position: "absolute", top: "100%", left: 0, right: 0,
-  background: "#fff", border: "1px solid var(--ha-divider)",
+  background: "var(--ha-suggestion-bg)", border: "1px solid var(--ha-divider)",
   borderRadius: 4, marginTop: 2, zIndex: 10,
   maxHeight: 150, overflowY: "auto", boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
 };
@@ -796,13 +817,19 @@ const sugItem: React.CSSProperties = {
 const spoolExpansionRow: React.CSSProperties = {
   margin: "0 10px 4px",
   padding: "8px 10px",
-  background: "rgba(3,169,244,0.04)",
-  border: "1px solid rgba(3,169,244,0.15)",
+  background: "var(--ha-spool-expansion-bg)",
+  border: "1px solid var(--ha-spool-expansion-border)",
   borderRadius: 8,
 };
 const iconColumn: React.CSSProperties = {
   display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
   flexShrink: 0,
+};
+const shareBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 5, padding: "7px 12px",
+  background: "var(--ha-subtle-bg)", color: "var(--ha-primary-text)",
+  border: "1px solid var(--ha-divider)", borderRadius: 4,
+  fontSize: 13, fontWeight: 500, cursor: "pointer",
 };
 const printIconBtn: React.CSSProperties = {
   width: 28, height: 28,

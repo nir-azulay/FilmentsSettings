@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.19.0 -- UX, Analytics, and Export Features
+
+### Dark Mode Support
+- Automatic dark mode following system `prefers-color-scheme` setting
+- All 50+ CSS custom property tokens have dark mode overrides
+- Audited all 20+ component files for hardcoded colors — replaced with CSS variable references
+
+### Mobile-Optimized Layout
+- Responsive toolbar: action buttons collapse into an overflow menu on small screens
+- Scan button stays inline on mobile; Add Filament and Sync move to the menu
+
+### Export / Import Database
+- **Export Database** — download a full JSON backup of all filaments, colors, spools, and assignments
+- **Import Database** — restore from a backup file with confirmation and preview
+- Both actions available from the toolbar overflow menu (⋮)
+
+### Shareable Filament Profiles
+- **Share** button on each filament card generates a QR code, copyable encoded string, and downloadable JSON
+- **Import Shared Profile** option in the toolbar menu — paste JSON or upload a file to import a shared filament
+
+### Drag-and-Drop Tray Assignment
+- Drag a spool from the All Spools panel directly onto an AMS tray slot to assign it
+- Visual feedback (dashed blue outline) during drag-over
+- Existing dialog-based assignment remains as a fallback
+
+### Usage Analytics Dashboard
+- New **Usage Analytics** collapsible panel with Consumption and Predictions tabs
+- **Consumption chart** — horizontal bar chart of usage grouped by material, brand, or color
+- **Weekly timeline** — vertical bar chart of weekly consumption trends
+- **Reorder predictions** — cards showing estimated days remaining per color based on rolling average
+- **Log Usage** action per spool in the All Spools panel (manual grams entry)
+- New `usage_logs` database table and migration
+- API endpoints: `GET /api/analytics/usage`, `GET /api/analytics/predictions`, `POST /api/analytics/log-usage`
+
 ## 0.18.3 -- Move All Spools panel below filament cards + batch print
 
 - **All Spools** overview panel now appears **below** the filament Dashboard cards (last section)

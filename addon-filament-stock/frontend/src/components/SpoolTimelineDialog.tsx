@@ -91,7 +91,7 @@ export default function SpoolTimelineDialog({ uid, onClose }: Props) {
 }
 
 const overlay: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+  position: "fixed", inset: 0, background: "var(--ha-overlay-bg)",
   display: "flex", alignItems: "center", justifyContent: "center",
   zIndex: 1100,
 };
@@ -146,7 +146,7 @@ const eventContent: React.CSSProperties = {
 };
 const detailPill: React.CSSProperties = {
   fontSize: 11, color: "var(--ha-secondary-text)",
-  background: "rgba(0,0,0,0.05)", padding: "1px 8px",
+  background: "var(--ha-subtle-bg)", padding: "1px 8px",
   borderRadius: 4, alignSelf: "flex-start",
 };
 const tsText: React.CSSProperties = {

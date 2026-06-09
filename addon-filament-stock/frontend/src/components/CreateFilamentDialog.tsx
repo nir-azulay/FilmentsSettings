@@ -156,7 +156,7 @@ export default function CreateFilamentDialog({ onClose, onCreated }: Props) {
 
 const overlay: React.CSSProperties = {
   position: "fixed", inset: 0,
-  background: "rgba(0,0,0,0.78)",
+  background: "var(--ha-overlay-bg)",
   backdropFilter: "blur(4px)",
   display: "flex", justifyContent: "center", alignItems: "center",
   zIndex: 1000,
@@ -207,7 +207,7 @@ const fieldLabel: React.CSSProperties = {
 };
 const inputStyle: React.CSSProperties = {
   padding: "7px 10px",
-  background: "#fff",
+  background: "var(--ha-input-bg)",
   border: "1px solid var(--ha-divider)",
   borderRadius: "var(--ha-btn-radius)",
   color: "var(--ha-primary-text)",

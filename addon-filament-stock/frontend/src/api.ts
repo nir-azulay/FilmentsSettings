@@ -189,6 +189,26 @@ export async function importProfiles(): Promise<{ imported: number; skipped: num
   return res.json();
 }
 
+// ─── Database export / import ──────────────────────────────────────────────
+
+export function exportUrl(): string {
+  return `${BASE}/export`;
+}
+
+export async function importDatabase(
+  file: File,
+): Promise<{ ok: boolean; filaments: number; colors: number; spools: number }> {
+  const text = await file.text();
+  const json = JSON.parse(text);
+  const res = await fetch(`${BASE}/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(json),
+  });
+  if (!res.ok) throw new Error("Import failed");
+  return res.json();
+}
+
 // ─── BambuStudio profile bundle ────────────────────────────────────────────
 // Each value in `summary` is a 1- or 2-element string array (Standard
 // extruder, optional High Flow extruder) as stored in Bambu profile JSON.
@@ -798,5 +818,151 @@ export interface SpoolsSummary {
 export async function fetchSpoolsSummary(): Promise<SpoolsSummary> {
   const res = await fetch(`${BASE}/spools/summary`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────
+
+export interface UsageGroup {
+  label: string;
+  total_grams: number;
+  count: number;
+}
+
+export interface TimelinePoint {
+  week: string;
+  grams: number;
+}
+
+export interface UsageData {
+  period: string;
+  group_by: string;
+  groups: UsageGroup[];
+  timeline: TimelinePoint[];
+  total_grams: number;
+}
+
+export interface Prediction {
+  color_stock_id: number;
+  brand: string;
+  material: string;
+  color_name: string;
+  color_hex: string;
+  available_units: number;
+  usage_30d_grams: number;
+  daily_rate_grams: number;
+  days_remaining: number;
+  estimated_runout: string | null;
+}
+
+export interface PredictionsData {
+  predictions: Prediction[];
+}
+
+export interface UsageLogEntry {
+  id: number;
+  spool_instance_id: number | null;
+  color_stock_id: number;
+  grams_used: number;
+  source: string;
+  print_name: string;
+  notes: string;
+  logged_at: string;
+}
+
+export async function fetchUsageData(period = "30d", groupBy = "material"): Promise<UsageData> {
+  const res = await fetch(`${BASE}/analytics/usage?period=${period}&group_by=${groupBy}`);
+  if (!res.ok) throw new Error("Failed to fetch usage data");
+  return res.json();
+}
+
+export async function fetchPredictions(): Promise<PredictionsData> {
+  const res = await fetch(`${BASE}/analytics/predictions`);
+  if (!res.ok) throw new Error("Failed to fetch predictions");
+  return res.json();
+}
+
+export async function logUsage(payload: {
+  color_stock_id: number;
+  grams_used: number;
+  spool_instance_id?: number;
+  source?: string;
+  print_name?: string;
+  notes?: string;
+}): Promise<UsageLogEntry> {
+  const res = await fetch(`${BASE}/analytics/log-usage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("Failed to log usage");
+  return res.json();
+}
+
+export async function fetchUsageLogs(opts?: {
+  color_stock_id?: number;
+  spool_instance_id?: number;
+  limit?: number;
+}): Promise<UsageLogEntry[]> {
+  const params = new URLSearchParams();
+  if (opts?.color_stock_id) params.set("color_stock_id", String(opts.color_stock_id));
+  if (opts?.spool_instance_id) params.set("spool_instance_id", String(opts.spool_instance_id));
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  const res = await fetch(`${BASE}/analytics/logs?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch usage logs");
+  return res.json();
+}
+
+// ── Sharing ──────────────────────────────────────────────────────────────────
+
+export interface SharePayload {
+  share_version: string;
+  shared_at: string;
+  filament: {
+    brand: string;
+    material: string;
+    filament_type: string;
+    filament_id: string | null;
+    density: number | null;
+    nozzle_temp_min: number | null;
+    nozzle_temp_max: number | null;
+    bed_temp: number | null;
+    bed_temp_max: number | null;
+    chamber_temp: number | null;
+    dry_temp: number | null;
+    dry_time: number | null;
+    amazon_url: string;
+    notes: string;
+  };
+  colors: { color_name: string; color_hex: string }[];
+}
+
+export interface ShareResponse {
+  payload: SharePayload;
+  encoded: string;
+}
+
+export async function shareFilament(filamentId: number): Promise<ShareResponse> {
+  const res = await fetch(`${BASE}/filaments/${filamentId}/share`);
+  if (!res.ok) throw new Error("Failed to generate share data");
+  return res.json();
+}
+
+export function shareQrUrl(filamentId: number): string {
+  return `${BASE}/filaments/${filamentId}/share/qr`;
+}
+
+export async function importSharedFilament(
+  payload: SharePayload | { encoded: string },
+): Promise<{ ok: boolean; filament_id: number; colors_added: number }> {
+  const res = await fetch(`${BASE}/filaments/import-shared`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Import failed" }));
+    throw new Error(err.detail || "Import failed");
+  }
   return res.json();
 }

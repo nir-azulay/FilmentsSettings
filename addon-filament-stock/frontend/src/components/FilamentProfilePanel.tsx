@@ -387,7 +387,7 @@ function SummaryTable({ summary }: { summary: ProfileMetadata["summary"] }) {
 const panelWrap: React.CSSProperties = {
   padding: "12px 16px",
   borderTop: "1px solid var(--ha-divider)",
-  background: "rgba(0,0,0,0.02)",
+  background: "var(--ha-tray-empty-bg)",
 };
 const sectionTitle: React.CSSProperties = {
   margin: "0 0 8px",
@@ -416,7 +416,7 @@ const metaVal: React.CSSProperties = { padding: "3px 0", color: "var(--ha-primar
 const muted: React.CSSProperties = { color: "var(--ha-secondary-text)" };
 const errorText: React.CSSProperties = { color: "var(--ha-error)", fontSize: 12 };
 const code: React.CSSProperties = {
-  background: "rgba(0,0,0,0.05)",
+  background: "var(--ha-subtle-bg)",
   padding: "1px 4px",
   borderRadius: 3,
   fontSize: 11,
@@ -492,7 +492,7 @@ const editInput: React.CSSProperties = {
   borderRadius: 4,
   fontSize: 12,
   color: "var(--ha-primary-text)",
-  background: "#fff",
+  background: "var(--ha-input-bg)",
   width: "100%",
   boxSizing: "border-box",
 };

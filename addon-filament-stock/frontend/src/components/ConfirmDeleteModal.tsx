@@ -43,7 +43,7 @@ const overlay: React.CSSProperties = {
   position: "fixed",
   inset: 0,
   zIndex: 2100,
-  background: "rgba(0,0,0,0.72)",
+  background: "var(--ha-overlay-bg)",
   backdropFilter: "blur(3px)",
   display: "flex",
   alignItems: "center",

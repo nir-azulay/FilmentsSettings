@@ -8,6 +8,7 @@ import {
   deleteSpool,
   fetchAddonConfig,
   fetchSpoolsSummary,
+  logUsage,
   markSpoolEmpty,
   unassignSpool,
 } from "../api";
@@ -21,9 +22,9 @@ interface Props {
 }
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  in_stock: { label: "In Stock", bg: "#e8f5e9", color: "#2e7d32" },
-  in_tray: { label: "In Tray", bg: "#e3f2fd", color: "#1565c0" },
-  empty: { label: "Empty", bg: "#f3f3f3", color: "#999" },
+  in_stock: { label: "In Stock", bg: "var(--ha-pill-success-bg)", color: "var(--ha-pill-success-text)" },
+  in_tray: { label: "In Tray", bg: "var(--ha-pill-info-bg)", color: "var(--ha-pill-info-text)" },
+  empty: { label: "Empty", bg: "var(--ha-pill-gray-bg)", color: "var(--ha-pill-gray-text)" },
 };
 
 const COLLAPSE_KEY = "filament_stock_spool_overview_collapsed";
@@ -131,6 +132,25 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
     onStockChanged();
   };
 
+  const handleLogUsage = async (spool: SpoolInstance) => {
+    const gramsStr = window.prompt(`Log usage for ${spool.uid}\n\nEnter grams used:`);
+    if (!gramsStr) return;
+    const grams = parseFloat(gramsStr);
+    if (isNaN(grams) || grams <= 0) { window.alert("Invalid amount"); return; }
+    const printName = window.prompt("Print name (optional):") ?? "";
+    try {
+      await logUsage({
+        color_stock_id: spool.color_stock_id,
+        spool_instance_id: spool.id,
+        grams_used: grams,
+        source: "manual",
+        print_name: printName,
+      });
+    } catch (e: any) {
+      window.alert(`Failed to log usage: ${e.message}`);
+    }
+  };
+
   return (
     <section className="ha-card" style={card}>
       <div style={headerRow} onClick={toggleCollapse} role="button">
@@ -222,7 +242,15 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
                       s.created_at;
 
                     return (
-                      <div key={s.uid} style={spoolRow}>
+                      <div
+                        key={s.uid}
+                        style={spoolRow}
+                        draggable={s.status === "in_stock"}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("application/x-spool-uid", s.uid);
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                      >
                         <input
                           type="checkbox"
                           checked={selected.has(s.uid)}
@@ -252,6 +280,13 @@ export default function SpoolOverviewPanel({ onStockChanged }: Props) {
                               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                             </svg>
                           </button>
+                          {s.status !== "empty" && (
+                            <button onClick={() => handleLogUsage(s)} style={iconBtn} title="Log usage">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 20V10M6 20V14M18 20V4" />
+                              </svg>
+                            </button>
+                          )}
                           {s.status === "in_tray" && (
                             <button onClick={() => handleUnassign(s.uid)} style={iconBtn} title="Return to stock">↩</button>
                           )}
@@ -307,9 +342,9 @@ const pill: React.CSSProperties = {
   fontSize: 10, fontWeight: 600, padding: "2px 8px",
   borderRadius: 10, textTransform: "uppercase", letterSpacing: "0.03em",
 };
-const pillGreen: React.CSSProperties = { background: "#e8f5e9", color: "#2e7d32" };
-const pillBlue: React.CSSProperties = { background: "#e3f2fd", color: "#1565c0" };
-const pillGray: React.CSSProperties = { background: "#f3f3f3", color: "#999" };
+const pillGreen: React.CSSProperties = { background: "var(--ha-pill-success-bg)", color: "var(--ha-pill-success-text)" };
+const pillBlue: React.CSSProperties = { background: "var(--ha-pill-info-bg)", color: "var(--ha-pill-info-text)" };
+const pillGray: React.CSSProperties = { background: "var(--ha-pill-gray-bg)", color: "var(--ha-pill-gray-text)" };
 const bodyWrap: React.CSSProperties = {
   padding: "0 20px 16px",
 };
@@ -323,7 +358,7 @@ const controlsRow: React.CSSProperties = {
 };
 const filterRow: React.CSSProperties = {
   display: "flex", gap: 2, padding: 2,
-  background: "rgba(0,0,0,0.04)", borderRadius: 8,
+  background: "var(--ha-subtle-bg)", borderRadius: 8,
 };
 const filterBtn: React.CSSProperties = {
   padding: "5px 12px", fontSize: 11, fontWeight: 500,
@@ -395,7 +430,7 @@ const actions: React.CSSProperties = {
 };
 const iconBtn: React.CSSProperties = {
   width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center",
-  background: "rgba(0,0,0,0.05)", border: "none", borderRadius: 4,
+  background: "var(--ha-subtle-bg)", border: "none", borderRadius: 4,
   cursor: "pointer", fontSize: 11,
 };
 const dangerBtn: React.CSSProperties = {

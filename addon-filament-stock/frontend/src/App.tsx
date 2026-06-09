@@ -1,22 +1,26 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AddonConfig,
   Alert,
   DEFAULT_ADDON_CONFIG,
   Filament,
   StapleAlertIgnore,
+  exportUrl,
   fetchAddonConfig,
   fetchAlertIgnores,
   fetchAlerts,
   fetchFilaments,
   ignoreStapleAlert,
+  importDatabase,
   importProfiles,
 } from "./api";
 import AlertBanner from "./components/AlertBanner";
 import AmsPanel from "./components/AmsPanel";
+import AnalyticsPanel from "./components/AnalyticsPanel";
 import CreateFilamentDialog from "./components/CreateFilamentDialog";
 import Dashboard from "./components/Dashboard";
 import EmptyState from "./components/EmptyState";
+import ImportSharedDialog from "./components/ImportSharedDialog";
 import QrScannerDialog from "./components/QrScannerDialog";
 import ScanAssignDialog from "./components/ScanAssignDialog";
 import SetupChecklist from "./components/SetupChecklist";
@@ -24,6 +28,7 @@ import SpoolOverviewPanel from "./components/SpoolOverviewPanel";
 import BrandLogo, { uniqueBrandsFromFilaments } from "./components/BrandLogo";
 import { SpoolIcon } from "./components/SpoolIcon";
 import { totalAvailableSpools, totalOnOrderSpools } from "./stockUtils";
+import { useIsMobile } from "./useMediaQuery";
 
 function jumpToFilament(filamentDbId: number) {
   const el = document.getElementById(`filament-${filamentDbId}`);
@@ -53,6 +58,11 @@ export default function App() {
   const [addonConfig, setAddonConfig] = useState<AddonConfig>(DEFAULT_ADDON_CONFIG);
   const [scanTarget, setScanTarget] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showImportShared, setShowImportShared] = useState(false);
+  const [dbImportMsg, setDbImportMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   // Hash-based deep linking: #spool/SP-XXXXXXXX opens the scan-assign dialog
   useEffect(() => {
@@ -105,6 +115,45 @@ export default function App() {
     }
   };
 
+  const handleExportDb = () => {
+    const a = document.createElement("a");
+    a.href = exportUrl();
+    a.download = `filament-stock-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setShowMenu(false);
+  };
+
+  const handleImportDb = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      if (!window.confirm(`Import "${file.name}"?\n\nThis will REPLACE all current data.`)) return;
+      try {
+        const result = await importDatabase(file);
+        setDbImportMsg({ text: `Restored ${result.filaments} filaments, ${result.colors} colors, ${result.spools} spools`, ok: true });
+        await reload();
+        setTimeout(() => setDbImportMsg(null), 5000);
+      } catch (e: any) {
+        setDbImportMsg({ text: e.message || "Import failed", ok: false });
+        setTimeout(() => setDbImportMsg(null), 5000);
+      }
+    };
+    input.click();
+    setShowMenu(false);
+  };
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const onClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [showMenu]);
+
   const totalInStock  = totalAvailableSpools(filaments);
   const totalOrdered  = totalOnOrderSpools(filaments);
   const uniqueBrands = uniqueBrandsFromFilaments(filaments);
@@ -125,8 +174,7 @@ export default function App() {
     <div className="ha-app-shell">
       {/* ── HA top toolbar ── */}
       <header className="ha-toolbar">
-        {/* HA hamburger / logo zone */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--ha-primary-color)">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
@@ -134,18 +182,15 @@ export default function App() {
           <span style={{ fontSize: 10, color: "var(--ha-secondary-text)", opacity: 0.6 }}>v{addonConfig.addon_version}</span>
         </div>
 
-        {/* Right side */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
-          {importMsg && (
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          {(importMsg || dbImportMsg) && (
             <span style={{
-              fontSize: 12,
-              padding: "3px 10px",
-              borderRadius: 12,
-              background: importMsg.ok ? "var(--ha-success-bg)" : "var(--ha-error-bg)",
-              color: importMsg.ok ? "var(--ha-success)" : "var(--ha-error)",
+              fontSize: 12, padding: "3px 10px", borderRadius: 12,
+              background: (importMsg?.ok ?? dbImportMsg?.ok) ? "var(--ha-success-bg)" : "var(--ha-error-bg)",
+              color: (importMsg?.ok ?? dbImportMsg?.ok) ? "var(--ha-success)" : "var(--ha-error)",
               animation: "fadeIn 0.2s ease-out",
             }}>
-              {importMsg.text}
+              {importMsg?.text ?? dbImportMsg?.text}
             </span>
           )}
           <button onClick={() => setShowScanner(true)} style={scanBtn} title="Scan spool QR code">
@@ -154,29 +199,58 @@ export default function App() {
               <path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" />
               <rect x="7" y="7" width="10" height="10" rx="1" />
             </svg>
-            Scan
+            {!isMobile && "Scan"}
           </button>
-          <button onClick={() => setShowCreateDialog(true)} style={addFilamentBtn}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            Add Filament
-          </button>
-          <button onClick={handleImport} disabled={importing} style={syncBtn}>
-            {importing ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={btnSpinner} /> Syncing…
-              </span>
-            ) : (
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {!isMobile && (
+            <>
+              <button onClick={() => setShowCreateDialog(true)} style={addFilamentBtn}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="1 4 1 10 7 10" />
-                  <path d="M3.51 15a9 9 0 1 0 .49-5.1L1 10" />
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                Sync Profiles
-              </span>
+                Add Filament
+              </button>
+              <button onClick={handleImport} disabled={importing} style={syncBtn}>
+                {importing ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={btnSpinner} /> Syncing…
+                  </span>
+                ) : (
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="1 4 1 10 7 10" />
+                      <path d="M3.51 15a9 9 0 1 0 .49-5.1L1 10" />
+                    </svg>
+                    Sync
+                  </span>
+                )}
+              </button>
+            </>
+          )}
+          {/* Overflow menu */}
+          <div style={{ position: "relative" }} ref={menuRef}>
+            <button onClick={() => setShowMenu(!showMenu)} style={menuBtn} title="More actions">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
+              </svg>
+            </button>
+            {showMenu && (
+              <div style={menuDropdown}>
+                {isMobile && (
+                  <>
+                    <button onClick={() => { setShowCreateDialog(true); setShowMenu(false); }} style={menuItem}>+ Add Filament</button>
+                    <button onClick={() => { handleImport(); setShowMenu(false); }} disabled={importing} style={menuItem}>
+                      {importing ? "Syncing..." : "Sync Profiles"}
+                    </button>
+                    <div style={menuDivider} />
+                  </>
+                )}
+                <button onClick={handleExportDb} style={menuItem}>Export Database</button>
+                <button onClick={handleImportDb} style={menuItem}>Import Database</button>
+                <div style={menuDivider} />
+                <button onClick={() => { setShowImportShared(true); setShowMenu(false); }} style={menuItem}>Import Shared Profile</button>
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </header>
 
@@ -217,6 +291,8 @@ export default function App() {
         )}
 
         <SpoolOverviewPanel onStockChanged={() => void reload()} />
+
+        <AnalyticsPanel />
       </main>
 
       {showCreateDialog && (
@@ -241,6 +317,13 @@ export default function App() {
           uid={scanTarget}
           onClose={() => setScanTarget(null)}
           onAssigned={() => void reload()}
+        />
+      )}
+
+      {showImportShared && (
+        <ImportSharedDialog
+          onClose={() => setShowImportShared(false)}
+          onImported={() => void reload()}
         />
       )}
     </div>
@@ -360,4 +443,25 @@ const summaryCardStyle: React.CSSProperties = {
   padding: "16px 20px",
   display: "flex",
   flexDirection: "column",
+};
+const menuBtn: React.CSSProperties = {
+  display: "flex", alignItems: "center", justifyContent: "center",
+  width: 36, height: 36,
+  background: "var(--ha-subtle-bg)", border: "none", borderRadius: "var(--ha-btn-radius)",
+  cursor: "pointer", color: "var(--ha-primary-text)",
+};
+const menuDropdown: React.CSSProperties = {
+  position: "absolute", top: "100%", right: 0, marginTop: 4,
+  minWidth: 180, background: "var(--ha-card-bg)",
+  borderRadius: 8, boxShadow: "var(--ha-dialog-shadow)",
+  border: "1px solid var(--ha-divider)", zIndex: 200,
+  padding: "4px 0", animation: "fadeIn 0.15s ease-out",
+};
+const menuItem: React.CSSProperties = {
+  display: "block", width: "100%", padding: "9px 16px",
+  background: "none", border: "none", textAlign: "left",
+  fontSize: 13, color: "var(--ha-primary-text)", cursor: "pointer",
+};
+const menuDivider: React.CSSProperties = {
+  height: 1, background: "var(--ha-divider)", margin: "4px 0",
 };

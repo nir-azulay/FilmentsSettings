@@ -72,8 +72,8 @@ export default function BatchLabelDialog({ spools, config, onClose }: Props) {
               borderRadius: 6,
               fontSize: 13,
               marginTop: 8,
-              background: failCount === 0 ? "#e8f5e9" : "#fff3e0",
-              color: failCount === 0 ? "#2e7d32" : "#e65100",
+              background: failCount === 0 ? "var(--ha-pill-success-bg)" : "var(--ha-pill-warn-bg)",
+              color: failCount === 0 ? "var(--ha-pill-success-text)" : "var(--ha-pill-warn-text)",
             }}
           >
             {failCount === 0
@@ -121,7 +121,7 @@ export default function BatchLabelDialog({ spools, config, onClose }: Props) {
 }
 
 const overlay: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+  position: "fixed", inset: 0, background: "var(--ha-overlay-bg)",
   display: "flex", alignItems: "center", justifyContent: "center",
   zIndex: 1100,
 };
@@ -138,7 +138,7 @@ const previewScroll: React.CSSProperties = {
   display: "flex", flexDirection: "column", gap: 8,
   maxHeight: 400, overflowY: "auto",
   border: "1px solid var(--ha-divider, #e0e0e0)", borderRadius: 8,
-  padding: 8, background: "#fafafa",
+  padding: 8, background: "var(--ha-preview-bg)",
 };
 const previewCard: React.CSSProperties = {
   display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
@@ -161,7 +161,7 @@ const cancelBtn: React.CSSProperties = {
 const downloadBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,
   padding: "8px 16px", border: "1px solid var(--ha-divider)",
-  borderRadius: 6, background: "rgba(0,0,0,0.04)", cursor: "pointer",
+  borderRadius: 6, background: "var(--ha-subtle-bg)", cursor: "pointer",
   fontSize: 13, fontWeight: 500, color: "var(--ha-primary-text)",
 };
 const printBtn: React.CSSProperties = {

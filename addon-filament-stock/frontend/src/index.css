@@ -1,44 +1,44 @@
 /* ─── Home Assistant Exact Design Tokens (extracted live from HA instance) ── */
 :root {
   /* Backgrounds — exact HA values */
-  --ha-app-bg:          #fafafa;   /* --primary-background-color */
+  --ha-app-bg:          #fafafa;
   --ha-sidebar-bg:      #ffffff;
-  --ha-card-bg:         #ffffff;   /* --card-background-color */
-  --ha-card-bg-hover:   #f3f3f3;   /* --ha-color-fill-neutral-quiet-hover */
+  --ha-card-bg:         #ffffff;
+  --ha-card-bg-hover:   #f3f3f3;
 
   /* Borders & dividers */
-  --ha-divider:         rgba(0, 0, 0, 0.12);  /* --divider-color */
-  --ha-border:          rgba(0, 0, 0, 0.12);  /* --outline-color */
+  --ha-divider:         rgba(0, 0, 0, 0.12);
+  --ha-border:          rgba(0, 0, 0, 0.12);
 
-  /* Typography — exact HA values */
-  --ha-primary-text:    #141414;   /* --primary-text-color / --ha-color-text-primary */
-  --ha-secondary-text:  #5e5e5e;   /* --secondary-text-color */
-  --ha-disabled-text:   #bdbdbd;   /* --disabled-text-color */
+  /* Typography */
+  --ha-primary-text:    #141414;
+  --ha-secondary-text:  #5e5e5e;
+  --ha-disabled-text:   #bdbdbd;
 
-  /* Primary accent — exact HA primary */
-  --ha-primary-color:        #009ac7;   /* --primary-color */
-  --ha-primary-color-light:  #dff3fc;   /* --ha-color-fill-primary-normal-resting */
-  --ha-primary-color-dim:    #eff9fe;   /* --ha-color-fill-primary-quiet-resting */
-  --ha-primary-color-dark:   #006787;   /* --ha-color-primary-30 */
+  /* Primary accent */
+  --ha-primary-color:        #009ac7;
+  --ha-primary-color-light:  #dff3fc;
+  --ha-primary-color-dim:    #eff9fe;
+  --ha-primary-color-dark:   #006787;
 
-  /* State colors — exact HA values */
-  --ha-success:    #43a047;   /* --success-color */
-  --ha-warning:    #ff9800;   /* --accent-color */
-  --ha-error:      #db4437;   /* --error-color */
-  --ha-info:       #039be5;   /* --info-color */
+  /* State colors */
+  --ha-success:    #43a047;
+  --ha-warning:    #ff9800;
+  --ha-error:      #db4437;
+  --ha-info:       #039be5;
 
-  /* Semantic dims — HA fill tokens */
-  --ha-success-bg: #c2f2c1;   /* --ha-color-fill-success-normal-resting */
-  --ha-warning-bg: #ffe0c8;   /* --ha-color-fill-warning-normal-resting */
-  --ha-error-bg:   #ffdedc;   /* --ha-color-fill-danger-normal-resting */
+  /* Semantic dims */
+  --ha-success-bg: #c2f2c1;
+  --ha-warning-bg: #ffe0c8;
+  --ha-error-bg:   #ffdedc;
   --ha-info-bg:    #dff3fc;
 
   /* Surface levels */
-  --ha-surface-default: #ffffff;    /* --ha-color-surface-default */
-  --ha-surface-low:     #f3f3f3;    /* --ha-color-surface-low */
-  --ha-surface-lower:   #e6e6e6;    /* --ha-color-surface-lower */
+  --ha-surface-default: #ffffff;
+  --ha-surface-low:     #f3f3f3;
+  --ha-surface-lower:   #e6e6e6;
 
-  /* Radii — HA uses 12px for cards */
+  /* Radii */
   --ha-card-radius: 12px;
   --ha-row-radius:  4px;
   --ha-chip-radius: 16px;
@@ -50,6 +50,65 @@
 
   /* Motion */
   --ha-transition: 0.18s ease;
+
+  /* Input backgrounds */
+  --ha-input-bg: #ffffff;
+
+  /* Semantic component tokens (used in inline styles) */
+  --ha-overlay-bg:         rgba(0,0,0,0.5);
+  --ha-subtle-bg:          rgba(0,0,0,0.04);
+  --ha-subtle-bg-hover:    rgba(0,0,0,0.06);
+  --ha-preview-bg:         #fafafa;
+  --ha-suggestion-bg:      #ffffff;
+
+  /* Status pill tokens */
+  --ha-pill-success-bg:    #e8f5e9;
+  --ha-pill-success-text:  #2e7d32;
+  --ha-pill-info-bg:       #e3f2fd;
+  --ha-pill-info-text:     #1565c0;
+  --ha-pill-gray-bg:       #f3f3f3;
+  --ha-pill-gray-text:     #999999;
+  --ha-pill-warn-bg:       #fff3e0;
+  --ha-pill-warn-text:     #e65100;
+  --ha-pill-purple-bg:     rgba(156,39,176,0.10);
+  --ha-pill-purple-text:   #6a1b9a;
+  --ha-pill-purple-border: rgba(156,39,176,0.3);
+
+  /* Action button tokens */
+  --ha-btn-green-bg:       #c2f2c1;
+  --ha-btn-green-text:     #036730;
+  --ha-btn-green-border:   #93da98;
+  --ha-btn-orange-bg:      #ffe0c8;
+  --ha-btn-orange-text:    #7e2900;
+  --ha-btn-orange-border:  #ffbb89;
+  --ha-btn-reorder-bg:     #dff3fc;
+  --ha-btn-reorder-text:   #006787;
+  --ha-btn-reorder-border: #7bd4fb;
+  --ha-btn-refill-bg:      #ffe0b2;
+  --ha-btn-refill-text:    #bf360c;
+  --ha-btn-refill-border:  #ffb74d;
+  --ha-btn-use-refill-bg:  #fff3e0;
+
+  /* Stock badge tokens */
+  --ha-stock-ok-bg:        rgba(76,175,80,0.12);
+  --ha-stock-ok-text:      #2e7d32;
+  --ha-stock-ok-border:    rgba(76,175,80,0.35);
+  --ha-stock-err-bg:       rgba(244,67,54,0.12);
+  --ha-stock-err-border:   rgba(244,67,54,0.35);
+  --ha-stock-warn-bg:      rgba(255,152,0,0.12);
+  --ha-stock-warn-text:    #bf360c;
+  --ha-stock-warn-border:  rgba(255,152,0,0.35);
+  --ha-stock-info-bg:      rgba(3,169,244,0.12);
+  --ha-stock-info-text:    #0277bd;
+  --ha-stock-info-border:  rgba(3,169,244,0.35);
+
+  /* Tray card tokens */
+  --ha-tray-loaded-bg:     rgba(76,175,80,0.04);
+  --ha-tray-empty-bg:      rgba(0,0,0,0.02);
+
+  /* Spool expansion */
+  --ha-spool-expansion-bg:     rgba(3,169,244,0.04);
+  --ha-spool-expansion-border: rgba(3,169,244,0.15);
 
   /* ── Legacy aliases ── */
   --bg-primary:      var(--ha-app-bg);
@@ -81,6 +140,92 @@
   --transition: var(--ha-transition);
 }
 
+/* ─── Dark Mode ────────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ha-app-bg:          #111318;
+    --ha-sidebar-bg:      #1c1f27;
+    --ha-card-bg:         #1c1f27;
+    --ha-card-bg-hover:   #262a33;
+
+    --ha-divider:         rgba(255, 255, 255, 0.12);
+    --ha-border:          rgba(255, 255, 255, 0.12);
+
+    --ha-primary-text:    #e1e1e1;
+    --ha-secondary-text:  #9e9e9e;
+    --ha-disabled-text:   #616161;
+
+    --ha-primary-color-light:  rgba(0,154,199,0.20);
+    --ha-primary-color-dim:    rgba(0,154,199,0.08);
+
+    --ha-success-bg: rgba(67,160,71,0.20);
+    --ha-warning-bg: rgba(255,152,0,0.20);
+    --ha-error-bg:   rgba(219,68,55,0.20);
+    --ha-info-bg:    rgba(3,155,229,0.20);
+
+    --ha-surface-default: #1c1f27;
+    --ha-surface-low:     #262a33;
+    --ha-surface-lower:   #31363f;
+
+    --ha-card-shadow: 0 2px 4px rgba(0,0,0,.4), 0 1px 6px rgba(0,0,0,.3);
+    --ha-dialog-shadow: 0 24px 48px rgba(0,0,0,0.5);
+
+    --ha-input-bg: #262a33;
+
+    --ha-overlay-bg:         rgba(0,0,0,0.7);
+    --ha-subtle-bg:          rgba(255,255,255,0.06);
+    --ha-subtle-bg-hover:    rgba(255,255,255,0.10);
+    --ha-preview-bg:         #1a1d24;
+    --ha-suggestion-bg:      #262a33;
+
+    --ha-pill-success-bg:    rgba(67,160,71,0.20);
+    --ha-pill-success-text:  #66bb6a;
+    --ha-pill-info-bg:       rgba(3,155,229,0.20);
+    --ha-pill-info-text:     #42a5f5;
+    --ha-pill-gray-bg:       rgba(255,255,255,0.08);
+    --ha-pill-gray-text:     #9e9e9e;
+    --ha-pill-warn-bg:       rgba(255,152,0,0.20);
+    --ha-pill-warn-text:     #ffb74d;
+    --ha-pill-purple-bg:     rgba(186,104,200,0.15);
+    --ha-pill-purple-text:   #ce93d8;
+    --ha-pill-purple-border: rgba(186,104,200,0.35);
+
+    --ha-btn-green-bg:       rgba(67,160,71,0.25);
+    --ha-btn-green-text:     #81c784;
+    --ha-btn-green-border:   rgba(67,160,71,0.40);
+    --ha-btn-orange-bg:      rgba(255,152,0,0.20);
+    --ha-btn-orange-text:    #ffb74d;
+    --ha-btn-orange-border:  rgba(255,152,0,0.35);
+    --ha-btn-reorder-bg:     rgba(3,155,229,0.20);
+    --ha-btn-reorder-text:   #4fc3f7;
+    --ha-btn-reorder-border: rgba(3,155,229,0.35);
+    --ha-btn-refill-bg:      rgba(255,152,0,0.20);
+    --ha-btn-refill-text:    #ffb74d;
+    --ha-btn-refill-border:  rgba(255,152,0,0.35);
+    --ha-btn-use-refill-bg:  rgba(255,152,0,0.12);
+
+    --ha-stock-ok-bg:        rgba(76,175,80,0.15);
+    --ha-stock-ok-text:      #66bb6a;
+    --ha-stock-ok-border:    rgba(76,175,80,0.35);
+    --ha-stock-err-bg:       rgba(244,67,54,0.15);
+    --ha-stock-err-border:   rgba(244,67,54,0.35);
+    --ha-stock-warn-bg:      rgba(255,152,0,0.15);
+    --ha-stock-warn-text:    #ffb74d;
+    --ha-stock-warn-border:  rgba(255,152,0,0.35);
+    --ha-stock-info-bg:      rgba(3,169,244,0.15);
+    --ha-stock-info-text:    #4fc3f7;
+    --ha-stock-info-border:  rgba(3,169,244,0.35);
+
+    --ha-tray-loaded-bg:     rgba(76,175,80,0.06);
+    --ha-tray-empty-bg:      rgba(255,255,255,0.03);
+
+    --ha-spool-expansion-bg:     rgba(3,169,244,0.08);
+    --ha-spool-expansion-border: rgba(3,169,244,0.20);
+
+    --bg-elevated: #262a33;
+  }
+}
+
 /* ─── Reset ───────────────────────────────────────────────────────────────── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -99,8 +244,8 @@ body {
 /* ─── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgb(194, 194, 194); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #b1b1b1; }
+::-webkit-scrollbar-thumb { background: var(--ha-disabled-text); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ha-secondary-text); }
 
 /* ─── Selection ───────────────────────────────────────────────────────────── */
 ::selection { background: var(--ha-primary-color-light); color: var(--ha-primary-color); }
@@ -135,7 +280,7 @@ a:hover { filter: brightness(0.88); }
 /* ─── HA toolbar — matches HA's white top header with tab nav ────────────── */
 .ha-toolbar {
   height: 56px;
-  background: #ffffff;
+  background: var(--ha-card-bg);
   border-bottom: 1px solid var(--ha-divider);
   display: flex;
   align-items: center;
@@ -264,11 +409,19 @@ a:hover { filter: brightness(0.88); }
   }
 
   .ha-toolbar {
-    padding: 0 12px !important;
+    padding: 0 10px !important;
+    gap: 6px !important;
   }
 
   .ha-main {
-    padding: 12px !important;
+    padding: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ha-summary-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
   }
 }
 
@@ -280,7 +433,7 @@ a:hover { filter: brightness(0.88); }
   transition: box-shadow var(--ha-transition);
 }
 .ha-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.16), 0 0 0 1px var(--ha-divider);
 }
 
 /* ─── HA entity row ───────────────────────────────────────────────────────── */
@@ -307,7 +460,7 @@ a:hover { filter: brightness(0.88); }
   position: absolute;
   inset: 0;
   border-radius: 10px;
-  background: #ccc;
+  background: var(--ha-disabled-text);
   transition: background 0.2s;
   cursor: pointer;
 }
@@ -319,7 +472,7 @@ a:hover { filter: brightness(0.88); }
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--ha-surface-default);
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   transition: transform 0.2s;
   pointer-events: none;

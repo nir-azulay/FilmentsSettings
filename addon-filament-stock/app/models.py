@@ -188,3 +188,20 @@ class SpoolEvent(Base):
     details = Column(String, default="", nullable=False)  # JSON string with extra context
 
     spool_instance = relationship("SpoolInstance", back_populates="events")
+
+
+class UsageLog(Base):
+    """Tracks filament consumption per spool or color."""
+    __tablename__ = "usage_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spool_instance_id = Column(Integer, ForeignKey("spool_instances.id", ondelete="SET NULL"), nullable=True, index=True)
+    color_stock_id = Column(Integer, ForeignKey("color_stocks.id"), nullable=False, index=True)
+    grams_used = Column(Float, nullable=False)
+    source = Column(String, nullable=False)  # "manual" | "ams_auto"
+    print_name = Column(String, default="", nullable=False)
+    notes = Column(String, default="", nullable=False)
+    logged_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    spool_instance = relationship("SpoolInstance")
+    color_stock = relationship("ColorStock")

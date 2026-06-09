@@ -595,7 +595,7 @@ function PackagingRadio({
 const backdrop: React.CSSProperties = {
   position: "fixed",
   inset: 0,
-  background: "rgba(0,0,0,0.45)",
+  background: "var(--ha-overlay-bg)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -727,8 +727,8 @@ const matchPill: React.CSSProperties = {
   fontWeight: 700,
   padding: "1px 5px",
   borderRadius: 4,
-  background: "rgba(76,175,80,0.18)",
-  color: "#2e7d32",
+  background: "var(--ha-pill-success-bg)",
+  color: "var(--ha-pill-success-text)",
   textTransform: "uppercase",
   letterSpacing: "0.05em",
 };
@@ -743,8 +743,8 @@ const countPill = (hasStock: boolean): React.CSSProperties => ({
   fontWeight: 600,
   padding: "1px 6px",
   borderRadius: 8,
-  background: hasStock ? "rgba(76,175,80,0.12)" : "rgba(0,0,0,0.05)",
-  color: hasStock ? "#2e7d32" : "var(--ha-secondary-text)",
+  background: hasStock ? "var(--ha-pill-success-bg)" : "var(--ha-subtle-bg)",
+  color: hasStock ? "var(--ha-pill-success-text)" : "var(--ha-secondary-text)",
   whiteSpace: "nowrap",
 });
 const controlsRow: React.CSSProperties = {
@@ -758,7 +758,7 @@ const packagingGroup: React.CSSProperties = {
   display: "flex",
   gap: 4,
   padding: 2,
-  background: "rgba(0,0,0,0.04)",
+  background: "var(--ha-subtle-bg)",
   borderRadius: 8,
 };
 const packagingBtn: React.CSSProperties = {
@@ -878,7 +878,7 @@ const chip: React.CSSProperties = {
   padding: "4px 10px",
   fontSize: 11,
   fontWeight: 500,
-  background: "rgba(0,0,0,0.05)",
+  background: "var(--ha-subtle-bg)",
   color: "var(--ha-primary-text)",
   border: "1px solid var(--ha-divider)",
   borderRadius: 14,

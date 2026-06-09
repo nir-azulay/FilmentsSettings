@@ -10,7 +10,7 @@ from .database import Base, engine, DATA_DIR, DATABASE_URL
 from .db_schema import apply_sqlite_migrations
 from .health import build_health_report
 from .profile_sync import sync_filaments_from_profiles
-from .routers import alert_ignores, ams, assignments, filaments, maintenance, profiles, spools, stock
+from .routers import alert_ignores, ams, analytics, assignments, filaments, maintenance, profiles, sharing, spools, stock
 from .seed import seed_filaments, seed_filaments_force
 
 _log = logging.getLogger("filament_stock")
@@ -59,6 +59,8 @@ app.include_router(profiles.router, prefix="/api")
 app.include_router(ams.router, prefix="/api")
 app.include_router(assignments.router, prefix="/api")
 app.include_router(spools.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+app.include_router(sharing.router, prefix="/api")
 
 
 @app.get("/api/ping")

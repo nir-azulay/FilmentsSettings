@@ -70,8 +70,8 @@ export default function LabelDialog({ spool, config, onClose }: Props) {
           <div
             style={{
               padding: "6px 10px", borderRadius: 6, fontSize: 13, marginTop: 8,
-              background: printResult.ok ? "#e8f5e9" : "#ffebee",
-              color: printResult.ok ? "#2e7d32" : "#c62828",
+              background: printResult.ok ? "var(--ha-pill-success-bg)" : "var(--ha-error-bg)",
+              color: printResult.ok ? "var(--ha-pill-success-text)" : "var(--ha-error)",
             }}
           >
             {printResult.msg}
@@ -118,7 +118,7 @@ export default function LabelDialog({ spool, config, onClose }: Props) {
 }
 
 const overlay: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
+  position: "fixed", inset: 0, background: "var(--ha-overlay-bg)",
   display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
 };
 const dialog: React.CSSProperties = {
@@ -136,7 +136,7 @@ const spoolHeader: React.CSSProperties = {
 };
 const previewWrap: React.CSSProperties = {
   border: "1px solid var(--ha-divider, #e0e0e0)", borderRadius: 8,
-  padding: 8, background: "#fafafa", textAlign: "center",
+  padding: 8, background: "var(--ha-preview-bg)", textAlign: "center",
 };
 const previewImg: React.CSSProperties = {
   maxWidth: "100%", height: "auto", borderRadius: 4,
@@ -154,7 +154,7 @@ const cancelBtn: React.CSSProperties = {
 const downloadBtn: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 6,
   padding: "8px 16px", border: "1px solid var(--ha-divider)",
-  borderRadius: 6, background: "rgba(0,0,0,0.04)", cursor: "pointer",
+  borderRadius: 6, background: "var(--ha-subtle-bg)", cursor: "pointer",
   fontSize: 13, fontWeight: 500, color: "var(--ha-primary-text)",
 };
 const printBtn: React.CSSProperties = {

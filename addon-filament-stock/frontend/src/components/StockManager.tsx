@@ -128,7 +128,7 @@ export default function StockManager({ filament, onClose, onUpdate, onRequestDel
                   <div ref={suggestionsRef} style={suggestionsList}>
                     {suggestions.map((s) => (
                       <div key={s.name} style={suggestionItem} onMouseDown={() => handleSuggestionClick(s.name, s.hex)}>
-                        <div style={{ width: 11, height: 11, borderRadius: 2, background: s.hex, border: "1px solid rgba(0,0,0,0.12)", flexShrink: 0 }} />
+                        <div style={{ width: 11, height: 11, borderRadius: 2, background: s.hex, border: "1px solid var(--ha-divider)", flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{s.name}</span>
                         <span style={{ opacity: 0.4, fontSize: 11, fontFamily: "monospace" }}>{s.hex}</span>
                       </div>
@@ -148,7 +148,7 @@ export default function StockManager({ filament, onClose, onUpdate, onRequestDel
             <div style={colorList}>
               {filament.colors.map((c) => (
                 <div key={c.id} className="ha-entity-row">
-                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.color_hex, border: "1px solid rgba(0,0,0,0.12)", flexShrink: 0, marginRight: 10 }} />
+                  <div style={{ width: 12, height: 12, borderRadius: "50%", background: c.color_hex, border: "1px solid var(--ha-divider)", flexShrink: 0, marginRight: 10 }} />
                   <span style={{ flex: 1, fontSize: 13 }}>{c.color_name}</span>
                   <StatusSelect colorId={c.id} status={(c.status ?? "in_stock") as ColorStatus} onUpdate={onUpdate} />
                   <input type="number" min={0} value={c.quantity}
@@ -268,7 +268,7 @@ function StatusSelect({ colorId, status, onUpdate }: { colorId: number; status: 
 /* ─── Styles ─────────────────────────────────────────────────────────────── */
 const overlay: React.CSSProperties = {
   position: "fixed", inset: 0,
-  background: "rgba(0,0,0,0.78)",
+  background: "var(--ha-overlay-bg)",
   backdropFilter: "blur(4px)",
   display: "flex", justifyContent: "center", alignItems: "center",
   zIndex: 1000,
@@ -324,7 +324,7 @@ const chipActionBtn: React.CSSProperties = {
 const addColorForm: React.CSSProperties = {
   display: "flex", gap: 6, alignItems: "center",
   marginTop: 8, padding: "8px 10px",
-  background: "rgba(0,0,0,0.02)",
+  background: "var(--ha-tray-empty-bg)",
   borderRadius: "var(--ha-btn-radius)",
   border: "1px solid var(--ha-divider)",
 };
@@ -334,7 +334,7 @@ const colorPicker: React.CSSProperties = {
 };
 const inputStyle: React.CSSProperties = {
   padding: "6px 8px",
-  background: "#fff",
+  background: "var(--ha-input-bg)",
   border: "1px solid var(--ha-divider)",
   borderRadius: "var(--ha-btn-radius)",
   color: "var(--ha-primary-text)",
@@ -379,7 +379,7 @@ const deleteBtn: React.CSSProperties = {
 };
 const selectStyle: React.CSSProperties = {
   padding: "6px 8px",
-  background: "#fff",
+  background: "var(--ha-input-bg)",
   border: "1px solid var(--ha-divider)",
   borderRadius: "var(--ha-btn-radius)",
   color: "var(--ha-primary-text)",
@@ -399,7 +399,7 @@ const eventBadge = (type: string): React.CSSProperties => ({
 });
 const suggestionsList: React.CSSProperties = {
   position: "absolute", top: "100%", left: 0, right: 0,
-  background: "#fff",
+  background: "var(--ha-card-bg)",
   border: "1px solid var(--ha-divider)",
   borderRadius: "var(--ha-btn-radius)",
   marginTop: 3, zIndex: 10,

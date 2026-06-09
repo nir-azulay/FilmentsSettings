@@ -90,7 +90,7 @@ export default function ScanAssignDialog({ uid, onClose, onAssigned }: Props) {
               <div
                 style={{
                   width: 36, height: 36, borderRadius: 6,
-                  background: colorSwatch, border: "2px solid #ccc",
+                  background: colorSwatch, border: "2px solid var(--ha-divider)",
                   flexShrink: 0,
                 }}
               />
@@ -154,7 +154,7 @@ export default function ScanAssignDialog({ uid, onClose, onAssigned }: Props) {
 
             {/* Result */}
             {result && (
-              <div style={{ ...resultBox, background: result.ok ? "#e8f5e9" : "#ffebee", color: result.ok ? "#2e7d32" : "#c62828" }}>
+              <div style={{ ...resultBox, background: result.ok ? "var(--ha-pill-success-bg)" : "var(--ha-error-bg)", color: result.ok ? "var(--ha-pill-success-text)" : "var(--ha-error)" }}>
                 {result.msg}
               </div>
             )}
@@ -185,7 +185,7 @@ export default function ScanAssignDialog({ uid, onClose, onAssigned }: Props) {
 }
 
 const overlay: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
+  position: "fixed", inset: 0, background: "var(--ha-overlay-bg)",
   display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
 };
 const dialog: React.CSSProperties = {
@@ -200,7 +200,7 @@ const title: React.CSSProperties = {
 const spoolInfo: React.CSSProperties = {
   display: "flex", gap: 12, alignItems: "center",
   padding: 12, borderRadius: 8,
-  background: "rgba(0,0,0,0.03)", marginBottom: 12,
+  background: "var(--ha-tray-empty-bg)", marginBottom: 12,
 };
 const trayList: React.CSSProperties = {
   display: "flex", flexDirection: "column", gap: 4,

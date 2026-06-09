@@ -163,7 +163,7 @@ export default function QrScannerDialog({ onScanned, onClose }: Props) {
 }
 
 const overlay: React.CSSProperties = {
-  position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+  position: "fixed", inset: 0, background: "var(--ha-overlay-bg)",
   display: "flex", alignItems: "center", justifyContent: "center",
   zIndex: 1000,
 };
@@ -220,7 +220,7 @@ const manualInput: React.CSSProperties = {
   flex: 1, padding: "8px 12px",
   border: "1px solid var(--ha-divider, #e0e0e0)", borderRadius: 6,
   fontSize: 14, fontFamily: "ui-monospace, monospace",
-  color: "var(--ha-primary-text)", background: "#fff",
+  color: "var(--ha-primary-text)", background: "var(--ha-input-bg)",
 };
 const manualBtn: React.CSSProperties = {
   padding: "8px 16px",

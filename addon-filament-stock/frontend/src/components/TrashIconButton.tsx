@@ -30,7 +30,7 @@ const btn: React.CSSProperties = {
   height: 28,
   padding: 0,
   flexShrink: 0,
-  background: "rgba(0,0,0,0.05)",
+  background: "var(--ha-subtle-bg)",
   border: "1px solid var(--ha-divider)",
   borderRadius: 6,
   color: "var(--ha-secondary-text)",

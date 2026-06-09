@@ -26,6 +26,7 @@ def apply_sqlite_migrations() -> None:
         _reset_zero_bed_temps(conn)
         _backfill_non_profile_filaments(conn)
         _backfill_spool_events(conn)
+        _create_usage_logs_table(conn)
 
 
 def _table_columns(conn, table: str) -> set[str]:
@@ -369,6 +370,27 @@ def _backfill_spool_events(conn) -> None:
 
     if count:
         _log.info("Backfilled %d spool events from existing timestamps", count)
+
+
+def _create_usage_logs_table(conn):
+    if _table_exists(conn, "usage_logs"):
+        return
+    conn.execute(text("""
+        CREATE TABLE usage_logs (
+            id INTEGER PRIMARY KEY,
+            spool_instance_id INTEGER REFERENCES spool_instances(id) ON DELETE SET NULL,
+            color_stock_id INTEGER NOT NULL REFERENCES color_stocks(id),
+            grams_used REAL NOT NULL,
+            source TEXT NOT NULL,
+            print_name TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            logged_at TEXT NOT NULL
+        )
+    """))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_usage_logs_spool_instance_id ON usage_logs(spool_instance_id)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_usage_logs_color_stock_id ON usage_logs(color_stock_id)"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_usage_logs_logged_at ON usage_logs(logged_at)"))
+    _log.info("Created usage_logs table")
 
 
 def _filaments_drying_columns(conn) -> None:

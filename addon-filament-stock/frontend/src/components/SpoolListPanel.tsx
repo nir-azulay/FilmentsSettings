@@ -22,9 +22,9 @@ interface Props {
 }
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
-  in_stock: { label: "In Stock", bg: "#e8f5e9", color: "#2e7d32" },
-  in_tray: { label: "In Tray", bg: "#e3f2fd", color: "#1565c0" },
-  empty: { label: "Empty", bg: "#f3f3f3", color: "#999" },
+  in_stock: { label: "In Stock", bg: "var(--ha-pill-success-bg)", color: "var(--ha-pill-success-text)" },
+  in_tray: { label: "In Tray", bg: "var(--ha-pill-info-bg)", color: "var(--ha-pill-info-text)" },
+  empty: { label: "Empty", bg: "var(--ha-pill-gray-bg)", color: "var(--ha-disabled-text)" },
 };
 
 export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged }: Props) {
@@ -136,7 +136,7 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
             <div
               style={{
                 width: 16, height: 16, borderRadius: 3,
-                background: colorHex, border: "1px solid #ccc", flexShrink: 0,
+                background: colorHex, border: "1px solid var(--ha-divider)", flexShrink: 0,
               }}
             />
             <span style={uidText}>{s.uid}</span>
@@ -236,7 +236,7 @@ export default function SpoolListPanel({ colorStockId, colorHex, onStockChanged 
 
 const panelWrap: React.CSSProperties = {
   padding: "8px 12px", borderTop: "1px solid var(--ha-divider)",
-  background: "rgba(0,0,0,0.015)",
+  background: "var(--ha-tray-empty-bg)",
 };
 const headerRow: React.CSSProperties = {
   display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -254,12 +254,12 @@ const emptyText: React.CSSProperties = {
 };
 const qtyInput: React.CSSProperties = {
   width: 38, fontSize: 11, padding: "3px 4px", borderRadius: 4,
-  border: "1px solid var(--ha-divider)", background: "#fff",
+  border: "1px solid var(--ha-divider)", background: "var(--ha-input-bg)",
   textAlign: "center",
 };
 const selectStyle: React.CSSProperties = {
   fontSize: 11, padding: "3px 6px", borderRadius: 4,
-  border: "1px solid var(--ha-divider)", background: "#fff",
+  border: "1px solid var(--ha-divider)", background: "var(--ha-input-bg)",
 };
 const addBtn: React.CSSProperties = {
   fontSize: 11, fontWeight: 600, padding: "4px 10px",
@@ -290,7 +290,7 @@ const actions: React.CSSProperties = {
 };
 const iconBtn: React.CSSProperties = {
   width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center",
-  background: "rgba(0,0,0,0.05)", border: "none", borderRadius: 4,
+  background: "var(--ha-subtle-bg)", border: "none", borderRadius: 4,
   cursor: "pointer", fontSize: 12,
 };
 const dangerIconBtn: React.CSSProperties = {
