@@ -207,8 +207,6 @@ export default function App() {
           <AmsPanel onJumpToFilament={jumpToFilament} onStockChanged={() => void reload()} />
         )}
 
-        <SpoolOverviewPanel onStockChanged={() => void reload()} />
-
         {filaments.length === 0 ? (
           <EmptyState
             onAddFilament={() => setShowCreateDialog(true)}
@@ -217,6 +215,8 @@ export default function App() {
         ) : (
           <Dashboard filaments={filaments} alertIgnores={alertIgnores} onUpdate={reload} />
         )}
+
+        <SpoolOverviewPanel onStockChanged={() => void reload()} />
       </main>
 
       {showCreateDialog && (
