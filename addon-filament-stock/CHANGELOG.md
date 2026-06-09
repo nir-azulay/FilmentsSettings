@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.19.1 -- Brand logo on spool labels
+
+- Spool label stickers now include the **brand logo** in the top-left corner
+- Logo is auto-converted to high-contrast grayscale for thermal printing
+- Falls back to the previous layout when no logo is available
+
 ## 0.19.0 -- UX, Analytics, and Export Features
 
 ### Dark Mode Support
