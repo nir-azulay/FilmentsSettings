@@ -125,13 +125,13 @@
         "0"
     ],
     "filament_dev_ams_drying_heat_distortion_temperature": [
-        "75"
+        "119"
     ],
     "filament_dev_ams_drying_temperature": [
-        "65",
-        "65",
-        "55",
-        "55"
+        "80",
+        "80",
+        "80",
+        "80"
     ],
     "filament_dev_ams_drying_time": [
         "12",
@@ -149,7 +149,7 @@
         "55"
     ],
     "filament_dev_drying_softening_temperature": [
-        "60"
+        "135"
     ],
     "filament_diameter": [
         "1.75"
@@ -198,7 +198,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "Based on SUNLU High Speed Matte PETG TDS (SL-TE-WI-062). Nozzle: 235-255C (lowered 5C from TDS 240-260C to reduce stringing). Bed: 60-70C (Textured PEI). Retraction: 0.8-1.2mm at 30-40mm/s. Fan: max 60%, min 20%, overhang 50% (aligned with Bambu PETG to reduce stringing). Drying: 60-65C. Density: 1.28 g/cm3. Tg: 65.5C. HDT: 70C. TDS: https://www.sunlu.com/public/upload/file/20260330/ccf53a55-5b58-49fa-b1d9-08f94c0a4b28.pdf",
+    "filament_notes": "Based on SUNLU Easy PA (PA E-PA) TDS (SL-TE-WI-060). Nylon 6+66 blend. Nozzle: 250-280C (profile uses 265C/270C initial). Bed: 30-50C on PEI textured with glue required. Retraction: 0.8-1.2mm at 30-40mm/s (profile: 1.0mm @ 35mm/s). Drying: 80-110C for 12h (critical for nylon). Fan: 30% max, 10% min (low cooling for nylon). Density: 1.10 g/cm3. Tg: 65C. HDT: 119C @ 0.45MPa. Vicat: 135C. Properties: high toughness, impact resistant, no warping/cracking.",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
