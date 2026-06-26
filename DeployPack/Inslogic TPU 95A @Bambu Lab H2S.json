@@ -168,8 +168,8 @@
         "Direct Drive High Flow"
     ],
     "filament_flow_ratio": [
-        "0.97",
-        "0.98"
+        "1.0",
+        "1.0"
     ],
     "filament_flush_temp": [
         "0",
