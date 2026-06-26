@@ -12,49 +12,50 @@
 
 - **Amazon Product Page**: [SUNLU TPU 95A on Amazon.pl](https://www.amazon.pl/dp/B0FRZZSN7D)
 - **Official SUNLU Website**: [SUNLU TPU Collection](https://www.sunlu.com/collections/tpu-filament)
-- **TDS**: Not publicly available online (settings derived from manufacturer specifications and Bambu Lab TPU 95A baseline)
+- **TDS Document**: SL-TE-WI-088 - [Download PDF](https://media.sunlu.com/prod/20260330/e8b9c06a-4b93-46cb-9532-d9deb185a7c8.pdf)
 
 ## Material Properties
 
-### Mechanical Properties
-| Property | Value | Notes |
-|----------|-------|-------|
-| Shore Hardness | 95A | Good balance of flexibility and rigidity |
-| Tensile Strength | N/A | Not specified by manufacturer |
-| Elongation at Break | High | Elastic and impact-resistant |
-| Impact Resistance | Excellent | Industrial-grade formulation |
-| Wear Resistance | Excellent | Suitable for functional parts |
+### Mechanical Properties (from TDS SL-TE-WI-088)
+| Property | Value | Test Method | Notes |
+|----------|-------|-------------|-------|
+| Shore Hardness | 95 HA | ISO 868 | Good balance of flexibility and rigidity |
+| Tensile Strength | 31±3 MPa | ISO 527/2 | X-Y direction, 50mm/min |
+| Elongation at Break | >900% | ISO 527/2 | Extremely elastic! |
+| Izod Impact Strength (Notched) | 47±5 KJ/m² | ISO 180 | X-Y direction, 23°C |
+| Izod Impact Strength (Unnotched) | 38±5 KJ/m² | ISO 180 | Z-X direction, 23°C |
 
-### Thermal Properties
-| Property | Value | Unit |
-|----------|-------|------|
-| Glass Transition Temp (Tg) | 30 | °C |
-| Heat Distortion Temp (HDT) | 75 | °C |
-| Vicat Softening Point | 60 | °C |
-| Drying Temperature | 65 | °C |
-| Drying Time | 12 | hours |
+### Thermal Properties (from TDS SL-TE-WI-088)
+| Property | Value | Test Method | Notes |
+|----------|-------|-------------|-------|
+| Decomposition Temp (@5%) | ≥300°C | ISO 11358 | High thermal stability |
+| Melt Mass-Flow Rate | 28±3 g/10min | ISO 1133 | 190°C/2.16kg |
+| Drying Temperature | 50-60°C | TDS spec | Use 55°C optimal |
+| Drying Time | 12 hours | TDS spec | Before printing |
 
-### Physical Properties
-| Property | Value | Unit |
-|----------|-------|------|
-| Density | 1.22 | g/cm³ |
-| Diameter Tolerance | ±0.03 | mm |
-| Shrinkage | Minimal | - |
+### Physical Properties (from TDS SL-TE-WI-088)
+| Property | Value | Test Method | Notes |
+|----------|-------|-------------|-------|
+| Density | 1.21 g/cm³ | ISO 1183 | @ 23°C |
+| Diameter Tolerance | ±0.03 mm | Product spec | High precision |
+| Volume Resistivity | 1.05×10¹² ohm-cm | IEC 60093 | Electrical properties |
+| Permittivity | 3.4 | IEC 60250 | @ 1 kHz |
+| Flammability | HB Class | UL 94 | @ 1.5mm |
 
-## Manufacturer Recommended Print Settings
+## Manufacturer Recommended Print Settings (TDS SL-TE-WI-088)
 
-Based on Amazon product specifications and Bambu Lab TPU 95A HF baseline:
-
-| Setting | Value | Notes |
-|---------|-------|-------|
-| **Nozzle Temperature** | 210-230°C | Use 230°C for optimal flow |
-| **Bed Temperature** | 35°C | Textured PEI plate recommended |
-| **Print Speed** | Up to 120 mm/s | 3x faster than conventional TPU |
-| **Max Volumetric Speed** | 12 mm³/s | High Flow nozzles only |
-| **Retraction Distance** | 2.0 mm | TPU-optimized |
-| **Retraction Speed** | 10 mm/s | Slow for flexible filament |
-| **Part Cooling Fan** | 100% | Full cooling throughout print |
-| **Chamber Temperature** | Not required | - |
+| Setting | TDS Specification | Profile Value | Notes |
+|---------|------------------|---------------|-------|
+| **Nozzle Temperature** | 190-210°C @ 50-80mm/s<br>210-230°C @ 80-120mm/s | 230°C | Use 230°C for high-speed printing |
+| **Bed Temperature** | 50-60°C | 55°C | Textured PEI plate, no processing required |
+| **Print Speed** | 50-120 mm/s | Up to 120 mm/s | Temperature-dependent speed range |
+| **Max Volumetric Speed** | - | 6 mm³/s (Std)<br>12 mm³/s (HF) | High Flow nozzles enable full speed |
+| **Retraction Distance** | 0.8-1.2 mm | 1.0 mm | TDS-compliant (with TPU feeder assistant) |
+| **Retraction Speed** | 30-40 mm/s | 35 mm/s | TDS mid-range for reduced stringing |
+| **Part Cooling Fan** | Open/Close | 100% | Full cooling throughout print |
+| **Raft Distance** | 0.2-0.4 mm | - | TDS specification |
+| **Drying Temperature** | 50-60°C | 55°C | 12 hours before printing |
+| **Support Material** | PVA | - | TDS recommendation |
 
 ## Print Quality Tips
 
@@ -97,11 +98,11 @@ All nozzles use the same thermal settings but differ in process parameters:
 | **Layer Height** | 0.20mm | 0.30mm | 0.40mm |
 | **Nozzle Temp (Std)** | 230°C | 230°C | 230°C |
 | **Nozzle Temp (HF)** | 230°C | 230°C | 230°C |
-| **Bed Temp** | 35°C | 35°C | 35°C |
+| **Bed Temp** | 55°C | 55°C | 55°C |
 | **Max Vol Speed (Std)** | 6 mm³/s | 6 mm³/s | 6 mm³/s |
 | **Max Vol Speed (HF)** | 12 mm³/s | 12 mm³/s | 12 mm³/s |
-| **Retraction Length** | 2.0mm | 2.0mm | 2.0mm |
-| **Retraction Speed** | 10mm/s | 10mm/s | 10mm/s |
+| **Retraction Length** | 1.0mm | 1.0mm | 1.0mm |
+| **Retraction Speed** | 35mm/s | 35mm/s | 35mm/s |
 | **Fan Speed** | 100% | 100% | 100% |
 
 ## Recommended Build Plate
