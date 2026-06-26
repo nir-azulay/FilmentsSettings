@@ -75,10 +75,10 @@
         "1"
     ],
     "eng_plate_temp": [
-        "50"
+        "60"
     ],
     "eng_plate_temp_initial_layer": [
-        "50"
+        "60"
     ],
     "fan_cooling_layer_time": [
         "30"
@@ -374,10 +374,10 @@
         "0.088"
     ],
     "hot_plate_temp": [
-        "50"
+        "60"
     ],
     "hot_plate_temp_initial_layer": [
-        "50"
+        "60"
     ],
     "impact_strength_z": [
         "10"
