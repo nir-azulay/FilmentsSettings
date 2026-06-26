@@ -179,7 +179,7 @@
         "0",
         "0"
     ],
-    "filament_id": "Pi3c4d5e6",
+    "filament_id": "Pe5a1b7c2",
     "filament_is_support": [
         "0"
     ],
@@ -189,7 +189,7 @@
     ],
     "filament_max_volumetric_speed": [
         "6",
-        "6"
+        "12"
     ],
     "filament_metal_stickiness": [
         "None"
@@ -197,7 +197,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "Based on SUNLU High Speed Matte PETG TDS (SL-TE-WI-062). Nozzle: 235-255C (lowered 5C from TDS 240-260C to reduce stringing). Bed: 60-70C (Textured PEI). Retraction: 0.8-1.2mm at 30-40mm/s. Fan: max 60%, min 20%, overhang 50% (aligned with Bambu PETG to reduce stringing). Drying: 60-65C. Density: 1.28 g/cm3. Tg: 65.5C. HDT: 70C. TDS: https://www.sunlu.com/public/upload/file/20260330/ccf53a55-5b58-49fa-b1d9-08f94c0a4b28.pdf",
+    "filament_notes": "SUNLU Industrial Grade TPU 95A (Shore 95A hardness). Nozzle: 210-230C. Bed: 35C (Textured PEI recommended). Retraction: 2.0mm at 10mm/s. Fan: 100% max/min (full cooling for TPU). Max volumetric speed: 6 mm³/s (Standard), 12 mm³/s (High Flow). Prints up to 120mm/s (3x faster than conventional TPU). Density: 1.22 g/cm³. Tg: 30C. HDT: 75C. Vicat: 60C. Drying: 65C for 12h. High elasticity, wear-resistant, impact-resistant. Diameter tolerance: ±0.03mm. Amazon: https://www.amazon.pl/dp/B0FRZZSN7D",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
@@ -296,7 +296,7 @@
         "none"
     ],
     "filament_settings_id": [
-        "my-Inslogic TPU 95A @Bambu Lab H2S"
+        "my-SUNLU TPU 95A @Bambu Lab H2S"
     ],
     "filament_shrink": [
         "100%"
@@ -329,7 +329,7 @@
         "1"
     ],
     "filament_vendor": [
-        "Inslogic"
+        "SUNLU"
     ],
     "filament_wipe": [
         "1",
@@ -389,7 +389,7 @@
         "1",
         "1"
     ],
-    "name": "my-Inslogic TPU 95A @Bambu Lab H2S",
+    "name": "my-SUNLU TPU 95A @Bambu Lab H2S",
     "no_slow_down_for_cooling_on_outwalls": [
         "0"
     ],

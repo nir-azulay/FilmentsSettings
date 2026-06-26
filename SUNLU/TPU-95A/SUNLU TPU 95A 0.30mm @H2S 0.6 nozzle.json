@@ -5,8 +5,8 @@
     "from": "User",
     "inherits": "0.30mm Standard @BBL H2S 0.6 nozzle",
     "instantiation": "true",
-    "name": "my-Inslogic TPU 95A 0.30mm @H2S 0.6 nozzle",
-    "print_settings_id": "my-Inslogic TPU 95A 0.30mm @H2S 0.6 nozzle",
+    "name": "SUNLU TPU 95A 0.30mm @H2S 0.6 nozzle",
+    "print_settings_id": "SUNLU TPU 95A 0.30mm @H2S 0.6 nozzle",
     "type": "process",
     "version": "2.6.0.2"
 }

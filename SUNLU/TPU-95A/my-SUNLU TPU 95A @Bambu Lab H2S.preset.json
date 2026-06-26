@@ -8,10 +8,10 @@
         "nil"
     ],
     "filament_settings_id": [
-        "Inslogic TPU 95A @Bambu Lab H2S"
+        "my-SUNLU TPU 95A @Bambu Lab H2S"
     ],
     "from": "User",
-    "inherits": "Inslogic TPU 95A @Bambu Lab H2S",
-    "name": "Inslogic TPU 95A @Bambu Lab H2S",
+    "inherits": "my-SUNLU TPU 95A @Bambu Lab H2S",
+    "name": "my-SUNLU TPU 95A @Bambu Lab H2S",
     "version": "2.6.0.2"
 }
