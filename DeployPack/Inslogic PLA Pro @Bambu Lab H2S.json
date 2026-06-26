@@ -114,7 +114,7 @@
         "20"
     ],
     "filament_density": [
-        "1.24"
+        "1.20"
     ],
     "filament_deretraction_speed": [
         "35",
@@ -125,13 +125,13 @@
         "0"
     ],
     "filament_dev_ams_drying_heat_distortion_temperature": [
-        "75"
+        "55"
     ],
     "filament_dev_ams_drying_temperature": [
-        "65",
-        "65",
-        "55",
-        "55"
+        "50",
+        "50",
+        "50",
+        "50"
     ],
     "filament_dev_ams_drying_time": [
         "12",
@@ -198,7 +198,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "Based on SUNLU High Speed Matte PETG TDS (SL-TE-WI-062). Nozzle: 235-255C (lowered 5C from TDS 240-260C to reduce stringing). Bed: 60-70C (Textured PEI). Retraction: 0.8-1.2mm at 30-40mm/s. Fan: max 60%, min 20%, overhang 50% (aligned with Bambu PETG to reduce stringing). Drying: 60-65C. Density: 1.28 g/cm3. Tg: 65.5C. HDT: 70C. TDS: https://www.sunlu.com/public/upload/file/20260330/ccf53a55-5b58-49fa-b1d9-08f94c0a4b28.pdf",
+    "filament_notes": "Based on Inslogic PLA Pro TDS (12.02.2024). Nozzle: 195-220C @ 50-300mm/s high-speed capable (profile uses 220C). Bed: 50-60C on textured PEI/cool plate. Drying: 50C for 4h. Fan: 100%. Density: 1.20 g/cm3. Tg: 65.3C. HDT: 55C @ 0.45MPa. Hardness: 83D. Upgraded biodegradable PLA with ABS-like impact strength, enhanced toughness/durability, easy printing. Ideal for prototyping, models, everyday use.",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
@@ -454,7 +454,7 @@
         "70"
     ],
     "temperature_vitrification": [
-        "60"
+        "65"
     ],
     "textured_plate_temp": [
         "35"

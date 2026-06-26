@@ -113,7 +113,7 @@
         "20"
     ],
     "filament_density": [
-        "1.22"
+        "1.23"
     ],
     "filament_deretraction_speed": [
         "10",
@@ -124,13 +124,13 @@
         "0"
     ],
     "filament_dev_ams_drying_heat_distortion_temperature": [
-        "75"
+        "53"
     ],
     "filament_dev_ams_drying_temperature": [
-        "65",
-        "65",
-        "55",
-        "55"
+        "50",
+        "50",
+        "50",
+        "50"
     ],
     "filament_dev_ams_drying_time": [
         "12",
@@ -197,7 +197,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "Based on SUNLU High Speed Matte PETG TDS (SL-TE-WI-062). Nozzle: 235-255C (lowered 5C from TDS 240-260C to reduce stringing). Bed: 60-70C (Textured PEI). Retraction: 0.8-1.2mm at 30-40mm/s. Fan: max 60%, min 20%, overhang 50% (aligned with Bambu PETG to reduce stringing). Drying: 60-65C. Density: 1.28 g/cm3. Tg: 65.5C. HDT: 70C. TDS: https://www.sunlu.com/public/upload/file/20260330/ccf53a55-5b58-49fa-b1d9-08f94c0a4b28.pdf",
+    "filament_notes": "Based on Inslogic TPU 95A TDS (12.02.2024). Nozzle: 190-230C @ 50-120mm/s (profile uses 230C). Bed: 50-60C on textured PEI/cool plate. Drying: 50C for 4h. Fan: 100% (TPU can handle cooling). Density: 1.23 g/cm3. HDT: 53C @ 0.45MPa. Hardness: 95A. Max elongation: 1050%. Soft flexible rubber-like texture, strong layer bonding, high abrasion/wear resistance. Ideal for protective cases, seals, wheels, flexible parts.",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
