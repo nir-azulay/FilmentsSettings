@@ -194,7 +194,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "YS Filament ABS. Nozzle: 270\u00b0C (Bambu system, TDS 220-250\u00b0C). Bed: 90\u00b0C. Chamber: 60\u00b0C. Fan: max 60%, min 40% (0.2mm nozzle). Density: 1.05 g/cm\u00b3. Vicat: 100\u00b0C. HDT: 83\u00b0C. Tensile: 47 MPa. Shrinkage: 0.4-0.7%. Air filtration enabled.",
+    "filament_notes": "YS Filament ABS ABS+. Based on Yousu ABS TDS (YS-ABS111) and Bambu ABS H2S baseline. TDS nozzle: 220-250C; H2S profile uses Bambu ABS 270C with 260C initial layer. Bed: 90C within TDS 80-120C. Chamber: 60C. Retraction: 0.8mm for 0.2 nozzle, 0.4mm for larger nozzles, at 35mm/s. Fan follows Bambu ABS H2S baseline. Density: 1.05 g/cm3. HDT: 83C unannealed at 1.8MPa. Vicat: 100C at 5kg. Air filtration enabled.",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
@@ -405,7 +405,7 @@
         "220"
     ],
     "overhang_fan_speed": [
-        "80"
+        "100"
     ],
     "overhang_fan_threshold": [
         "10%"

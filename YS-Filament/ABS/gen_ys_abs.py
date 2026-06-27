@@ -119,7 +119,7 @@ def build_base_profile(nozzle):
         "eng_plate_temp": ["90"],
         "eng_plate_temp_initial_layer": ["90"],
         "fan_cooling_layer_time": ["30"],
-        "fan_max_speed": ["60"] if is_02 else ["80"],
+        "fan_max_speed": ["60"],
         "fan_min_speed": ["40"] if is_02 else ["10"],
         "filament_adaptive_volumetric_speed": ["0", "0"],
         "filament_adhesiveness_category": ["300"],
@@ -153,21 +153,19 @@ def build_base_profile(nozzle):
         "filament_is_support": ["0"],
         "filament_long_retractions_when_cut": ["nil", "nil"],
         "filament_max_volumetric_speed": (
-            ["2", "2"] if is_02 else ["15", "15"]
+            ["2", "2"]
+            if is_02
+            else (["20", "35"] if nozzle == "0.4" else ["25", "35"])
         ),
         "filament_metal_stickiness": ["None"],
         "filament_minimal_purge_on_wipe_tower": ["15"],
         "filament_notes": (
-            "YS Filament ABS. Nozzle: 270\u00b0C (Bambu system, TDS 220-250\u00b0C). "
-            "Bed: 90\u00b0C. Chamber: 60\u00b0C. "
-            + (
-                "Fan: max 60%, min 40% (0.2mm nozzle). "
-                if is_02
-                else "Fan: max 80%, min 10%. "
-            )
-            + "Density: 1.05 g/cm\u00b3. Vicat: 100\u00b0C. HDT: 83\u00b0C. "
-            "Tensile: 47 MPa. Shrinkage: 0.4-0.7%. "
-            "Air filtration enabled."
+            "YS Filament ABS ABS+. Based on Yousu ABS TDS (YS-ABS111) and Bambu ABS H2S baseline. "
+            "TDS nozzle: 220-250C; H2S profile uses Bambu ABS 270C with 260C initial layer. "
+            "Bed: 90C within TDS 80-120C. Chamber: 60C. "
+            "Retraction: 0.8mm for 0.2 nozzle, 0.4mm for larger nozzles, at 35mm/s. "
+            "Fan follows Bambu ABS H2S baseline. Density: 1.05 g/cm3. "
+            "HDT: 83C unannealed at 1.8MPa. Vicat: 100C at 5kg. Air filtration enabled."
         ),
         "filament_overhang_1_4_speed": ["0", "0"],
         "filament_overhang_2_4_speed": ["50", "50"],
@@ -234,7 +232,7 @@ def build_base_profile(nozzle):
         "nozzle_temperature_initial_layer": ["260", "260"],
         "nozzle_temperature_range_high": ["290"],
         "nozzle_temperature_range_low": ["220"],
-        "overhang_fan_speed": ["80"],
+        "overhang_fan_speed": ["100"],
         "overhang_fan_threshold": ["10%"],
         "overhang_threshold_participating_cooling": ["95%"],
         "override_process_overhang_speed": ["0", "0"],

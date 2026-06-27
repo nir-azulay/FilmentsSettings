@@ -75,10 +75,10 @@
         "1"
     ],
     "eng_plate_temp": [
-        "60"
+        "50"
     ],
     "eng_plate_temp_initial_layer": [
-        "60"
+        "50"
     ],
     "fan_cooling_layer_time": [
         "30"
@@ -198,7 +198,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "Based on SUNLU Easy PA (PA E-PA) TDS (SL-TE-WI-060). Nylon 6+66 blend. Nozzle: 250-280C (profile uses 265C/270C initial). Bed: 30-50C on PEI textured with glue required. Retraction: 0.8-1.2mm at 30-40mm/s (profile: 1.0mm @ 35mm/s). Drying: 80-110C for 12h (critical for nylon). Fan: 30% max, 10% min (low cooling for nylon). Density: 1.10 g/cm3. Tg: 65C. HDT: 119C @ 0.45MPa. Vicat: 135C. Properties: high toughness, impact resistant, no warping/cracking.",
+    "filament_notes": "Based on SUNLU Easy PA / PA E-PA TDS (SL-TE-WI-060). Nozzle: 250-270C at 50-100mm/s, 270-280C at 100-150mm/s (profile uses 265C, initial 270C). Bed: 30-50C on textured PEI with glue (profile uses 50C). Retraction: 0.8-1.2mm at 30-40mm/s (profile: 1.0mm at 35mm/s). Fan: max 30%, min 10%, overhang 50% (PA-tuned cooling). Drying: 80-110C (profile uses 80C for 12h). Density: 1.10 g/cm3. Tg: 65C. HDT: 119C at 0.45MPa. Vicat: 135C. Easy-print nylon with high toughness and impact resistance.",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
@@ -374,10 +374,10 @@
         "0.088"
     ],
     "hot_plate_temp": [
-        "60"
+        "50"
     ],
     "hot_plate_temp_initial_layer": [
-        "60"
+        "50"
     ],
     "impact_strength_z": [
         "10"
@@ -406,7 +406,7 @@
         "280"
     ],
     "nozzle_temperature_range_low": [
-        "255"
+        "250"
     ],
     "overhang_fan_speed": [
         "50"
@@ -457,10 +457,10 @@
         "65"
     ],
     "textured_plate_temp": [
-        "60"
+        "50"
     ],
     "textured_plate_temp_initial_layer": [
-        "60"
+        "50"
     ],
     "version": "2.6.0.2",
     "volumetric_speed_coefficients": [

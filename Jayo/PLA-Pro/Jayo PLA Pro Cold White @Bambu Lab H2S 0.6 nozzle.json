@@ -125,25 +125,25 @@
         "0"
     ],
     "filament_dev_ams_drying_heat_distortion_temperature": [
-        "75"
-    ],
-    "filament_dev_ams_drying_temperature": [
-        "65",
-        "65",
-        "55",
         "55"
     ],
+    "filament_dev_ams_drying_temperature": [
+        "50",
+        "50",
+        "50",
+        "50"
+    ],
     "filament_dev_ams_drying_time": [
-        "12",
-        "12",
-        "12",
-        "12"
+        "4",
+        "4",
+        "4",
+        "4"
     ],
     "filament_dev_chamber_drying_bed_temperature": [
         "80"
     ],
     "filament_dev_chamber_drying_time": [
-        "12"
+        "4"
     ],
     "filament_dev_drying_cooling_temperature": [
         "55"
@@ -169,8 +169,8 @@
         "Direct Drive High Flow"
     ],
     "filament_flow_ratio": [
-        "0.97",
-        "0.98"
+        "1.0",
+        "1.0"
     ],
     "filament_flush_temp": [
         "0",
@@ -198,7 +198,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "Jayo PLA Pro Cold White. Based on Generic PLA settings.",
+    "filament_notes": "Jayo PLA Pro. No manufacturer TDS is present in this repo; tuned as PLA Pro on Bambu H2S using the existing repo Jayo bundle and established PLA Pro baseline. Nozzle: 220C. Range: 195-230C. Bed/textured plate: 60C, cool plate: 35C. Retraction: 0.8mm at 35/40mm/s. Fan: 100% max/min, overhang 90%. Drying: 50C for 4h. Density: 1.24 g/cm3. PLA Pro/tough PLA style profile.",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
@@ -374,10 +374,10 @@
         "0.088"
     ],
     "hot_plate_temp": [
-        "35"
+        "60"
     ],
     "hot_plate_temp_initial_layer": [
-        "35"
+        "60"
     ],
     "impact_strength_z": [
         "10"
@@ -403,10 +403,10 @@
         "220"
     ],
     "nozzle_temperature_range_high": [
-        "235"
+        "230"
     ],
     "nozzle_temperature_range_low": [
-        "190"
+        "195"
     ],
     "overhang_fan_speed": [
         "90"
@@ -454,13 +454,13 @@
         "70"
     ],
     "temperature_vitrification": [
-        "60"
+        "65.3"
     ],
     "textured_plate_temp": [
-        "35"
+        "60"
     ],
     "textured_plate_temp_initial_layer": [
-        "35"
+        "60"
     ],
     "version": "2.6.0.2",
     "volumetric_speed_coefficients": [

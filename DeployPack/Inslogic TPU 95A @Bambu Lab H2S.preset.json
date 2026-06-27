@@ -3,15 +3,11 @@
         "Direct Drive Standard",
         "Direct Drive High Flow"
     ],
-    "filament_flow_ratio": [
-        "nil",
-        "nil"
-    ],
     "filament_settings_id": [
         "Inslogic TPU 95A @Bambu Lab H2S"
     ],
     "from": "User",
-    "inherits": "Inslogic TPU 95A @Bambu Lab H2S",
+    "inherits": "Bambu TPU 95A @BBL H2S",
     "name": "Inslogic TPU 95A @Bambu Lab H2S",
-    "version": "2.6.0.2"
+    "version": "2.7.0.8"
 }

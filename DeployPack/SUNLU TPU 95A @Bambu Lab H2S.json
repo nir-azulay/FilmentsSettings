@@ -179,7 +179,7 @@
         "0",
         "0"
     ],
-    "filament_id": "Pe5a1b7c2",
+    "filament_id": "Pe5a1b7d",
     "filament_is_support": [
         "0"
     ],
@@ -197,7 +197,7 @@
     "filament_minimal_purge_on_wipe_tower": [
         "15"
     ],
-    "filament_notes": "SUNLU Industrial Grade TPU 95A (Shore 95A hardness) - TDS: SL-TE-WI-088. Nozzle: 210-230C (use 230C for 80-120mm/s). Bed: 50-60C (TDS spec, 55C optimal). Retraction: 1.0mm at 35mm/s (TDS: 0.8-1.2mm at 30-40mm/s). Fan: 100% (full cooling). Max volumetric speed: 6 mm³/s (Standard), 12 mm³/s (High Flow). Prints 80-120mm/s. Density: 1.21 g/cm³. Tensile: 31±3 MPa. Elongation: >900%. Impact: 47±5 KJ/m². Decomp: ≥300C. Drying: 50-60C for 12h. TDS: https://media.sunlu.com/prod/20260330/e8b9c06a-4b93-46cb-9532-d9deb185a7c8.pdf",
+    "filament_notes": "Based on SUNLU TPU 95A TDS (SL-TE-WI-088). Nozzle: 190-210C at 50-80mm/s, 210-230C at 80-120mm/s (profile uses 230C). Bed: 50-60C on textured PEI, no treatment required (profile uses 55C). Retraction: 0.8-1.2mm at 30-40mm/s (profile: 1.0mm at 35mm/s). Fan: 100%. Drying: 50-60C for 12h (profile uses 55C). Density: 1.21 g/cm3. Shore hardness: 95A. Tensile: 31+/-3 MPa. Elongation: >900%. TPU is flexible and should be manually fed; AMS use is not recommended.",
     "filament_overhang_1_4_speed": [
         "0",
         "0"
@@ -373,10 +373,10 @@
         "0.088"
     ],
     "hot_plate_temp": [
-        "60"
+        "55"
     ],
     "hot_plate_temp_initial_layer": [
-        "60"
+        "55"
     ],
     "impact_strength_z": [
         "10"
@@ -402,10 +402,10 @@
         "230"
     ],
     "nozzle_temperature_range_high": [
-        "240"
+        "230"
     ],
     "nozzle_temperature_range_low": [
-        "210"
+        "190"
     ],
     "overhang_fan_speed": [
         "100"
@@ -456,10 +456,10 @@
         "30"
     ],
     "textured_plate_temp": [
-        "60"
+        "55"
     ],
     "textured_plate_temp_initial_layer": [
-        "60"
+        "55"
     ],
     "version": "2.6.0.2",
     "volumetric_speed_coefficients": [
