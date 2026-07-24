@@ -72,20 +72,20 @@
 ### Filament Base Profiles (3 nozzle sizes)
 | File Name | Nozzle | Nozzle Temp | Volumetric Speed (Std/HF) | Notes |
 |-----------|--------|-------------|---------------------------|-------|
-| `SUNLU TPU 95A @Bambu Lab H2S.json` | 0.4, 0.6, 0.8mm | 230/230°C | 6/12 mm³/s | Base profile for all nozzles |
+| `SUNLU TPU 95A @Bambu Lab H2C.json` | 0.4, 0.6, 0.8mm | 230/230°C | 6/12 mm³/s | Base profile for all nozzles |
 
 ### User Presets
 | File Name | Purpose |
 |-----------|---------|
-| `SUNLU TPU 95A @Bambu Lab H2S.preset.json` | User preset (inherits from base) |
+| `SUNLU TPU 95A @Bambu Lab H2C.preset.json` | User preset (inherits from base) |
 | `SUNLU TPU 95A Calibrated.json` | Post-calibration overrides |
 
 ### Process Presets (3 nozzle sizes)
 | File Name | Nozzle | Layer Height | Inherits From | Notes |
 |-----------|--------|--------------|---------------|-------|
-| `SUNLU TPU 95A 0.20mm @H2S 0.4 nozzle.json` | 0.4mm | 0.20mm | `0.20mm Standard @BBL H2S` | Standard layer height |
-| `SUNLU TPU 95A 0.30mm @H2S 0.6 nozzle.json` | 0.6mm | 0.30mm | `0.30mm Standard @BBL H2S 0.6 nozzle` | Larger nozzle |
-| `SUNLU TPU 95A 0.40mm @H2S 0.8 nozzle.json` | 0.8mm | 0.40mm | `0.40mm Standard @BBL H2S 0.8 nozzle` | Fast printing |
+| `SUNLU TPU 95A 0.20mm @H2C 0.4 nozzle.json` | 0.4mm | 0.20mm | `0.20mm Standard @BBL H2C` | Standard layer height |
+| `SUNLU TPU 95A 0.30mm @H2C 0.6 nozzle.json` | 0.6mm | 0.30mm | `0.30mm Standard @BBL H2C 0.6 nozzle` | Larger nozzle |
+| `SUNLU TPU 95A 0.40mm @H2C 0.8 nozzle.json` | 0.8mm | 0.40mm | `0.40mm Standard @BBL H2C 0.8 nozzle` | Fast printing |
 
 **Note**: TPU does not support 0.2mm nozzles due to filament flexibility and feed path constraints.
 

@@ -153,7 +153,7 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
     )
     # Attribute-based fallback for the external spool. We get here when the
     # printer's external-spool sensor lives at a name we haven't seen yet
-    # (e.g. "_x1_spool", "_h2s_external_filament", whatever). We rely on the
+    # (e.g. "_x1_spool", "_h2c_external_filament", whatever). We rely on the
     # entity_id mentioning external/vt/virtual AND the sensor exposing the
     # Bambu tray attribute set.
     external_fallback = (
@@ -224,7 +224,7 @@ def _parse_tray(entity: dict[str, Any]) -> dict[str, Any] | None:
         tray_idx = int(fallback_match.group("tray"))
         instance_idx = _instance_from(fallback_match)
         # Try to lift an AMS index out of the entity_id, e.g.
-        # "h2s_xxx_ams_pro_2_tray_3" -> 2. Best-effort only.
+        # "h2c_xxx_ams_pro_2_tray_3" -> 2. Best-effort only.
         m = re.search(r"_(?:ams|ams_pro|ams2pro|ams_ht|ams_lite|ams_hub)_(\d+)_", entity_id)
         if m:
             ams_idx = int(m.group(1))
@@ -653,7 +653,7 @@ def _enrich_with_device_info(
 
     `printer_label` is the friendly name of the AMS device's *parent*
     (`via_device`) -- which on ha-bambulab is the printer itself. That gives
-    us "H2S" or "H2S 3D Printer" instead of "h2s_<hex serial>_externalspool".
+    us "H2C" or "H2C 3D Printer" instead of "h2c_<hex serial>_externalspool".
     """
     for t in trays:
         info = device_info.get(t["entity_id"]) or {}
@@ -761,9 +761,9 @@ _AMS_SUFFIX_RE = re.compile(
 def _strip_ams_suffix(name: str) -> str:
     """Trim trailing AMS / external-spool words from a device name.
 
-    "H2S 0938BC5C2200107 ExternalSpool"  -> "H2S 0938BC5C2200107"
-    "H2S 0938BC5C2200107 AMS 1"          -> "H2S 0938BC5C2200107"
-    "H2S 0938BC5C2200107 AMS 2 Pro #1"   -> "H2S 0938BC5C2200107"
+    "H2C 0938BC5C2200107 ExternalSpool"  -> "H2C 0938BC5C2200107"
+    "H2C 0938BC5C2200107 AMS 1"          -> "H2C 0938BC5C2200107"
+    "H2C 0938BC5C2200107 AMS 2 Pro #1"   -> "H2C 0938BC5C2200107"
     """
     if not name:
         return ""
@@ -779,13 +779,13 @@ def _strip_ams_suffix(name: str) -> str:
 
 def _slug_to_label(slug: str) -> str:
     """Make a snake_case slug human-friendly:
-    "h2s_0938bc5c2200107_externalspool" -> "H2S 0938bc5c2200107"
+    "h2c_0938bc5c2200107_externalspool" -> "H2C 0938bc5c2200107"
     """
     if not slug:
         return ""
     label = slug.replace("_", " ").strip()
     label = _AMS_SUFFIX_RE.sub("", label).rstrip(" -·#")
-    # Title-case the first token if it's a short printer prefix like "h2s",
+    # Title-case the first token if it's a short printer prefix like "h2c",
     # "p1p", "x1c", etc. (mix of letters and digits, <=5 chars). Leave long
     # hex serial-number tokens alone.
     parts = label.split()
@@ -811,7 +811,7 @@ async def debug_ams_candidates():
           "unmatched_count": 1,
           "candidates": [
             {
-              "entity_id": "sensor.h2s_xxx_ams_pro_2_tray_3",
+              "entity_id": "sensor.h2c_xxx_ams_pro_2_tray_3",
               "state": "Bambu PLA Matte",
               "attribute_keys": ["filament_id", "tray_type", ...],
               "matched_by": "ams_regex"  // or "fallback_regex" / "external_regex" / null

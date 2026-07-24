@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Jayo PLA Pro Cold White profiles for Bambu Lab H2S."""
+"""Generate Jayo PLA Pro Cold White profiles for Bambu Lab H2C."""
 
 import json
 import os
@@ -9,7 +9,7 @@ from copy import deepcopy
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TEMPLATE = Path(r"c:\GitHub\filments settings\Inslogic\Inslogic PLA Pro @Bambu Lab H2S.json")
+TEMPLATE = Path(r"c:\GitHub\filments settings\Inslogic\Inslogic PLA Pro @Bambu Lab H2C.json")
 
 with open(TEMPLATE) as f:
     base = json.load(f)
@@ -46,18 +46,20 @@ base.update({
     "filament_dev_chamber_drying_time": ["4"],
     "filament_notes": (
         "Jayo PLA Pro Cold White. No manufacturer TDS is present in this repo; "
-        "tuned as PLA Pro on Bambu H2S using the established PLA Pro baseline."
+        "tuned as PLA Pro on Bambu H2C using the established PLA Pro baseline."
     ),
 })
 
 nozzles = ["0.2", "0.4", "0.6", "0.8"]
-all_printers = [f"Bambu Lab H2S {nz} nozzle" for nz in nozzles]
+all_printers = [f"Bambu Lab H2C {nz} nozzle" for nz in nozzles]
 
 filament_paths = []
 for nz in nozzles:
     d = deepcopy(base)
     d["compatible_printers"] = all_printers
-    d["name"] = f"Jayo PLA Pro Cold White @Bambu Lab H2S {nz} nozzle"
+    d["type"] = "filament"
+    d["instantiation"] = "true"
+    d["name"] = f"Jayo PLA Pro Cold White @Bambu Lab H2C {nz} nozzle"
     d["filament_settings_id"] = [d["name"]]
     d["filament_max_volumetric_speed"] = ["2", "2"] if nz == "0.2" else ["12", "18"]
 
@@ -85,7 +87,7 @@ print("  Created: bundle_structure.json")
 bbsflmt = SCRIPT_DIR / "Jayo PLA Pro Cold White.bbsflmt"
 with zipfile.ZipFile(bbsflmt, "w", zipfile.ZIP_DEFLATED) as zf:
     for nz in nozzles:
-        fname = f"Jayo PLA Pro Cold White @Bambu Lab H2S {nz} nozzle.json"
+        fname = f"Jayo PLA Pro Cold White @Bambu Lab H2C {nz} nozzle.json"
         zf.write(SCRIPT_DIR / fname, f"Jayo/{fname}")
     zf.write(bs_path, "bundle_structure.json")
 print(f"  Packed: {bbsflmt}")

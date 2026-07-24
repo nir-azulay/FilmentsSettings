@@ -76,7 +76,7 @@ class _GenericDefaults:
 
 # Generic defaults by material-type keyword (matched case-insensitively,
 # first match wins).  Values mirror the Bambu Studio Generic profiles for
-# each material family on the H2S.
+# each material family on the H2C.
 _GENERIC_DEFAULTS: list[tuple[str, _GenericDefaults]] = [
     # More-specific variants first so "PETG HS" doesn't match just "PLA".
     ("ASA",   _GenericDefaults(240, 270,  90, 100, 60, 1.07, 65,  8)),

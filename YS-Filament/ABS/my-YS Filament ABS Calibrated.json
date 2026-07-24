@@ -11,7 +11,7 @@
         "my-YS Filament ABS Calibrated"
     ],
     "from": "User",
-    "inherits": "my-YS Filament ABS @Bambu Lab H2S 0.4 nozzle",
+    "inherits": "my-YS Filament ABS @Bambu Lab H2C 0.4 nozzle",
     "name": "my-YS Filament ABS Calibrated",
     "version": "2.6.0.2"
 }

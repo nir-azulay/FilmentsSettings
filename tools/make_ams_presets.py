@@ -7,21 +7,21 @@ DEPLOYPACK = Path(r"C:\GitHub\filments settings\DeployPack")
 USER_FILAMENT = Path(r"C:\Users\Nir\AppData\Roaming\BambuStudio\user\2189385007\filament")
 
 # Device-tab AMS assignment follows Bambu Studio's own user preset format:
-# a minimal user preset inheriting directly from a system H2S filament profile,
+# a minimal user preset inheriting directly from a system H2C filament profile,
 # with the .info base_id set to that system profile's setting_id.
 PRESETS = [
-    ("SUNLU TPU 95A", "Bambu TPU 95A @BBL H2S", "GFSU01_04"),
-    ("SUNLU PETG", "Bambu PETG Basic @BBL H2S", "GFSG00_10"),
-    ("SUNLU PETG HS", "Bambu PETG HF @BBL H2S", "GFSG02_10"),
-    ("SUNLU PA E-PA", "Bambu PA6-GF @BBL H2S", "GFSN08_10"),
-    ("SUNLU PLA", "Bambu PLA Basic @BBL H2S", "GFSA00_05"),
-    ("Inslogic ASA", "Bambu ASA @BBL H2S", "GFSB01_26"),
-    ("Inslogic PETG Pro", "Bambu PETG Basic @BBL H2S", "GFSG00_10"),
-    ("Inslogic TPU 95A", "Bambu TPU 95A @BBL H2S", "GFSU01_04"),
-    ("Inslogic PLA Pro", "Bambu PLA Basic @BBL H2S", "GFSA00_05"),
-    ("Inslogic Matte PLA", "Bambu PLA Matte @BBL H2S", "GFSA01_07"),
-    ("Inslogic Silk PLA", "Bambu PLA Silk @BBL H2S", "GFSA05_08"),
-    ("Inslogic Nebulux PLA", "Bambu PLA Galaxy @BBL H2S", "GFSA15_11"),
+    ("SUNLU TPU 95A", "Bambu TPU 95A @BBL H2C", "GFSU01_09"),
+    ("SUNLU PETG", "Bambu PETG Basic @BBL H2C", "GFSG00_25"),
+    ("SUNLU PETG HS", "Bambu PETG HF @BBL H2C", "GFSG02_25"),
+    ("SUNLU PA E-PA", "Bambu PA6-GF @BBL H2C", "GFSN08_09"),
+    ("SUNLU PLA", "Bambu PLA Basic @BBL H2C", "GFSA00_22"),
+    ("Inslogic ASA", "Bambu ASA @BBL H2C", "GFSB01_23"),
+    ("Inslogic PETG Pro", "Bambu PETG Basic @BBL H2C", "GFSG00_25"),
+    ("Inslogic TPU 95A", "Bambu TPU 95A @BBL H2C", "GFSU01_09"),
+    ("Inslogic PLA Pro", "Bambu PLA Basic @BBL H2C", "GFSA00_22"),
+    ("Inslogic Matte PLA", "Bambu PLA Matte @BBL H2C", "GFSA01_22"),
+    ("Inslogic Silk PLA", "Bambu PLA Silk @BBL H2C", "GFSA05_23"),
+    ("Inslogic Nebulux PLA", "Bambu PLA Galaxy @BBL H2C", "GFSA15_24"),
 ]
 
 
@@ -48,7 +48,7 @@ def main() -> None:
     updated_time = str(int(time.time()))
 
     for name, inherits, base_id in PRESETS:
-        profile_name = f"{name} @Bambu Lab H2S"
+        profile_name = f"{name} @Bambu Lab H2C"
         preset = {
             "filament_extruder_variant": [
                 "Direct Drive Standard",

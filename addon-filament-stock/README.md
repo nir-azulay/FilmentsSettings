@@ -167,7 +167,7 @@ two sections:
 
 Bundles ship for the filaments tracked in this repo (SUNLU PETG/PETG HS/PLA/PA
 E-PA/TPU 95A, Inslogic ASA/Matte PLA/Nebulux PLA/PETG Pro/PLA Pro/Silk PLA/TPU
-95A), targeting the **Bambu Lab H2S**. Filaments outside that set still show
+95A), targeting the **Bambu Lab H2C**. Filaments outside that set still show
 the configuration metadata; the profile section just displays a friendly empty
 state and a pointer at [`.cursor/rules/add-filament.mdc`](../.cursor/rules/add-filament.mdc)
 for authoring a new one.

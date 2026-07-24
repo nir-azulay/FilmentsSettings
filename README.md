@@ -5,7 +5,7 @@
 | What | Where |
 |---|---|
 | **Filament Stock for Home Assistant** -- native HA add-on + integration + blueprints for tracking spools and wiring them to AMS automations | [`addon-filament-stock/`](addon-filament-stock/) + [`home-assistant/`](home-assistant/) |
-| **Bambu Lab filament profiles** -- tested filament + process JSON profiles for the H2S, with the generators that produced them | [`SUNLU/`](SUNLU/), [`Inslogic/`](Inslogic/), [`DeployPack/`](DeployPack/) |
+| **Bambu Lab filament profiles** -- tested filament + process JSON profiles for the H2C, with the generators that produced them | [`SUNLU/`](SUNLU/), [`Inslogic/`](Inslogic/), [`DeployPack/`](DeployPack/) |
 
 ## Filament Stock for Home Assistant
 

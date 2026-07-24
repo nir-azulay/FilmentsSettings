@@ -6,14 +6,14 @@ matched to its bundle by exact `"<brand> <material>"` prefix, e.g. a row with
 brand="SUNLU" material="PETG HS" matches files starting with `"SUNLU PETG HS "`
 or `"SUNLU PETG HS@"` -- never `"SUNLU PETG "` (a different product).
 
-Each bundle for a Bambu Lab H2S filament typically contains 12 files:
+Each bundle for a Bambu Lab H2C filament typically contains 12 files:
 
-  - 4 process JSONs (per nozzle size): `<product> 0.NNmm @H2S 0.X nozzle.json`
+  - 4 process JSONs (per nozzle size): `<product> 0.NNmm @H2C 0.X nozzle.json`
   - 4 matching `.info` sidecars
-  - 1 base filament JSON: `<product> @Bambu Lab H2S.json` (one file lists all
+  - 1 base filament JSON: `<product> @Bambu Lab H2C.json` (one file lists all
     nozzle sizes in compatible_printers)
   - 1 matching `.info` sidecar
-  - 1 user preset JSON: `<product> @Bambu Lab H2S.preset.json`
+  - 1 user preset JSON: `<product> @Bambu Lab H2C.preset.json`
   - 1 matching `.info` sidecar
 
 (TPU 95A is a 10-file exception -- no 0.2mm nozzle.)
@@ -32,9 +32,9 @@ from typing import Iterable
 # (/app/app/profile_bundle.py + /app/profiles/) and during local dev.
 PROFILES_ROOT = Path(__file__).resolve().parent.parent / "profiles"
 
-_NOZZLE_RE = re.compile(r"\s(0\.[0-9]+)mm @H2S (0\.[0-9]+) nozzle\.json$")
-_BASE_SUFFIX = " @Bambu Lab H2S.json"
-_PRESET_SUFFIX = " @Bambu Lab H2S.preset.json"
+_NOZZLE_RE = re.compile(r"\s(0\.[0-9]+)mm @H2C (0\.[0-9]+) nozzle\.json$")
+_BASE_SUFFIX = " @Bambu Lab H2C.json"
+_PRESET_SUFFIX = " @Bambu Lab H2C.preset.json"
 
 
 @dataclass
@@ -42,7 +42,7 @@ class NozzleEntry:
     """One process preset file (per nozzle size)."""
     layer_height_mm: str  # "0.10" / "0.20" / "0.30" / "0.40"
     nozzle_mm: str        # "0.2" / "0.4" / "0.6" / "0.8"
-    file_name: str        # bare filename, e.g. "SUNLU PETG HS 0.20mm @H2S 0.4 nozzle.json"
+    file_name: str        # bare filename, e.g. "SUNLU PETG HS 0.20mm @H2C 0.4 nozzle.json"
     info_file: str | None  # matching .info sidecar if present
 
 
@@ -51,9 +51,9 @@ class ProfileBundle:
     """All files bundled for one filament product."""
     product: str          # exact prefix used to match, e.g. "SUNLU PETG HS"
     files: list[str]      # all bundled file names (sorted)
-    base_file: str | None    # "<product> @Bambu Lab H2S.json", if present
+    base_file: str | None    # "<product> @Bambu Lab H2C.json", if present
     base_info: str | None
-    preset_file: str | None  # "<product> @Bambu Lab H2S.preset.json", if present
+    preset_file: str | None  # "<product> @Bambu Lab H2C.preset.json", if present
     preset_info: str | None
     nozzles: list[NozzleEntry]  # one per nozzle size present
     # Pulled out of base_file for quick display in the UI.
@@ -64,7 +64,7 @@ def bundle_for(brand: str, material: str) -> ProfileBundle | None:
     """Return the bundle for `<brand> <material>` or None if nothing matches.
 
     `product` must be an exact match against a product whose base profile
-    (`<product> @Bambu Lab H2S.json`) exists on disk. Two products that share
+    (`<product> @Bambu Lab H2C.json`) exists on disk. Two products that share
     a prefix (e.g. "SUNLU PETG" and "SUNLU PETG HS") are kept apart this way.
     """
     if not PROFILES_ROOT.is_dir():
@@ -83,8 +83,8 @@ def bundle_for(brand: str, material: str) -> ProfileBundle | None:
 
     base_file = _exact_one(files, f"{product}{_BASE_SUFFIX}")
     preset_file = _exact_one(files, f"{product}{_PRESET_SUFFIX}")
-    base_info = _exact_one(files, f"{product} @Bambu Lab H2S.info") if base_file else None
-    preset_info = _exact_one(files, f"{product} @Bambu Lab H2S.preset.info") if preset_file else None
+    base_info = _exact_one(files, f"{product} @Bambu Lab H2C.info") if base_file else None
+    preset_info = _exact_one(files, f"{product} @Bambu Lab H2C.preset.info") if preset_file else None
 
     nozzles: list[NozzleEntry] = []
     nozzle_prefix = f"{product} "

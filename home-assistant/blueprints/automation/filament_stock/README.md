@@ -34,7 +34,7 @@ For each `.yaml` above:
 2. Paste the raw GitHub URL of the file.
 3. **Create Automation** from the new blueprint and fill in the input fields.
 
-## Bambu integration entities (verified against HACS Bambu Lab v2.2.22 + H2S)
+## Bambu integration entities (verified against HACS Bambu Lab v2.2.22 + H2C)
 
 | Purpose | Example entity (your printer's serial is the prefix) |
 |---|---|

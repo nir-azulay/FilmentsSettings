@@ -59,21 +59,21 @@
 
 ## Profile Configuration
 
-**Printer:** Bambu Lab H2S
+**Printer:** Bambu Lab H2C
 **Nozzle Types:** Standard + High Flow (0.2, 0.4, 0.6, 0.8mm)
 
 ### Filament Base Profiles (`filament/base/`)
 
 | File | Nozzle | Max Vol Speed (STD/HF) | Nozzle Temp (STD/HF) | Retraction |
 |---|---|---|---|---|
-| `my-SUNLU PETG HS @Bambu Lab H2S 0.2 nozzle.json` | 0.2mm | 6 / 10 mm³/s | 235 / 245°C | 1.0mm @ 35/40 mm/s |
-| `my-SUNLU PETG HS @Bambu Lab H2S 0.4 nozzle.json` | 0.4mm | 18 / 21 mm³/s | 245 / 250°C | 1.0mm @ 35/40 mm/s |
-| `my-SUNLU PETG HS @Bambu Lab H2S 0.6 nozzle.json` | 0.6mm | 18 / 28 mm³/s | 245 / 255°C | 1.0mm @ 35/40 mm/s |
-| `my-SUNLU PETG HS @Bambu Lab H2S 0.8 nozzle.json` | 0.8mm | 22 / 36 mm³/s | 250 / 255°C | 1.0mm @ 35/40 mm/s |
+| `my-SUNLU PETG HS @Bambu Lab H2C 0.2 nozzle.json` | 0.2mm | 6 / 10 mm³/s | 235 / 245°C | 1.0mm @ 35/40 mm/s |
+| `my-SUNLU PETG HS @Bambu Lab H2C 0.4 nozzle.json` | 0.4mm | 18 / 21 mm³/s | 245 / 250°C | 1.0mm @ 35/40 mm/s |
+| `my-SUNLU PETG HS @Bambu Lab H2C 0.6 nozzle.json` | 0.6mm | 18 / 28 mm³/s | 245 / 255°C | 1.0mm @ 35/40 mm/s |
+| `my-SUNLU PETG HS @Bambu Lab H2C 0.8 nozzle.json` | 0.8mm | 22 / 36 mm³/s | 250 / 255°C | 1.0mm @ 35/40 mm/s |
 
 ### Filament User Presets (`filament/`)
 
-- `my-SUNLU PETG HS @Bambu Lab H2S 0.2/0.4/0.6/0.8 nozzle` - per-nozzle presets
+- `my-SUNLU PETG HS @Bambu Lab H2C 0.2/0.4/0.6/0.8 nozzle` - per-nozzle presets
 - `my-SUNLU PETG HS Calibrated` - custom override for personal calibrations
 
 ### Process Presets (`process/`)
@@ -82,10 +82,10 @@ Each process preset **inherits only** the matching Bambu **Standard** profile (s
 
 | File | Inherits (Bambu system) |
 |---|---|
-| `my-SUNLU PETG HS 0.10mm @H2S 0.2 nozzle.json` | `0.10mm Standard @BBL H2S 0.2 nozzle` |
-| `my-SUNLU PETG HS 0.20mm @H2S 0.4 nozzle.json` | `0.20mm Standard @BBL H2S` |
-| `my-SUNLU PETG HS 0.30mm @H2S 0.6 nozzle.json` | `0.30mm Standard @BBL H2S 0.6 nozzle` |
-| `my-SUNLU PETG HS 0.40mm @H2S 0.8 nozzle.json` | `0.40mm Standard @BBL H2S 0.8 nozzle` |
+| `my-SUNLU PETG HS 0.10mm @H2C 0.2 nozzle.json` | `0.10mm Standard @BBL H2C 0.2 nozzle` |
+| `my-SUNLU PETG HS 0.20mm @H2C 0.4 nozzle.json` | `0.20mm Standard @BBL H2C` |
+| `my-SUNLU PETG HS 0.30mm @H2C 0.6 nozzle.json` | `0.30mm Standard @BBL H2C 0.6 nozzle` |
+| `my-SUNLU PETG HS 0.40mm @H2C 0.8 nozzle.json` | `0.40mm Standard @BBL H2C 0.8 nozzle` |
 
 ### Key PETG-specific Settings
 

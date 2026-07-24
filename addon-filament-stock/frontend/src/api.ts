@@ -305,7 +305,7 @@ export interface AmsTray {
   entity_id: string;
   /** Raw printer prefix derived from entity_id (kept for grouping fallback). */
   printer: string;
-  /** Friendly printer name from the HA device registry. e.g. "H2S 3D Printer".
+  /** Friendly printer name from the HA device registry. e.g. "H2C 3D Printer".
    *  Falls back to a prettified `printer` when the registry lookup is unavailable. */
   printer_label?: string;
   /** Hardware model from the HA device registry, normalised to a short label.

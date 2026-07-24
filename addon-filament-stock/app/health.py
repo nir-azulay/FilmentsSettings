@@ -72,7 +72,7 @@ _BAMBULAB_ENTITY_PREFIXES = (
 _BAMBULAB_FRIENDLY_HINTS = (
     "bambu",
     "p1s", "p1p", "x1c", "x1e", "a1",  # printer model substrings
-    "h2s", "h2d",
+    "h2c", "h2d",
 )
 
 

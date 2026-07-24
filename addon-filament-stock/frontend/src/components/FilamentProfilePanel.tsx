@@ -248,7 +248,7 @@ function ProfileView({ filamentId, meta }: { filamentId: number; meta: ProfileMe
         </p>
         <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--ha-secondary-text)" }}>
           The add-on ships profiles for the filaments tracked in the maintainer's
-          repo (SUNLU, Inslogic on the Bambu Lab H2S). To add a new one, follow
+          repo (SUNLU, Inslogic on the Bambu Lab H2C). To add a new one, follow
           <code style={code}> .cursor/rules/add-filament.mdc</code> and re-sync
           with <code style={code}>./sync_profiles.sh</code>.
         </p>
@@ -260,7 +260,7 @@ function ProfileView({ filamentId, meta }: { filamentId: number; meta: ProfileMe
     <>
       <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--ha-secondary-text)" }}>
         <strong style={{ color: "var(--ha-primary-text)" }}>{meta.product}</strong> -- one base
-        filament profile listing all H2S nozzle sizes in <code style={code}>compatible_printers</code>,
+        filament profile listing all H2C nozzle sizes in <code style={code}>compatible_printers</code>,
         a user preset, and {meta.nozzles.length} process preset(s).
       </p>
 

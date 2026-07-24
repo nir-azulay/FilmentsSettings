@@ -44,11 +44,11 @@
 
 ## Manufacturer Recommended Print Settings
 
-| Setting | TDS Value | Profile Value (Bambu H2S) |
+| Setting | TDS Value | Profile Value (Bambu H2C) |
 |---|---|---|
 | Nozzle Temperature | 220-250°C | 270°C (matches Bambu system ABS) |
 | Bed Temperature | 80-120°C | 90°C (matches Bambu system ABS) |
-| Retraction | N/A | 0.4mm @ 35mm/s (H2S direct drive) |
+| Retraction | N/A | 0.4mm @ 35mm/s (H2C direct drive) |
 | Fan Max | N/A | 80% (60% for 0.2mm nozzle) |
 | Fan Min | N/A | 10% (40% for 0.2mm nozzle) |
 | Overhang Fan | N/A | 80% |
@@ -57,15 +57,15 @@
 
 | File | Nozzle | Key Settings |
 |---|---|---|
-| `my-YS Filament ABS @Bambu Lab H2S 0.2 nozzle.json` | 0.2mm | 270°C, Bed 90°C, MVS 2, Fan 60/40% |
-| `my-YS Filament ABS @Bambu Lab H2S 0.4 nozzle.json` | 0.4mm | 270°C, Bed 90°C, MVS 15, Fan 80/10% |
-| `my-YS Filament ABS @Bambu Lab H2S 0.6 nozzle.json` | 0.6mm | 270°C, Bed 90°C, MVS 15, Fan 80/10% |
-| `my-YS Filament ABS @Bambu Lab H2S 0.8 nozzle.json` | 0.8mm | 270°C, Bed 90°C, MVS 15, Fan 80/10% |
+| `my-YS Filament ABS @Bambu Lab H2C 0.2 nozzle.json` | 0.2mm | 270°C, Bed 90°C, MVS 2, Fan 60/40% |
+| `my-YS Filament ABS @Bambu Lab H2C 0.4 nozzle.json` | 0.4mm | 270°C, Bed 90°C, MVS 15, Fan 80/10% |
+| `my-YS Filament ABS @Bambu Lab H2C 0.6 nozzle.json` | 0.6mm | 270°C, Bed 90°C, MVS 15, Fan 80/10% |
+| `my-YS Filament ABS @Bambu Lab H2C 0.8 nozzle.json` | 0.8mm | 270°C, Bed 90°C, MVS 15, Fan 80/10% |
 | `my-YS Filament ABS Calibrated.json` | 0.4mm | Calibration override |
-| `my-YS Filament ABS 0.10mm @H2S 0.2 nozzle.json` | 0.2mm | Process: 0.10mm layer, gyroid 20%, 4 walls |
-| `my-YS Filament ABS 0.20mm @H2S 0.4 nozzle.json` | 0.4mm | Process: 0.20mm layer, gyroid 20%, 4 walls |
-| `my-YS Filament ABS 0.30mm @H2S 0.6 nozzle.json` | 0.6mm | Process: 0.30mm layer, gyroid 20%, 4 walls |
-| `my-YS Filament ABS 0.40mm @H2S 0.8 nozzle.json` | 0.8mm | Process: 0.40mm layer, gyroid 20%, 4 walls |
+| `my-YS Filament ABS 0.10mm @H2C 0.2 nozzle.json` | 0.2mm | Process: 0.10mm layer, gyroid 20%, 4 walls |
+| `my-YS Filament ABS 0.20mm @H2C 0.4 nozzle.json` | 0.4mm | Process: 0.20mm layer, gyroid 20%, 4 walls |
+| `my-YS Filament ABS 0.30mm @H2C 0.6 nozzle.json` | 0.6mm | Process: 0.30mm layer, gyroid 20%, 4 walls |
+| `my-YS Filament ABS 0.40mm @H2C 0.8 nozzle.json` | 0.8mm | Process: 0.40mm layer, gyroid 20%, 4 walls |
 
 ## Notes
 
@@ -74,4 +74,4 @@
 - Enable air filtration -- ABS produces fumes
 - Brim (outer + inner, 5mm) enabled in process presets for bed adhesion
 - First layer speed set to 30mm/s for better adhesion
-- Nozzle temp set to 270°C per Bambu system ABS profile (significantly higher than TDS 220-250°C range -- this is normal for H2S direct drive)
+- Nozzle temp set to 270°C per Bambu system ABS profile (significantly higher than TDS 220-250°C range -- this is normal for H2C direct drive)

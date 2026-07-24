@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate YS Filament ABS profiles for Bambu Lab H2S (all nozzle sizes)."""
+"""Generate YS Filament ABS profiles for Bambu Lab H2C (all nozzle sizes)."""
 
 import json
 import os
@@ -48,26 +48,26 @@ PROCESS_SETTING_IDS = {
 PROCESS_CONFIG = {
     "0.2": {
         "layer": "0.10",
-        "inherits": "0.10mm Standard @BBL H2S 0.2 nozzle",
-        "base_id": "GP152",
+        "inherits": "0.10mm Standard @BBL H2C 0.2 nozzle",
+        "base_id": "GP245",
         "support_top_z_distance": "0.1",
     },
     "0.4": {
         "layer": "0.20",
-        "inherits": "0.20mm Standard @BBL H2S",
-        "base_id": "GP158",
+        "inherits": "0.20mm Standard @BBL H2C",
+        "base_id": "GP252",
         "support_top_z_distance": "0.2",
     },
     "0.6": {
         "layer": "0.30",
-        "inherits": "0.30mm Standard @BBL H2S 0.6 nozzle",
-        "base_id": "GP159",
+        "inherits": "0.30mm Standard @BBL H2C 0.6 nozzle",
+        "base_id": "GP256",
         "support_top_z_distance": "0.2",
     },
     "0.8": {
         "layer": "0.40",
-        "inherits": "0.40mm Standard @BBL H2S 0.8 nozzle",
-        "base_id": "GP156",
+        "inherits": "0.40mm Standard @BBL H2C 0.8 nozzle",
+        "base_id": "GP258",
         "support_top_z_distance": "0.2",
     },
 }
@@ -85,11 +85,13 @@ def write_info(path, content):
 
 
 def build_base_profile(nozzle):
-    name = f"my-YS Filament ABS @Bambu Lab H2S {nozzle} nozzle"
+    name = f"my-YS Filament ABS @Bambu Lab H2C {nozzle} nozzle"
 
     is_02 = nozzle == "0.2"
 
     profile = {
+        "type": "filament",
+        "instantiation": "true",
         "activate_air_filtration": ["1"],
         "additional_cooling_fan_speed": ["0"],
         "additional_fan_full_speed_layer": ["0"],
@@ -97,7 +99,7 @@ def build_base_profile(nozzle):
         "circle_compensation_speed": ["200"],
         "close_additional_fan_first_x_layers": ["3"],
         "close_fan_the_first_x_layers": ["3"],
-        "compatible_printers": [f"Bambu Lab H2S {nozzle} nozzle"],
+        "compatible_printers": [f"Bambu Lab H2C {nozzle} nozzle"],
         "compatible_printers_condition": "",
         "compatible_prints": [],
         "compatible_prints_condition": "",
@@ -160,11 +162,11 @@ def build_base_profile(nozzle):
         "filament_metal_stickiness": ["None"],
         "filament_minimal_purge_on_wipe_tower": ["15"],
         "filament_notes": (
-            "YS Filament ABS ABS+. Based on Yousu ABS TDS (YS-ABS111) and Bambu ABS H2S baseline. "
-            "TDS nozzle: 220-250C; H2S profile uses Bambu ABS 270C with 260C initial layer. "
+            "YS Filament ABS ABS+. Based on Yousu ABS TDS (YS-ABS111) and Bambu ABS H2C baseline. "
+            "TDS nozzle: 220-250C; H2C profile uses Bambu ABS 270C with 260C initial layer. "
             "Bed: 90C within TDS 80-120C. Chamber: 60C. "
             "Retraction: 0.8mm for 0.2 nozzle, 0.4mm for larger nozzles, at 35mm/s. "
-            "Fan follows Bambu ABS H2S baseline. Density: 1.05 g/cm3. "
+            "Fan follows Bambu ABS H2C baseline. Density: 1.05 g/cm3. "
             "HDT: 83C unannealed at 1.8MPa. Vicat: 100C at 5kg. Air filtration enabled."
         ),
         "filament_overhang_1_4_speed": ["0", "0"],
@@ -259,7 +261,7 @@ def build_base_profile(nozzle):
 
 
 def build_user_preset(nozzle):
-    name = f"my-YS Filament ABS @Bambu Lab H2S {nozzle} nozzle"
+    name = f"my-YS Filament ABS @Bambu Lab H2C {nozzle} nozzle"
     return {
         "filament_extruder_variant": [
             "Direct Drive Standard",
@@ -283,7 +285,7 @@ def build_calibrated():
         "filament_flow_ratio": ["nil", "nil"],
         "filament_settings_id": ["my-YS Filament ABS Calibrated"],
         "from": "User",
-        "inherits": "my-YS Filament ABS @Bambu Lab H2S 0.4 nozzle",
+        "inherits": "my-YS Filament ABS @Bambu Lab H2C 0.4 nozzle",
         "name": "my-YS Filament ABS Calibrated",
         "version": "2.6.0.2",
     }
@@ -291,7 +293,7 @@ def build_calibrated():
 
 def build_process_preset(nozzle):
     cfg = PROCESS_CONFIG[nozzle]
-    name = f"my-YS Filament ABS {cfg['layer']}mm @H2S {nozzle} nozzle"
+    name = f"my-YS Filament ABS {cfg['layer']}mm @H2C {nozzle} nozzle"
     return {
         "brim_type": "outer_and_inner",
         "brim_width": "5",
@@ -327,7 +329,7 @@ def main():
     created = []
 
     for nozzle in NOZZLES:
-        base_name = f"my-YS Filament ABS @Bambu Lab H2S {nozzle} nozzle"
+        base_name = f"my-YS Filament ABS @Bambu Lab H2C {nozzle} nozzle"
 
         # --- Base filament profile ---
         base_json_path = os.path.join(OUTPUT_DIR, f"{base_name}.json")
@@ -359,7 +361,7 @@ def main():
 
         # --- Process preset ---
         cfg = PROCESS_CONFIG[nozzle]
-        proc_name = f"my-YS Filament ABS {cfg['layer']}mm @H2S {nozzle} nozzle"
+        proc_name = f"my-YS Filament ABS {cfg['layer']}mm @H2C {nozzle} nozzle"
         proc_json_path = os.path.join(OUTPUT_DIR, f"{proc_name}.json")
         write_json(proc_json_path, build_process_preset(nozzle))
         created.append(proc_json_path)

@@ -51,25 +51,25 @@ Successfully configured and optimized Bambu Studio profiles for SUNLU Industrial
 SUNLU\TPU-95A\
 ├── README.md                          (Comprehensive documentation)
 ├── SETUP_SUMMARY.md                   (This file)
-├── SUNLU TPU 95A @Bambu Lab H2S.json  (Base profile - all nozzles)
-├── SUNLU TPU 95A @Bambu Lab H2S.info
-├── SUNLU TPU 95A @Bambu Lab H2S.preset.json
-├── SUNLU TPU 95A @Bambu Lab H2S.preset.info
+├── SUNLU TPU 95A @Bambu Lab H2C.json  (Base profile - all nozzles)
+├── SUNLU TPU 95A @Bambu Lab H2C.info
+├── SUNLU TPU 95A @Bambu Lab H2C.preset.json
+├── SUNLU TPU 95A @Bambu Lab H2C.preset.info
 ├── SUNLU TPU 95A Calibrated.json      (Post-calibration overrides)
 ├── SUNLU TPU 95A Calibrated.info
-├── my-SUNLU TPU 95A @Bambu Lab H2S.json
-├── my-SUNLU TPU 95A @Bambu Lab H2S.info
-├── my-SUNLU TPU 95A @Bambu Lab H2S.preset.json
-├── my-SUNLU TPU 95A @Bambu Lab H2S.preset.info
+├── my-SUNLU TPU 95A @Bambu Lab H2C.json
+├── my-SUNLU TPU 95A @Bambu Lab H2C.info
+├── my-SUNLU TPU 95A @Bambu Lab H2C.preset.json
+├── my-SUNLU TPU 95A @Bambu Lab H2C.preset.info
 ├── my-SUNLU TPU 95A Calibrated.json
 ├── my-SUNLU TPU 95A Calibrated.info
 ├── Process Presets (3 nozzle sizes):
-│   ├── SUNLU TPU 95A 0.20mm @H2S 0.4 nozzle.json/.info
-│   ├── SUNLU TPU 95A 0.30mm @H2S 0.6 nozzle.json/.info
-│   ├── SUNLU TPU 95A 0.40mm @H2S 0.8 nozzle.json/.info
-│   ├── my-SUNLU TPU 95A 0.20mm @H2S 0.4 nozzle.json/.info
-│   ├── my-SUNLU TPU 95A 0.30mm @H2S 0.6 nozzle.json/.info
-│   └── my-SUNLU TPU 95A 0.40mm @H2S 0.8 nozzle.json/.info
+│   ├── SUNLU TPU 95A 0.20mm @H2C 0.4 nozzle.json/.info
+│   ├── SUNLU TPU 95A 0.30mm @H2C 0.6 nozzle.json/.info
+│   ├── SUNLU TPU 95A 0.40mm @H2C 0.8 nozzle.json/.info
+│   ├── my-SUNLU TPU 95A 0.20mm @H2C 0.4 nozzle.json/.info
+│   ├── my-SUNLU TPU 95A 0.30mm @H2C 0.6 nozzle.json/.info
+│   └── my-SUNLU TPU 95A 0.40mm @H2C 0.8 nozzle.json/.info
 ```
 
 **Removed**: Obsolete Inslogic TPU 95A profiles (replaced with correct SUNLU configuration)
@@ -153,13 +153,13 @@ Notes: SUNLU Industrial Grade TPU 95A specifications
 | **0.8mm HF** | 0.40mm | 120 mm/s | 12 mm³/s | Maximum speed |
 
 ### Profile Names in Bambu Studio:
-- Base: `my-SUNLU TPU 95A @Bambu Lab H2S`
+- Base: `my-SUNLU TPU 95A @Bambu Lab H2C`
 - Calibrated: `my-SUNLU TPU 95A Calibrated` (use after running flow calibration)
 
 ### Process Presets:
-- `my-SUNLU TPU 95A 0.20mm @H2S 0.4 nozzle`
-- `my-SUNLU TPU 95A 0.30mm @H2S 0.6 nozzle`
-- `my-SUNLU TPU 95A 0.40mm @H2S 0.8 nozzle`
+- `my-SUNLU TPU 95A 0.20mm @H2C 0.4 nozzle`
+- `my-SUNLU TPU 95A 0.30mm @H2C 0.6 nozzle`
+- `my-SUNLU TPU 95A 0.40mm @H2C 0.8 nozzle`
 
 ---
 
@@ -180,7 +180,7 @@ Notes: SUNLU Industrial Grade TPU 95A specifications
 ## Next Steps
 
 1. **Restart Bambu Studio** to load the profiles
-2. **Select Profile**: Choose `my-SUNLU TPU 95A @Bambu Lab H2S` in filament settings
+2. **Select Profile**: Choose `my-SUNLU TPU 95A @Bambu Lab H2C` in filament settings
 3. **Choose Process**: Select appropriate layer height process preset for your nozzle
 4. **Test Print**: Start with a small test print at 60-80mm/s
 5. **Calibrate** (optional): Run flow calibration and save to `my-SUNLU TPU 95A Calibrated`

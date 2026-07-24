@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate SUNLU filament profiles for Bambu Lab H2S.
+Generate SUNLU filament profiles for Bambu Lab H2C.
 
 Produces:
   - SUNLU PETG HS   (High Speed Matte PETG)
@@ -8,7 +8,7 @@ Produces:
   - SUNLU TPU 95A   (TPU 95A Shore — no 0.2mm nozzle)
   - SUNLU PA E-PA   (Easy Nylon 6+66 — requires glue on textured PEI)
 
-Design: ONE filament file per product that lists compatible H2S nozzle sizes in
+Design: ONE filament file per product that lists compatible H2C nozzle sizes in
 compatible_printers — identical behaviour to Bambu's built-in presets.
 No need to reassign the filament when changing nozzle size.
 
@@ -38,19 +38,19 @@ DEPLOY_DIR = REPO_ROOT / "DeployPack"
 STOCK_DIR = REPO_ROOT / "stock-manager" / "deploy" / "backend" / "profiles" / "SUNLU" / "PETG-HS"
 TEMPLATE_PATH = SCRIPT_DIR / "baseline_full_filament.json"
 
-ALL_H2S_NOZZLES = [
-    "Bambu Lab H2S 0.2 nozzle",
-    "Bambu Lab H2S 0.4 nozzle",
-    "Bambu Lab H2S 0.6 nozzle",
-    "Bambu Lab H2S 0.8 nozzle",
+ALL_H2C_NOZZLES = [
+    "Bambu Lab H2C 0.2 nozzle",
+    "Bambu Lab H2C 0.4 nozzle",
+    "Bambu Lab H2C 0.6 nozzle",
+    "Bambu Lab H2C 0.8 nozzle",
 ]
 
-# Bambu system process parents (H2S)
+# Bambu system process parents (H2C)
 PROCESS_PARENT = {
-    "0.2": ("0.10mm Standard @BBL H2S 0.2 nozzle", "GP152", "0.10"),
-    "0.4": ("0.20mm Standard @BBL H2S",             "GP158", "0.20"),
-    "0.6": ("0.30mm Standard @BBL H2S 0.6 nozzle",  "GP159", "0.30"),
-    "0.8": ("0.40mm Standard @BBL H2S 0.8 nozzle",  "GP156", "0.40"),
+    "0.2": ("0.10mm Standard @BBL H2C 0.2 nozzle", "GP245", "0.10"),
+    "0.4": ("0.20mm Standard @BBL H2C",             "GP252", "0.20"),
+    "0.6": ("0.30mm Standard @BBL H2C 0.6 nozzle",  "GP256", "0.30"),
+    "0.8": ("0.40mm Standard @BBL H2C 0.8 nozzle",  "GP258", "0.40"),
 }
 
 # ─── Filament definitions ─────────────────────────────────────────────────────
@@ -262,8 +262,8 @@ def write_info(path: Path, setting_id: str, base_id: str = "", user_id: str = ""
 # ─── Builders ─────────────────────────────────────────────────────────────────
 
 def build_filament(fil: dict, template: dict) -> tuple[dict, str]:
-    """Full filament JSON listing compatible H2S nozzle sizes."""
-    name = f"{fil['short']} @Bambu Lab H2S"
+    """Full filament JSON listing compatible H2C nozzle sizes."""
+    name = f"{fil['short']} @Bambu Lab H2C"
     nozzles = fil.get("nozzles", ["0.2", "0.4", "0.6", "0.8"])
     d = deepcopy(template)
     d["name"] = name
@@ -274,11 +274,13 @@ def build_filament(fil: dict, template: dict) -> tuple[dict, str]:
     d["from"] = "User"
     d["inherits"] = ""
     d["version"] = VERSION
-    d["compatible_printers"] = [f"Bambu Lab H2S {nz} nozzle" for nz in nozzles]
+    d["compatible_printers"] = [f"Bambu Lab H2C {nz} nozzle" for nz in nozzles]
     # Apply all filament-specific settings (temps, fans, retraction, bed, gcode…)
     for k, v in fil["settings"].items():
         d[k] = v
     # Always-on fields
+    d["type"] = "filament"
+    d["instantiation"] = "true"
     d["enable_pressure_advance"] = ["1"]
     d["filament_enable_overhang_speed"] = ["0", "0"]
     d["slow_down_layer_time"] = ["8"]
@@ -299,7 +301,7 @@ def build_preset(fil_name: str, base_sid: str) -> tuple[dict, str]:
 
 
 def build_calibrated(fil_name: str, base_sid: str) -> tuple[dict, str]:
-    cal_name = fil_name.replace("@Bambu Lab H2S", "Calibrated").strip()
+    cal_name = fil_name.replace("@Bambu Lab H2C", "Calibrated").strip()
     cal = {
         "filament_extruder_variant": ["Direct Drive Standard", "Direct Drive High Flow"],
         "filament_flow_ratio": ["nil", "nil"],
@@ -314,9 +316,9 @@ def build_calibrated(fil_name: str, base_sid: str) -> tuple[dict, str]:
 
 def build_process(short: str, nozzle: str) -> tuple[dict, str, str]:
     parent, gp, layer = PROCESS_PARENT[nozzle]
-    proc_name = f"{short} {layer}mm @H2S {nozzle} nozzle"
+    proc_name = f"{short} {layer}mm @H2C {nozzle} nozzle"
     proc = {
-        "compatible_printers": [f"Bambu Lab H2S {nozzle} nozzle"],
+        "compatible_printers": [f"Bambu Lab H2C {nozzle} nozzle"],
         "from": "User",
         "inherits": parent,
         "instantiation": "true",
@@ -330,7 +332,7 @@ def build_process(short: str, nozzle: str) -> tuple[dict, str, str]:
 # ─── Generator ────────────────────────────────────────────────────────────────
 
 def generate_filament(fil: dict, template: dict) -> None:
-    name = f"{fil['short']} @Bambu Lab H2S"
+    name = f"{fil['short']} @Bambu Lab H2C"
 
     filament, base_sid = build_filament(fil, template)
     write_json(SCRIPT_DIR / f"{name}.json", filament)
