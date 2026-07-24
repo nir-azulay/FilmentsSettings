@@ -1,0 +1,17 @@
+{
+    "filament_cost": [
+        "65"
+    ],
+    "filament_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow",
+        "Direct Drive E3D High Flow"
+    ],
+    "filament_settings_id": [
+        "Inslogic ASA"
+    ],
+    "from": "User",
+    "inherits": "Inslogic ASA Basic @Bambu Lab H2C 0.4 nozzle",
+    "name": "Inslogic ASA",
+    "version": "2.8.0.4"
+}
