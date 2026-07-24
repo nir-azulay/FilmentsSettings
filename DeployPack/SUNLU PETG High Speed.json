@@ -1,0 +1,17 @@
+{
+    "filament_cost": [
+        "40"
+    ],
+    "filament_extruder_variant": [
+        "Direct Drive Standard",
+        "Direct Drive High Flow",
+        "Direct Drive E3D High Flow"
+    ],
+    "filament_settings_id": [
+        "SUNLU PETG High Speed"
+    ],
+    "from": "User",
+    "inherits": "SUNLU PETG High Speed @Bambu Lab H2C 0.4 nozzle",
+    "name": "SUNLU PETG High Speed",
+    "version": "2.8.0.4"
+}
