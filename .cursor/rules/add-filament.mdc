@@ -9,79 +9,85 @@ When the user asks to add a new filament, follow this workflow.
 
 ## 1. Workflow Overview
 
-**IMPORTANT:** The user creates the filament via Bambu Studio Beta's "Create Filament" wizard. The agent only tunes the settings in the wizard-generated files based on TDS data.
-
 ### Steps:
 1. User provides TDS PDF link or product info
-2. Agent extracts TDS parameters
-3. **User creates filament** in Bambu Studio Beta via: Filament Settings → Custom Filaments → Create New
-4. Agent locates the wizard-generated files and updates only the print/material settings
-5. Agent copies tuned files to DeployPack for version control
+2. **Agent reads TDS PDF** and extracts ALL printing parameters
+3. **User creates filament** in Bambu Studio Beta via wizard
+4. **Agent configures the profile** with TDS-based settings (not just minor fixes)
+5. Agent copies configured files to DeployPack for version control
 
-## 2. Gather Info
+## 2. Get TDS Information
 
-- Ask for the **Amazon product URL**, **official product page**, and/or **TDS PDF link**
-- Download the **TDS PDF** and save it in the filament's brand folder as `<Brand>_<Material>_TDS.pdf`
-- Printer is **Bambu Lab H2C**
-- Nozzle sizes: **0.2, 0.4, 0.6, 0.8mm** (Standard, High Flow, E3D High Flow)
-- Using **Bambu Studio Beta** (not regular BambuStudio)
+When adding a new filament, **ALWAYS get the TDS first**:
+- Ask user for **TDS PDF link** or **official product page**
+- Read/download the TDS PDF
+- Extract ALL parameters from TDS (see section 4)
+
+**Printer:** Bambu Lab H2C  
+**Nozzle sizes:** 0.2, 0.4, 0.6, 0.8mm (Standard, High Flow, E3D High Flow)  
+**Software:** Bambu Studio Beta
 
 ## 3. User Creates Filament via Wizard
 
-The user must create the filament through Bambu Studio Beta's wizard:
-1. Open Bambu Studio Beta
-2. Go to **Filament Settings** (top menu)
-3. Click **Custom Filaments** → **Create New**
-4. Fill in: Brand name, Material type, Color
-5. Click **OK** to save
+User creates the filament through Bambu Studio Beta:
+1. Filament Settings → Custom Filaments → Create New
+2. Fill in: Brand name, Material type, Color
+3. Click OK to save
 
-This creates the necessary files with proper registration and `filament_id`.
+This creates files with proper `filament_id` registration.
 
-## 4. Locate Wizard-Generated Files
+**Files location:**
+- Base profiles: `C:\Users\Nir\AppData\Roaming\BambuStudioBeta\user\2189385007\filament\base\`
+- User presets: `C:\Users\Nir\AppData\Roaming\BambuStudioBeta\user\2189385007\filament\`
 
-After user creates the filament, find the files at:
-- **Base profiles:** `C:\Users\Nir\AppData\Roaming\BambuStudioBeta\user\2189385007\filament\base\`
-- **User presets:** `C:\Users\Nir\AppData\Roaming\BambuStudioBeta\user\2189385007\filament\`
+**CRITICAL:** Only modify H2C files. H2S printer is no longer used.
 
-File naming: `<Brand> <Material> @Bambu Lab H2C 0.X nozzle.json` + `.info`
+## 4. Configure Profile from TDS Data
 
-**CRITICAL:** Only modify H2C files. Do NOT create or modify H2S files (printer no longer used).
+**DO NOT modify identity fields** (wizard creates them):
+- `filament_id`, `filament_settings_id`, `name`, `inherits`
+- `.info` file contents
 
-## 5. Tune Settings Based on TDS
+**CONFIGURE these settings from TDS:**
 
-**DO NOT modify these identity fields** (wizard creates them):
-- `filament_id`
-- `filament_settings_id`
-- `name`
-- `inherits`
-- `.info` file contents (`setting_id`, `base_id`, `user_id`)
+### Material Properties (from TDS):
+| Setting | TDS Source |
+|---------|-----------|
+| `filament_density` | Density (g/cm³) |
+| `temperature_vitrification` | Glass Transition Tg (°C) |
+| `filament_dev_ams_drying_heat_distortion_temperature` | HDT Heat Distortion (°C) |
+| `filament_dev_drying_softening_temperature` | Vicat Softening (°C) |
 
-**DO modify these print/material settings** based on TDS:
+### Print Settings (from TDS):
+| Setting | TDS Source | Notes |
+|---------|-----------|-------|
+| `nozzle_temperature` | Nozzle Temp range | Use mid-high of range |
+| `nozzle_temperature_initial_layer` | Same or +5°C | Must be >= nozzle_temperature |
+| `hot_plate_temp` | Bed Temp range | Use value from range |
+| `textured_plate_temp` | Bed Temp range | Usually same as hot_plate |
+| `filament_retraction_length` | Retraction Distance | TDS says 0.8-1.2mm typically |
+| `filament_retraction_speed` | Retraction Speed | TDS says 30-40mm/s typically |
+| `filament_deretraction_speed` | Same as retraction | Match retraction speed |
+| `filament_max_volumetric_speed` | Max Print Speed | Calculate from TDS max speed |
 
-### TDS-Critical Fields to update:
-| Field | Source |
-|-------|--------|
-| `filament_density` | TDS density value |
-| `temperature_vitrification` | TDS Tg value |
-| `filament_dev_ams_drying_heat_distortion_temperature` | TDS HDT value |
-| `nozzle_temperature` | TDS nozzle temp range (mid-high) |
-| `hot_plate_temp` / `textured_plate_temp` | TDS bed temp range |
-| `filament_retraction_length` | TDS retraction distance (usually 0.8-1.2mm) |
-| `filament_retraction_speed` / `filament_deretraction_speed` | TDS retraction speed |
+### Mandatory Settings (wizard gets these wrong):
+| Setting | Value | Reason |
+|---------|-------|--------|
+| `enable_pressure_advance` | `"1"` | MUST be enabled |
+| `filament_retraction_speed` | Explicit value, NOT `"nil"` | `"nil"` causes extrusion issues |
+| `filament_deretraction_speed` | Explicit value, NOT `"nil"` | Match retraction speed |
+| `filament_start_gcode` | Aux fan control gcode | Required for chamber ventilation |
 
-### Mandatory Fixes (wizard defaults are often wrong):
-| Field | Fix | Reason |
-|-------|-----|--------|
-| `enable_pressure_advance` | `"1"` | Wizard sets `"0"`, must be enabled |
-| `filament_retraction_speed` | `["35", "40"]` or `["35", "40", "40"]` | Wizard sets `"nil"`, causes issues |
-| `filament_deretraction_speed` | Same as retraction | Wizard sets `"nil"` |
-| `filament_retraction_length` | `"1.0"` | Wizard sets `"0.4"` or `"nil"`, TDS usually 0.8-1.2mm |
-| `fan_max_speed` | Match Bambu system profile | Wizard may set wrong value |
-| `overhang_fan_speed` | Match Bambu system profile | 100% causes stringing on PETG |
-| `filament_start_gcode` | Add aux fan control gcode | Wizard leaves empty |
+### Fan Speeds (match Bambu system profile for material type):
+| Material | fan_max_speed | fan_min_speed | overhang_fan_speed |
+|----------|--------------|--------------|-------------------|
+| PETG | 60% | 20% | 50% |
+| ASA | 35% | 10% | 80-100% |
+| PLA | 100% | 100% | 90% |
+| PA/Nylon | 30% | 10% | 50% |
+| TPU | 100% | 100% | 100% |
 
-### Validation Against Bambu System Profiles:
-Compare with Bambu system profiles at:
+### Reference Bambu System Profiles:
 `C:\Users\Nir\AppData\Roaming\BambuStudioBeta\system\BBL\filament\`
 
 ### Material-specific Fan Speed Reference (from Bambu system profiles):
@@ -93,12 +99,12 @@ Compare with Bambu system profiles at:
 | PA/Nylon | 30% | 10% | 50% |
 | TPU | 100% | 100% | 100% |
 
-### Filament Start Gcode (add this to wizard-generated profiles):
+### Filament Start Gcode (PETG/PLA):
 ```
 ; filament start gcode\n{if (bed_temperature[current_extruder] >80)||(bed_temperature_initial_layer[current_extruder] >80)}M106 P3 S255\n{elsif (bed_temperature[current_extruder] >60)||(bed_temperature_initial_layer[current_extruder] >60)}M106 P3 S180\n{endif}\n\n{if activate_air_filtration[current_extruder] && support_air_filtration}\nM106 P3 S{during_print_exhaust_fan_speed_num[current_extruder]} \n{endif}
 ```
 
-## 6. Copy to DeployPack
+## 5. Copy to DeployPack
 
 After tuning, copy files from BambuStudioBeta to Git repo:
 
@@ -141,13 +147,39 @@ c:\GitHub\filments settings\
 - Never use PowerShell `ConvertTo-Json` (adds wrong indentation)
 - All `.info` files must be ASCII encoded, no BOM, Unix line endings (`\n`)
 
-## 9. TDS PDF Handling
+## 9. TDS PDF - Parameters to Extract
 
-- Always download the manufacturer's TDS PDF when available
-- Save in the filament's folder: `<Brand>\<Material>\<Brand>_<Material>_TDS.pdf`
-- Extract and verify all printing parameters against profile values
-- Include TDS download link in README.md
-- Key TDS data to extract: nozzle temp, bed temp, retraction distance/speed, density, Tg, HDT, Vicat, melting temp, drying temp, max print speed
+When reading a TDS, extract these parameters:
+
+### Printing Parameters:
+| TDS Field | Profile Setting |
+|-----------|-----------------|
+| Nozzle Temperature | `nozzle_temperature`, `nozzle_temperature_initial_layer` |
+| Bed Temperature | `hot_plate_temp`, `textured_plate_temp`, `eng_plate_temp` |
+| Retraction Distance | `filament_retraction_length` |
+| Retraction Speed | `filament_retraction_speed`, `filament_deretraction_speed` |
+| Max Print Speed | `filament_max_volumetric_speed` (calculate mm³/s) |
+| Drying Temperature | `filament_dev_ams_drying_temperature` |
+
+### Material Properties:
+| TDS Field | Profile Setting |
+|-----------|-----------------|
+| Density | `filament_density` |
+| Glass Transition (Tg) | `temperature_vitrification` |
+| HDT (Heat Distortion) | `filament_dev_ams_drying_heat_distortion_temperature` |
+| Vicat Softening | `filament_dev_drying_softening_temperature` |
+| Melting Temperature | (informational) |
+
+### Example - SUNLU PETG HS (TDS SL-TE-WI-062):
+| TDS Value | Profile Setting | Value |
+|-----------|-----------------|-------|
+| Density: 1.28 g/cm³ | `filament_density` | `"1.28"` |
+| Tg: 65.5°C | `temperature_vitrification` | `"66"` |
+| HDT: 70°C | `filament_dev_ams_drying_heat_distortion_temperature` | `"70"` |
+| Nozzle: 240-260°C | `nozzle_temperature` | `"245"` |
+| Bed: 60-70°C | `hot_plate_temp` | `"70"` |
+| Retraction: 0.8-1.2mm | `filament_retraction_length` | `"1.0"` |
+| Retraction Speed: 30-40mm/s | `filament_retraction_speed` | `["35", "40"]` |
 
 ## 10. Current Filaments
 
