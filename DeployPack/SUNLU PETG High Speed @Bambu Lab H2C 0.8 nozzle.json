@@ -190,8 +190,8 @@
         "nil"
     ],
     "filament_max_volumetric_speed": [
-        "30",
-        "35"
+        "32",
+        "42"
     ],
     "filament_metal_stickiness": [
         "High"
@@ -401,11 +401,11 @@
     ],
     "nozzle_temperature": [
         "245",
-        "245"
+        "255"
     ],
     "nozzle_temperature_initial_layer": [
         "245",
-        "245"
+        "255"
     ],
     "nozzle_temperature_range_high": [
         "270"
