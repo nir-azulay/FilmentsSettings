@@ -81,10 +81,10 @@
         "20"
     ],
     "fan_max_speed": [
-        "60"
+        "100"
     ],
     "fan_min_speed": [
-        "20"
+        "50"
     ],
     "filament_adaptive_volumetric_speed": [
         "0",
@@ -166,8 +166,8 @@
         "Direct Drive High Flow"
     ],
     "filament_flow_ratio": [
-        "0.95",
-        "0.95"
+        "0.97",
+        "0.97"
     ],
     "filament_flush_temp": [
         "0",
@@ -190,8 +190,8 @@
         "nil"
     ],
     "filament_max_volumetric_speed": [
-        "1",
-        "1"
+        "18",
+        "22"
     ],
     "filament_metal_stickiness": [
         "High"
@@ -400,12 +400,12 @@
         "0"
     ],
     "nozzle_temperature": [
-        "245",
-        "245"
+        "255",
+        "265"
     ],
     "nozzle_temperature_initial_layer": [
-        "245",
-        "245"
+        "255",
+        "265"
     ],
     "nozzle_temperature_range_high": [
         "270"
