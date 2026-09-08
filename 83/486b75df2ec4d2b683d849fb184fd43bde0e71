@@ -1,0 +1,23 @@
+"DeployPack/SUNLU PETG HS Calibrated.json"
+  s_db11c293c01520::t_a3f752376cb4e1 1-17
+"DeployPack/SUNLU PETG HS Calibrated.info"
+  s_db11c293c01520::t_a3f752376cb4e1 1-5
+DeployPack/deploy.sh
+  s_db11c293c01520::t_07f2f2a7601c7b 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "83486b75df2ec4d2b683d849fb184fd43bde0e71",
+  "prompts": {},
+  "sessions": {
+    "s_db11c293c01520": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ff338e7d-f82c-4ff3-a002-499b7f0896bf",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Nir Azulay <nir.azulay@gmail.com>"
+    }
+  }
+}
