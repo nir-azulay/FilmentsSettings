@@ -81,10 +81,10 @@
         "20"
     ],
     "fan_max_speed": [
-        "100"
+        "60"
     ],
     "fan_min_speed": [
-        "50"
+        "20"
     ],
     "filament_adaptive_volumetric_speed": [
         "0",
@@ -201,9 +201,9 @@
         "nil"
     ],
     "filament_max_volumetric_speed": [
-        "35",
-        "54",
-        "54"
+        "28",
+        "36",
+        "36"
     ],
     "filament_metal_stickiness": [
         "High"
@@ -438,13 +438,13 @@
     ],
     "nozzle_temperature": [
         "250",
-        "265",
-        "265"
+        "255",
+        "255"
     ],
     "nozzle_temperature_initial_layer": [
         "250",
-        "265",
-        "265"
+        "255",
+        "255"
     ],
     "nozzle_temperature_range_high": [
         "270"
