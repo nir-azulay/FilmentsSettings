@@ -200,9 +200,9 @@
         "nil"
     ],
     "filament_max_volumetric_speed": [
-        "12",
-        "12",
-        "12"
+        "10",
+        "10",
+        "10"
     ],
     "filament_metal_stickiness": [
         "High"

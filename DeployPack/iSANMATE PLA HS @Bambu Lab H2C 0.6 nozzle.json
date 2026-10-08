@@ -30,10 +30,10 @@
         "70"
     ],
     "cool_plate_temp": [
-        "35"
+        "50"
     ],
     "cool_plate_temp_initial_layer": [
-        "35"
+        "50"
     ],
     "cooling_perimeter_transition_distance": [
         "10"
@@ -190,8 +190,8 @@
         "nil"
     ],
     "filament_max_volumetric_speed": [
-        "18",
-        "18"
+        "30",
+        "40"
     ],
     "filament_metal_stickiness": [
         "None"

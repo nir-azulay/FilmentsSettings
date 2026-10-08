@@ -84,7 +84,7 @@
         "30"
     ],
     "fan_min_speed": [
-        "40"
+        "10"
     ],
     "filament_adaptive_volumetric_speed": [
         "0",
