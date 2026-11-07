@@ -8,5 +8,10 @@
     "name": "SUNLU PETG HS 0.10mm @H2S 0.2 nozzle",
     "print_settings_id": "SUNLU PETG HS 0.10mm @H2S 0.2 nozzle",
     "type": "process",
-    "version": "2.6.0.2"
+    "version": "2.6.0.2",
+    "brim_type": "outer_only",
+    "brim_width": "5",
+    "brim_object_gap": "0.1",
+    "initial_layer_speed": "30",
+    "initial_layer_infill_speed": "40"
 }

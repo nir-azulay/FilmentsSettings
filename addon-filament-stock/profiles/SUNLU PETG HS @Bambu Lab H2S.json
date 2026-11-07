@@ -75,10 +75,10 @@
         "1"
     ],
     "eng_plate_temp": [
-        "75"
+        "85"
     ],
     "eng_plate_temp_initial_layer": [
-        "75"
+        "85"
     ],
     "fan_cooling_layer_time": [
         "30"
@@ -468,4 +468,3 @@
         "0 0 0 0 0 0"
     ]
 }
-

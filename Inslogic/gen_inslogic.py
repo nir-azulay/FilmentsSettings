@@ -104,8 +104,8 @@ FILAMENTS = [
             "hot_plate_temp_initial_layer":     ["70"],
             "textured_plate_temp":              ["70"],
             "textured_plate_temp_initial_layer":["70"],
-            "eng_plate_temp":                   ["0"],
-            "eng_plate_temp_initial_layer":     ["0"],
+            "eng_plate_temp":                   ["85"],
+            "eng_plate_temp_initial_layer":     ["85"],
             "filament_start_gcode":             [PETG_START_GCODE],
         },
     },
@@ -404,6 +404,14 @@ def build_process(short: str, nozzle: str) -> tuple[dict, str, str]:
         "type":           "process",
         "version":        VERSION,
     }
+    # Smooth engineering plate: PETG lifts at the edges without a brim
+    # and a slow first layer.
+    if "PETG" in short:
+        proc["brim_type"] = "outer_only"
+        proc["brim_width"] = "5"
+        proc["brim_object_gap"] = "0.1"
+        proc["initial_layer_speed"] = "30"
+        proc["initial_layer_infill_speed"] = "40"
     return proc, gen_sid("PPUS"), gp
 
 
