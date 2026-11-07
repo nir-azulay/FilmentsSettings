@@ -1,0 +1,73 @@
+"addon-filament-stock/profiles/SUNLU PETG HS 0.10mm @H2S 0.2 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/Inslogic PETG Pro 0.30mm @H2S 0.6 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"SUNLU/PETG-HS/SUNLU PETG HS 0.40mm @H2S 0.8 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/Inslogic PETG Pro @Bambu Lab H2S.json"
+  s_db11c293c01520::t_d66a52c3a70f58 80,83
+"DeployPack/SUNLU PETG 0.20mm @H2S 0.4 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/Inslogic PETG Pro 0.40mm @H2S 0.8 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"SUNLU/PETG-HS/SUNLU PETG HS 0.30mm @H2S 0.6 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG HS 0.20mm @H2S 0.4 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"SUNLU/PETG-HS/SUNLU PETG HS @Bambu Lab H2S.json"
+  s_db11c293c01520::t_b414dd2502abe2 78,81
+"DeployPack/SUNLU PETG HS 0.30mm @H2S 0.6 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG HS 0.10mm @H2S 0.2 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG 0.40mm @H2S 0.8 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG HS 0.40mm @H2S 0.8 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"addon-filament-stock/profiles/SUNLU PETG HS 0.30mm @H2S 0.6 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"addon-filament-stock/profiles/SUNLU PETG HS @Bambu Lab H2S.json"
+  s_db11c293c01520::t_b414dd2502abe2 78,81
+"DeployPack/Inslogic PETG Pro 0.10mm @H2S 0.2 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"SUNLU/PETG-HS/SUNLU PETG HS 0.10mm @H2S 0.2 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+SUNLU/PETG-HS/gen_sunlu_petg_hs.py
+  s_db11c293c01520::t_e849338a31b9b3 100-101
+  s_db11c293c01520::t_ec5290bf43e283 328-333
+Inslogic/gen_inslogic.py
+  s_db11c293c01520::t_0315ea73ed04e2 107-108
+  s_db11c293c01520::t_eec2a2429d22c0 407-414
+"DeployPack/Inslogic PETG Pro 0.20mm @H2S 0.4 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG @Bambu Lab H2S.json"
+  s_db11c293c01520::t_b414dd2502abe2 78,81
+"addon-filament-stock/profiles/SUNLU PETG HS 0.20mm @H2S 0.4 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"SUNLU/PETG-HS/SUNLU PETG HS 0.20mm @H2S 0.4 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"addon-filament-stock/profiles/SUNLU PETG HS 0.40mm @H2S 0.8 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG 0.10mm @H2S 0.2 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG 0.30mm @H2S 0.6 nozzle.json"
+  s_db11c293c01520::t_b414dd2502abe2 11-16
+"DeployPack/SUNLU PETG HS @Bambu Lab H2S.json"
+  s_db11c293c01520::t_6c4c2adcc2c08a 78,81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.11",
+  "base_commit_sha": "07cf2761285bd942e6801feed5e3bb41e592e297",
+  "prompts": {},
+  "sessions": {
+    "s_db11c293c01520": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "ff338e7d-f82c-4ff3-a002-499b7f0896bf",
+        "model": "grok-4.7"
+      },
+      "human_author": "Nir Azulay <nir.azulay@gmail.com>"
+    }
+  }
+}
